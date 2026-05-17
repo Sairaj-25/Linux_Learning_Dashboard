@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Sections 2 — Permissions & Security</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --navy:    #080F1C;
+    --blue:    #1565C0;
+    --sky:     #0288D1;
+    --teal:    #00695C;
+    --green:   #2E7D32;
+    --orange:  #E65100;
+    --red:     #B71C1C;
+    --purple:  #6A1B9A;
+    --indigo:  #283593;
+    --amber:   #F57F17;
+    --pink:    #AD1457;
+    --bg:      #EFF5FC;
+    --surface: #FFFFFF;
+    --surf2:   #E4EFF9;
+    --border:  #C1D3EB;
+    --text:    #0A1829;
+    --text2:   #1F3248;
+    --text3:   #486075;
+    --codebg:  #070F1B;
+    --sh-s:    0 1px 4px rgba(8,15,28,.07);
+    --sh-m:    0 4px 16px rgba(8,15,28,.10);
+    --sh-l:    0 14px 44px rgba(8,15,28,.13);
+    --r:       14px;
+    --rs:      9px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; }
+  ::-webkit-scrollbar { width: 6px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ══ HERO ══ */
+  .hero {
+    background: linear-gradient(150deg, #030810 0%, #080F1C 22%, #0C1F3A 50%, #10285A 75%, #142E6E 100%);
+    padding: 66px 24px 54px; text-align: center; position: relative; overflow: hidden;
+  }
+  .hero::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 18% 65%, rgba(21,101,192,.22) 0%, transparent 50%),
+                radial-gradient(ellipse at 82% 18%, rgba(0,105,92,.16) 0%, transparent 48%),
+                radial-gradient(ellipse at 50% 95%, rgba(106,27,154,.12) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .hero-in { position: relative; z-index: 1; }
+  .h-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.18); color: #90CAF9; font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 7px 20px; border-radius: 100px; margin-bottom: 20px; }
+  .hero h1 { font-size: clamp(1.9rem, 5vw, 3.1rem); font-weight: 800; color: #fff; letter-spacing: -.03em; line-height: 1.15; margin-bottom: 12px; }
+  .hero h1 em { font-style: normal; color: #64B5F6; }
+  .hero-desc { font-size: .95rem; color: #90CAF9; max-width: 700px; margin: 0 auto 24px; line-height: 1.7; }
+  .hero-sections { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 20px; }
+  .hs-card { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.15); border-radius: 10px; padding: 10px 18px; text-align: center; }
+  .hs-card .hs-num { font-size: .65rem; font-weight: 700; color: rgba(255,255,255,.5); letter-spacing: .1em; text-transform: uppercase; }
+  .hs-card .hs-title { font-size: .85rem; font-weight: 700; color: #fff; margin-top: 2px; }
+  .hs-card .hs-cmds { font-size: .72rem; color: #81D4FA; margin-top: 3px; }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; }
+  .chip { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.13); color: #B3E5FC; font-size: .72rem; font-weight: 500; padding: 4px 12px; border-radius: 100px; }
+
+  /* ══ NAV ══ */
+  .nav { position: sticky; top: 0; z-index: 200; background: rgba(255,255,255,.94); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); box-shadow: var(--sh-s); }
+  .nav-in { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 2px; height: 50px; padding: 0 14px; overflow-x: auto; white-space: nowrap; }
+  .nav-in a { text-decoration: none; color: var(--text2); font-size: .73rem; font-weight: 600; padding: 4px 10px; border-radius: 100px; transition: all .15s; flex-shrink: 0; }
+  .nav-in a:hover { background: var(--surf2); color: var(--sky); }
+  .nav-sep { color: var(--border); font-size: .9rem; margin: 0 1px; flex-shrink: 0; }
+  .nav-sec { color: var(--text3); font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 4px 8px; flex-shrink: 0; }
+
+  /* ══ LAYOUT ══ */
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 40px 20px 90px; }
+
+  /* ══ SECTION BANNER ══ */
+  .sec-banner { border-radius: var(--r); padding: 22px 28px; margin-bottom: 28px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .sb2 { background: linear-gradient(135deg, #1A0A2A, #6A1B9A, #AD1457); }
+  .sb3 { background: linear-gradient(135deg, #0A1A0A, #1B5E20, #2E7D32); }
+  .sb-num { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); color: rgba(255,255,255,.7); font-size: .7rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; padding: 4px 13px; border-radius: 100px; flex-shrink: 0; }
+  .sb-title { font-size: clamp(1rem, 2.5vw, 1.45rem); font-weight: 800; color: #fff; }
+  .sb-sub { color: rgba(255,255,255,.65); font-size: .83rem; margin-top: 2px; }
+  .sb-count { margin-left: auto; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); color: #fff; font-size: .74rem; font-weight: 700; padding: 4px 13px; border-radius: 100px; flex-shrink: 0; }
+
+  /* ══ CMD CARD ══ */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-m); margin-bottom: 32px; overflow: hidden; }
+
+  /* Color themes */
+  .h-chmod  { background: linear-gradient(135deg, #1A0834, #6A1B9A); }
+  .h-chown  { background: linear-gradient(135deg, #0A1A34, #1565C0); }
+  .h-chgrp  { background: linear-gradient(135deg, #001A20, #00695C); }
+  .h-umask  { background: linear-gradient(135deg, #2A1A00, #E65100); }
+  .h-setfacl{ background: linear-gradient(135deg, #1A0014, #AD1457); }
+  .h-getfacl{ background: linear-gradient(135deg, #0A0020, #283593); }
+  .h-useradd{ background: linear-gradient(135deg, #001A0A, #2E7D32); }
+  .h-adduser{ background: linear-gradient(135deg, #001808, #1B5E20); }
+  .h-userdel{ background: linear-gradient(135deg, #1A0000, #B71C1C); }
+  .h-usermod{ background: linear-gradient(135deg, #001A2A, #0277BD); }
+  .h-passwd { background: linear-gradient(135deg, #2A1400, #BF360C); }
+  .h-chage  { background: linear-gradient(135deg, #1A1400, #F57F17); }
+  .h-id     { background: linear-gradient(135deg, #0A0020, #4527A0); }
+  .h-whoami { background: linear-gradient(135deg, #001814, #00695C); }
+  .h-su     { background: linear-gradient(135deg, #1A0818, #880E4F); }
+  .h-sudo   { background: linear-gradient(135deg, #1A0814, #C62828); }
+  .h-last   { background: linear-gradient(135deg, #001A20, #006064); }
+  .h-who    { background: linear-gradient(135deg, #0A1A00, #558B2F); }
+  .h-groupadd{ background: linear-gradient(135deg, #001830, #1565C0); }
+  .h-groupdel{ background: linear-gradient(135deg, #1A0A00, #E64A19); }
+  .h-groupmod{ background: linear-gradient(135deg, #0A0018, #6A1B9A); }
+  .h-groups { background: linear-gradient(135deg, #001818, #00838F); }
+  .h-newgrp { background: linear-gradient(135deg, #001A10, #2E7D32); }
+  .h-gpasswd{ background: linear-gradient(135deg, #1A1400, #E65100); }
+
+  .cmd-head { padding: 18px 24px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+  .cmd-mono { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 700; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); border-radius: 8px; padding: 5px 15px; flex-shrink: 0; color: #E0E0E0; }
+  .cmd-meta { flex: 1; min-width: 180px; }
+  .cmd-label { color: rgba(255,255,255,.5); font-size: .69rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .cmd-tagline { color: #fff; font-size: .9rem; font-weight: 600; margin-top: 2px; }
+  .cmd-body { padding: 22px; }
+
+  /* ══ SECTION LABELS ══ */
+  .sl { display: flex; align-items: center; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid var(--border); margin: 22px 0 11px; }
+  .sl:first-of-type { margin-top: 0; }
+  .sn { width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: #fff; font-size: .66rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sn2 { background: var(--purple); }
+  .sn3 { background: var(--green); }
+  .st { font-size: .93rem; font-weight: 700; color: var(--text); }
+  .sub { font-size: .71rem; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: .09em; margin: 13px 0 6px; }
+  .desc { font-size: .875rem; color: var(--text2); line-height: 1.82; margin-bottom: 9px; }
+
+  /* ══ INLINE CODE ══ */
+  .ic { font-family: 'JetBrains Mono', monospace; background: #E8EEF8; color: #B71C1C; padding: 2px 6px; border-radius: 4px; font-size: .79rem; border: 1px solid #C5D5F0; }
+
+  /* ══ CODE BLOCK ══ */
+  .cw { margin-bottom: 12px; border-radius: var(--rs); overflow: hidden; }
+  .ct { background: #0D1B2C; padding: 6px 14px; display: flex; align-items: center; justify-content: space-between; font-size: .67rem; font-weight: 700; color: #3A5E7A; letter-spacing: .09em; text-transform: uppercase; }
+  .ct .lang { color: #29B6F6; }
+  pre.p { background: var(--codebg); padding: 14px 18px; overflow-x: auto; margin: 0; border-top: 1px solid #121E30; }
+  pre.p code { font-family: 'JetBrains Mono', monospace; font-size: .79rem; line-height: 1.88; color: #90CAF9; background: none; padding: 0; }
+  .c  { color: class#4ccfff; }
+  .k  { color: #FF8A80; font-weight: 600; }
+  .cm { color: #64B5F6; }
+  .fl { color: #FFCC80; }
+  .st2{ color: #A5D6A7; }
+  .sc { color: #CE93D8; font-weight: 600; }
+  .di { color: #FFD54F; }
+  .nu { color: #80CBC4; }
+  .out{ color: #499767; }
+  .va { color: #FFE082; }
+
+  /* ══ FLAG TABLE ══ */
+  .tw { overflow-x: auto; border-radius: var(--rs); border: 1px solid var(--border); margin-bottom: 12px; }
+  table.ft { width: 100%; border-collapse: collapse; font-size: .81rem; }
+  table.ft thead tr { background: linear-gradient(90deg, #0D1E34, #1565C0); }
+  table.ft thead th { padding: 10px 12px; color: #fff; font-size: .7rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; text-align: left; border: none; white-space: nowrap; }
+  table.ft tbody tr:nth-child(odd)  { background: #FAFCFF; }
+  table.ft tbody tr:nth-child(even) { background: #EEF4FB; }
+  table.ft tbody tr:hover { background: #DBE8F8; }
+  table.ft td { padding: 9px 12px; border-bottom: 1px solid #DDEAF8; vertical-align: top; color: var(--text2); line-height: 1.5; font-size: .82rem; }
+  table.ft td:first-child { font-family: 'JetBrains Mono', monospace; font-size: .74rem; font-weight: 600; color: #B71C1C; white-space: nowrap; border-right: 1px solid var(--border); }
+  table.ft td:last-child  { font-family: 'JetBrains Mono', monospace; font-size: .74rem; color: #37474F; background: rgba(0,0,0,.013); }
+  table.ft .cat td { background: linear-gradient(90deg, #E2EAF8, #EEF4FB) !important; font-weight: 700; font-size: .7rem; color: var(--navy); text-transform: uppercase; letter-spacing: .07em; padding: 6px 12px; font-family: 'Inter', sans-serif; }
+
+  /* ══ CALLOUTS ══ */
+  .box { display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; border-radius: var(--rs); margin-bottom: 10px; font-size: .855rem; line-height: 1.7; }
+  .box .bi { font-size: 1.05rem; flex-shrink: 0; margin-top: 1px; }
+  .box strong { display: block; margin-bottom: 2px; font-size: .82rem; }
+  .box.info   { background: #E3F2FD; border-left: 4px solid #1E88E5; color: #0D2B4E; }
+  .box.tip    { background: #E8F5E9; border-left: 4px solid #43A047; color: #1B5E20; }
+  .box.warn   { background: #FFF8E1; border-left: 4px solid #F9A825; color: #4E342E; }
+  .box.danger { background: #FEEBEA; border-left: 4px solid #E53935; color: #7F1D1D; }
+  .box.purple { background: #F3E5F5; border-left: 4px solid #8E24AA; color: #3E0D5C; }
+  .box.teal   { background: #E0F2F1; border-left: 4px solid #00897B; color: #004D40; }
+  .box.orange { background: #FBE9E7; border-left: 4px solid #E64A19; color: #4E1500; }
+
+  /* ══ Q&A ══ */
+  .qs { display: flex; flex-direction: column; gap: 10px; }
+  .qa { border-radius: var(--rs); overflow: hidden; border: 1px solid var(--border); box-shadow: var(--sh-s); }
+  .qq { background: linear-gradient(90deg, #0D1E34, #1A3D6B); padding: 11px 15px; display: flex; gap: 10px; align-items: flex-start; font-size: .84rem; font-weight: 600; color: #E3F2FD; }
+  .qb { background: rgba(255,255,255,.14); color: #64B5F6; font-size: .66rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+  .qa-a { background: #fff; padding: 11px 15px 11px 32px; font-size: .84rem; color: var(--text2); line-height: 1.78; border-top: 1px solid var(--border); }
+  .qa-a .al { color: var(--teal); font-weight: 700; margin-right: 5px; }
+
+  /* ══ BULLETS ══ */
+  ul.bl { list-style: none; padding: 0; margin-bottom: 9px; }
+  ul.bl li { display: flex; gap: 10px; align-items: flex-start; padding: 5px 0; border-bottom: 1px solid #F0F4FB; font-size: .845rem; color: var(--text2); line-height: 1.65; }
+  ul.bl li:last-child { border-bottom: none; }
+  ul.bl li::before { content: '▸'; color: var(--sky); flex-shrink: 0; margin-top: 2px; font-size: .68rem; }
+  ul.bl li strong { color: var(--text); }
+
+  /* ══ PERMISSION VISUAL ══ */
+  .perm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .perm-col { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--rs); padding: 12px; text-align: center; }
+  .perm-col .pc-label { font-size: .68rem; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+  .perm-col .pc-bits { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--blue); }
+  .perm-col .pc-name { font-size: .75rem; color: var(--text2); margin-top: 3px; }
+  .perm-col.owner { border-color: #90CAF9; background: #E3F2FD; }
+  .perm-col.group { border-color: #A5D6A7; background: #E8F5E9; }
+  .perm-col.other { border-color: #EF9A9A; background: #FEEBEA; }
+
+  /* ══ CHEAT SHEET ══ */
+  .cheat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-m); overflow: hidden; margin-bottom: 32px; }
+  .cheat-h { padding: 16px 22px; }
+  .ch-h2 { background: linear-gradient(135deg, #1A0828, #6A1B9A, #AD1457); }
+  .ch-h3 { background: linear-gradient(135deg, #0A1A08, #1B5E20, #2E7D32); }
+  .cheat-h h2 { color: #fff; font-size: .95rem; font-weight: 700; }
+  .cheat-h p  { color: rgba(255,255,255,.65); font-size: .8rem; margin-top: 2px; }
+  table.ct2 { width: 100%; border-collapse: collapse; font-size: .8rem; }
+  table.ct2 tr { border-bottom: 1px solid #E0EAF8; }
+  table.ct2 tr:nth-child(odd)  { background: #FAFCFF; }
+  table.ct2 tr:nth-child(even) { background: #EEF4FB; }
+  table.ct2 tr:hover { background: #DCE8F8; }
+  table.ct2 td { padding: 8px 14px; vertical-align: middle; }
+  table.ct2 td:first-child { font-family: 'JetBrains Mono', monospace; color: #1565C0; font-size: .74rem; font-weight: 600; border-right: 1px solid var(--border); background: rgba(21,101,192,.04); width: 44%; }
+  table.ct2 td:last-child { color: var(--text2); }
+  .cts td { background: linear-gradient(90deg, #0D1E34, #1565C0) !important; color: #fff !important; font-weight: 700 !important; font-size: .68rem !important; letter-spacing: .1em; text-transform: uppercase; font-family: 'Inter', sans-serif !important; padding: 6px 14px !important; border-bottom: none !important; }
+
+  /* ══ FINAL TIP ══ */
+  .final-tip { background: linear-gradient(135deg, #0A1830, #142B58); border-radius: var(--r); padding: 24px 28px; display: flex; gap: 16px; align-items: flex-start; box-shadow: var(--sh-l); margin-bottom: 32px; }
+  .final-tip .ti { font-size: 2rem; flex-shrink: 0; }
+  .final-tip h3 { color: #BBDEFB; font-size: .73rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 7px; }
+  .final-tip p  { color: #E3F2FD; font-size: .87rem; line-height: 1.82; }
+
+  footer { text-align: center; padding: 22px; border-top: 1px solid var(--border); font-size: .74rem; color: var(--text3); }
+  footer strong { color: var(--blue); }
+
+  @media (max-width: 660px) {
+    .hero { padding: 40px 14px 36px; }
+    .wrap { padding: 18px 12px 60px; }
+    .cmd-body { padding: 14px; }
+    table.ft td:last-child { display: none; }
+    .perm-grid { grid-template-columns: 1fr; }
+    .final-tip { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-in">
+    <div class="h-pill">🐧 Linux Commands — Interview Guide</div>
+    <h1>Sections 2 :<br><em>Permissions, Security</em></h1>
+    <p class="hero-desc">Complete command reference covering filesystem permissions, and ACLs — with deep interview Q&A, real-world scenarios, and pro tips for DevOps, Data Engineering, and AI-ML roles.</p>
+    <div class="hero-sections">
+      <div class="hs-card">
+        <div class="hs-num">Section 2</div>
+        <div class="hs-title">🔒 Filesystem Permissions &amp; Security</div>
+        <div class="hs-cmds">chmod · chown · chgrp · umask · setfacl · getfacl</div>
+    </div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-in">
+    <a href="#chmod">chmod</a><span class="nav-sep">·</span>
+    <a href="#chown">chown</a><span class="nav-sep">·</span>
+    <a href="#chgrp">chgrp</a><span class="nav-sep">·</span>
+    <a href="#umask">umask</a><span class="nav-sep">·</span>
+    <a href="#setfacl">setfacl</a><span class="nav-sep">·</span>
+    <a href="#getfacl">getfacl</a>
+    <a href="#cheat2">📋 §2</a><span class="nav-sep">·</span>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ══════════════════════════════════════
+     SECTION 2: FILESYSTEM PERMISSIONS
+══════════════════════════════════════ -->
+<div class="sec-banner sb2">
+  <div>
+    <span class="sb-num">Section 2</span>
+    <div class="sb-title">🔒 Filesystem Permissions &amp; Security</div>
+    <div class="sb-sub">chmod · chown · chgrp · umask · setfacl · getfacl</div>
+  </div>
+  <div class="sb-count">6 Commands</div>
+</div>
+
+<!-- Permission Model Visual -->
+<div class="card" style="margin-bottom:28px">
+  <div class="cmd-head" style="background:linear-gradient(135deg,#0A0820,#283593)">
+    <div class="cmd-mono" style="color:#90CAF9">Linux Permission Model</div>
+    <div class="cmd-meta"><div class="cmd-tagline">Understanding rwx before learning chmod/chown</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="perm-grid">
+      <div class="perm-col owner"><div class="pc-label">Owner (u)</div><div class="pc-bits">rwx = 7</div><div class="pc-name">Read + Write + Execute</div></div>
+      <div class="perm-col group"><div class="pc-label">Group (g)</div><div class="pc-bits">r-x = 5</div><div class="pc-name">Read + Execute only</div></div>
+      <div class="perm-col other"><div class="pc-label">Others (o)</div><div class="pc-bits">r-- = 4</div><div class="pc-name">Read only</div></div>
+    </div>
+    <div class="cw"><div class="ct"><span class="lang">TEXT — Permission Reference</span></div>
+    <pre class="p"><code><span class="c"># r = 4 (read)  w = 2 (write)  x = 1 (execute)</span>
+<span class="c">#</span>
+<span class="c"># Common values:  7=rwx  6=rw-  5=r-x  4=r--  0=---</span>
+<span class="c">#</span>
+<span class="c"># Standard permissions:</span>
+<span class="di">777</span> <span class="c">= rwxrwxrwx  (NEVER in production — security risk)</span>
+<span class="di">755</span> <span class="c">= rwxr-xr-x  (scripts, directories)</span>
+<span class="di">644</span> <span class="c">= rw-r--r--  (regular files)</span>
+<span class="di">640</span> <span class="c">= rw-r-----  (config files — owner+group only)</span>
+<span class="di">600</span> <span class="c">= rw-------  (SSH keys, secrets, .env files)</span>
+<span class="di">700</span> <span class="c">= rwx------  (private directories)</span>
+<span class="di">400</span> <span class="c">= r--------  (read-only: certificates)</span>
+<span class="c">#</span>
+<span class="c"># Special bits:</span>
+<span class="di">4000</span> <span class="c">= SUID  (run as file owner)</span>
+<span class="di">2000</span> <span class="c">= SGID  (run as file group / inherit dir group)</span>
+<span class="di">1000</span> <span class="c">= Sticky (only owner can delete in shared dir)</span></code></pre></div>
+  </div>
+</div>
+
+<!-- ════ chmod ════ -->
+<div class="card" id="chmod">
+  <div class="cmd-head h-chmod">
+    <div class="cmd-mono">chmod</div>
+    <div class="cmd-meta"><div class="cmd-label">Change Mode</div><div class="cmd-tagline">Change file/directory permissions — octal and symbolic modes</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn2">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">chmod</span> (Change Mode) modifies the permission bits of files and directories. It accepts two notation styles: <strong>octal</strong> (755, 644) for setting absolute permissions, and <strong>symbolic</strong> (u+x, g-w, o=r) for relative changes. In production, chmod is used for securing SSH keys, fixing web server permissions, making scripts executable, and hardening file access.</p>
+
+    <div class="sl"><span class="sn sn2">2</span><span class="st">Syntax</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="cm">chmod</span> <span class="fl">[OPTIONS]</span> <span class="di">MODE</span> <span class="st2">FILE...</span>
+
+  <span class="c">MODE (octal):    chmod 755 file.sh</span>
+  <span class="c">MODE (symbolic): chmod u+x,g-w,o=r file.sh</span>
+  <span class="c">  u = user/owner   g = group   o = others   a = all</span>
+  <span class="c">  + = add          - = remove   = = set exactly</span>
+  <span class="c">  r = read(4)      w = write(2) x = execute(1)</span></code></pre></div>
+
+    <div class="sl"><span class="sn sn2">3</span><span class="st">Commonly Used Options</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag/Usage</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-R</td><td>Recursive — apply to all files in directory</td><td>chmod -R 755 /var/www/html/</td></tr>
+        <tr><td>-v</td><td>Verbose — show each file changed</td><td>chmod -v 644 *.conf</td></tr>
+        <tr><td>-c</td><td>Like verbose but only show changed files</td><td>chmod -c 755 script.sh</td></tr>
+        <tr><td>--reference</td><td>Use permissions from another file as reference</td><td>chmod --reference=ref.sh target.sh</td></tr>
+        <tr class="cat"><td colspan="3">Symbolic Mode Examples</td></tr>
+        <tr><td>u+x</td><td>Add execute for owner</td><td>chmod u+x deploy.sh</td></tr>
+        <tr><td>g-w</td><td>Remove write for group</td><td>chmod g-w /etc/config</td></tr>
+        <tr><td>o=r</td><td>Set others to read-only exactly</td><td>chmod o=r report.txt</td></tr>
+        <tr><td>a+r</td><td>Add read for ALL (owner+group+others)</td><td>chmod a+r public.txt</td></tr>
+        <tr><td>u=rwx,g=rx,o=</td><td>Set exact permissions for all groups</td><td>chmod u=rwx,g=rx,o= dir/</td></tr>
+        <tr class="cat"><td colspan="3">Special Bits</td></tr>
+        <tr><td>4755</td><td>SUID bit — runs as file owner (e.g., passwd)</td><td>chmod 4755 /usr/bin/myapp</td></tr>
+        <tr><td>2755</td><td>SGID bit — runs as group / dir files inherit group</td><td>chmod 2775 /shared/project/</td></tr>
+        <tr><td>1777</td><td>Sticky bit — only owner can delete (e.g., /tmp)</td><td>chmod 1777 /tmp</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn sn2">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Make script executable</span>
+<span class="cm">chmod</span> +x deploy.sh
+<span class="cm">chmod</span> <span class="di">755</span> deploy.sh    <span class="c"># Owner: full, Group+Others: read+execute</span>
+
+<span class="c"># Secure SSH private key (REQUIRED — SSH refuses 644!)</span>
+<span class="cm">chmod</span> <span class="di">600</span> ~/.ssh/id_rsa
+<span class="cm">chmod</span> <span class="di">700</span> ~/.ssh/
+
+<span class="c"># Web server permissions (standard pattern)</span>
+<span class="cm">find</span> /var/www/html <span class="fl">-type d -exec chmod 755</span> {} \;   <span class="c"># Directories</span>
+<span class="cm">find</span> /var/www/html <span class="fl">-type f -exec chmod 644</span> {} \;   <span class="c"># Files</span>
+<span class="cm">chmod</span> <span class="di">640</span> /var/www/html/.env   <span class="c"># Protect secrets</span>
+
+<span class="c"># Shared directory — SGID ensures new files inherit group</span>
+<span class="cm">chmod</span> <span class="di">2775</span> /opt/shared-project/
+<span class="cm">ls</span> <span class="fl">-ld</span> /opt/shared-project/
+<span class="out"># drwxrwsr-x  (s = SGID bit set)</span>
+
+<span class="c"># Remove all permissions from others (secure file)</span>
+<span class="cm">chmod</span> o= sensitive_data.csv
+
+<span class="c"># Add execute for all — quick way to allow script execution</span>
+<span class="cm">chmod</span> a+x /usr/local/bin/myutil
+
+<span class="c"># Sticky bit on shared directory (/tmp-like)</span>
+<span class="cm">chmod</span> <span class="di">1777</span> /shared/uploads/    <span class="c"># Everyone can write, only owner can delete own files</span></code></pre></div>
+
+    <div class="sl"><span class="sn sn2">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the difference between octal and symbolic chmod notation? When do you prefer each?</div>
+      <div class="qa-a"><span class="al">A:</span><strong>Octal</strong> (chmod 755) sets absolute permissions — all three groups are set simultaneously. <strong>Symbolic</strong> (chmod u+x) makes relative changes without affecting other bits. Use octal when setting from scratch (new files, deployments). Use symbolic in scripts when you only want to toggle specific bits — e.g., <span class="ic">chmod +x script.sh</span> adds execute without changing read/write.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>Explain SUID, SGID, and Sticky bit with real-world examples.</div>
+      <div class="qa-a"><span class="al">A:</span><strong>SUID (4xxx):</strong> File runs as file owner — <span class="ic">/usr/bin/passwd</span> has SUID root, so any user can change their own password (needs to write /etc/shadow). <strong>SGID (2xxx) on dir:</strong> New files created inside inherit the directory's group — critical for shared project directories where files should belong to "devteam" not the creator's primary group. <strong>Sticky (1xxx):</strong> On directories like /tmp — everyone can write but only the file owner and root can delete a file. Prevents users from deleting each other's temp files.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q3</span>SSH refuses to connect saying "WARNING: UNPROTECTED PRIVATE KEY FILE!" How do you fix it?</div>
+      <div class="qa-a"><span class="al">A:</span>The SSH private key has permissions too open. Fix: <span class="ic">chmod 600 ~/.ssh/id_rsa && chmod 700 ~/.ssh/</span>. SSH requires the private key to be readable ONLY by the owner (600 = rw-------). If the key is world or group readable, SSH considers it a security risk and refuses to use it.</div></div>
+    </div>
+
+    <div class="sl"><span class="sn sn2">7</span><span class="st">Common Mistakes &amp; Tips</span></div>
+    <div class="box danger"><span class="bi">❌</span><div><strong>chmod 777 is never acceptable in production</strong> — it gives everyone write access, making the file a security vulnerability. If nginx is compromised, it can overwrite any 777 file.</div></div>
+    <div class="box warn"><span class="bi">⚠️</span><div><strong>chmod -R on /var/www without checking</strong> — recursively applying 755 to ALL files makes config files and database files potentially world-readable. Always separate file permissions (644) from directory permissions (755) using find.</div></div>
+    <div class="box tip"><span class="bi">✅</span><div><strong>Pro tip:</strong> Use <span class="ic">stat -c "%a %n" file</span> to quickly get the octal permissions of a file. Use <span class="ic">ls -l | grep "^-..s"</span> to find SUID binaries.</div></div>
+  </div>
+</div>
+
+<!-- ════ chown ════ -->
+<div class="card" id="chown">
+  <div class="cmd-head h-chown">
+    <div class="cmd-mono">chown</div>
+    <div class="cmd-meta"><div class="cmd-label">Change Owner</div><div class="cmd-tagline">Change file owner and/or group — service isolation principle</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn2">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">chown</span> changes the owner and optionally the group of files/directories. In production, it enforces the <strong>principle of least privilege</strong> — services run as dedicated users and own only their files. Web servers own web root, databases own data directories, ML services own model files.</p>
+
+    <div class="sl"><span class="sn sn2">2</span><span class="st">Syntax</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="cm">chown</span> <span class="fl">[OPTIONS]</span> <span class="di">OWNER[:GROUP]</span> <span class="st2">FILE...</span>
+
+  <span class="c">chown user file          ← change owner only</span>
+  <span class="c">chown user:group file    ← change both owner and group</span>
+  <span class="c">chown :group file        ← change group only (same as chgrp)</span>
+  <span class="c">chown user: file         ← change owner, set group to user's login group</span></code></pre></div>
+
+    <div class="sl"><span class="sn sn2">3</span><span class="st">Commonly Used Options</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-R</td><td>Recursive — change owner for all files in dir</td><td>chown -R www-data:www-data /var/www/</td></tr>
+        <tr><td>-v</td><td>Verbose — show each change</td><td>chown -v alice:devops report.csv</td></tr>
+        <tr><td>-h</td><td>Change symlink itself, not its target</td><td>chown -h user symlink</td></tr>
+        <tr><td>--reference</td><td>Use ownership from reference file</td><td>chown --reference=/etc/app/cfg file</td></tr>
+        <tr><td>--from</td><td>Change only if current owner matches</td><td>chown --from=old:old new:new file</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn sn2">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Web server deployment</span>
+<span class="cm">sudo chown</span> <span class="fl">-R</span> www-data:www-data /var/www/html/
+
+<span class="c"># Database files — owned by postgres service user</span>
+<span class="cm">sudo chown</span> <span class="fl">-R</span> postgres:postgres /var/lib/postgresql/
+
+<span class="c"># ML model files — owned by ml service account</span>
+<span class="cm">sudo chown</span> <span class="fl">-R</span> mlservice:mlteam /opt/models/
+
+<span class="c"># Docker socket — add user to docker group instead of chown!</span>
+<span class="cm">sudo chown</span> root:docker /var/run/docker.sock
+<span class="cm">sudo chmod</span> <span class="di">660</span> /var/run/docker.sock
+
+<span class="c"># Change only the group (same as chgrp)</span>
+<span class="cm">sudo chown</span> :developers /shared/project/
+
+<span class="c"># After running deployment as wrong user — fix ownership</span>
+<span class="cm">sudo chown</span> <span class="fl">-R</span> appuser:appgroup /opt/app/
+
+<span class="c"># Change owner using UID/GID numbers (when name not available)</span>
+<span class="cm">sudo chown</span> <span class="di">1001:1002</span> /data/file.csv</code></pre></div>
+
+    <div class="sl"><span class="sn sn2">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>Why does nginx/apache/postgres run as a dedicated user instead of root?</div>
+      <div class="qa-a"><span class="al">A:</span>Principle of least privilege — if the service is compromised, the attacker gets the permissions of that service user, not root. A compromised www-data account can only read/write files owned by www-data. It cannot access /etc/shadow, other users' home directories, or system files. This containment is fundamental to Linux security design.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>After deploying with root, the application gets "Permission denied" errors. How do you fix?</div>
+      <div class="qa-a"><span class="al">A:</span>The deployment created files owned by root, but the application runs as e.g. www-data. Fix: <span class="ic">sudo chown -R www-data:www-data /var/www/html/</span> then <span class="ic">find /var/www/html -type d -exec chmod 755 {} \; && find /var/www/html -type f -exec chmod 644 {} \;</span></div></div>
+    </div>
+
+    <div class="box danger"><span class="bi">❌</span><div><strong>Never run chown -R on /</strong> — always specify a full non-root path. Recursive chown from root destroys the entire system's permission structure.</div></div>
+  </div>
+</div>
+
+<!-- ════ chgrp ════ -->
+<div class="card" id="chgrp">
+  <div class="cmd-head h-chgrp">
+    <div class="cmd-mono">chgrp</div>
+    <div class="cmd-meta"><div class="cmd-label">Change Group</div><div class="cmd-tagline">Change group ownership — collaborate without changing file owner</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn2">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">chgrp</span> changes only the group ownership of a file — leaving the owner unchanged. While <span class="ic">chown :group file</span> achieves the same result, <span class="ic">chgrp</span> is more explicit and readable when only the group needs changing. Used for shared project directories where multiple users need access through a common group.</p>
+
+    <div class="sl"><span class="sn sn2">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Change group of a directory to 'developers'</span>
+<span class="cm">sudo chgrp</span> developers /opt/project/
+
+<span class="c"># Recursive — all files inherit group</span>
+<span class="cm">sudo chgrp</span> <span class="fl">-R</span> dataengineers /data/warehouse/
+
+<span class="c"># Docker socket — allow docker group access</span>
+<span class="cm">sudo chgrp</span> docker /var/run/docker.sock
+
+<span class="c"># Give data team read access to ML models</span>
+<span class="cm">sudo chgrp</span> <span class="fl">-R</span> datateam /opt/models/
+<span class="cm">sudo chmod</span> <span class="fl">-R</span> g+r /opt/models/
+
+<span class="c"># Equivalent using chown</span>
+<span class="cm">sudo chown</span> :developers /opt/project/   <span class="c"># same as chgrp developers</span></code></pre></div>
+
+    <div class="box info"><span class="bi">💡</span><div><strong>chgrp vs chown :group</strong> — Both achieve the same result. Use <span class="ic">chgrp</span> for clarity when only changing group. Use <span class="ic">chown user:group</span> when changing both simultaneously. In scripts, <span class="ic">chown :group</span> is preferred for compactness.</div></div>
+  </div>
+</div>
+
+<!-- ════ umask ════ -->
+<div class="card" id="umask">
+  <div class="cmd-head h-umask">
+    <div class="cmd-mono">umask</div>
+    <div class="cmd-meta"><div class="cmd-label">User Mask</div><div class="cmd-tagline">Set default file creation permissions — what gets removed by default</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn2">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">umask</span> defines the default permissions REMOVED when creating new files/directories. It's a mask — bits set in umask are subtracted from maximum permissions. Files default to 666, directories to 777, and umask removes the specified bits. umask 022 → files get 644, directories get 755.</p>
+
+    <div class="sl"><span class="sn sn2">2</span><span class="st">How umask Works</span></div>
+    <div class="cw"><div class="ct"><span class="lang">TEXT — umask Calculation</span></div>
+    <pre class="p"><code><span class="c"># Max permissions:  Files=666   Directories=777</span>
+<span class="c"># Subtract umask:   666 - 022 = 644  (files get rw-r--r--)</span>
+<span class="c">#                  777 - 022 = 755  (dirs  get rwxr-xr-x)</span>
+<span class="c">#</span>
+<span class="c"># Common umask values:</span>
+<span class="di">022</span>  <span class="c">→ files=644  dirs=755  (standard, most systems)</span>
+<span class="di">027</span>  <span class="c">→ files=640  dirs=750  (more secure, others get nothing)</span>
+<span class="di">077</span>  <span class="c">→ files=600  dirs=700  (very secure, private)</span>
+<span class="di">002</span>  <span class="c">→ files=664  dirs=775  (group collaborative environment)</span></code></pre></div>
+
+    <div class="sl"><span class="sn sn2">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Check current umask</span>
+<span class="cm">umask</span>
+<span class="out"># 0022</span>
+
+<span class="cm">umask</span> <span class="fl">-S</span>   <span class="c"># Symbolic display</span>
+<span class="out"># u=rwx,g=rx,o=rx</span>
+
+<span class="c"># Set umask for current session</span>
+<span class="cm">umask</span> <span class="di">027</span>   <span class="c"># Files=640, Dirs=750 (more secure)</span>
+
+<span class="c"># Set permanently for a user (add to ~/.bashrc or ~/.profile)</span>
+<span class="cm">echo</span> <span class="st2">"umask 027"</span> >> ~/.bashrc
+
+<span class="c"># System-wide default (affects all users)</span>
+<span class="c"># Edit: /etc/profile or /etc/login.defs (UMASK setting)</span>
+
+<span class="c"># Service-specific umask in systemd unit file</span>
+<span class="c"># [Service]</span>
+<span class="c"># UMask=0027  ← nginx creates files with 640</span>
+
+<span class="c"># DevOps: verify new files have expected permissions</span>
+<span class="cm">umask</span> <span class="di">027</span> && <span class="cm">touch</span> testfile && <span class="cm">ls</span> <span class="fl">-l</span> testfile && <span class="cm">rm</span> testfile
+<span class="out"># -rw-r----- 1 user user 0 Jan 15 10:00 testfile</span></code></pre></div>
+
+    <div class="sl"><span class="sn sn2">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What does umask 022 mean and what permissions will new files have?</div>
+      <div class="qa-a"><span class="al">A:</span>umask 022 means bits 022 (write permissions for group and others) are removed from new files. New files: 666 - 022 = 644 (rw-r--r--). New directories: 777 - 022 = 755 (rwxr-xr-x). This is the Linux standard — owner can read/write, group and others can only read.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>Why would a production application run with umask 027 instead of 022?</div>
+      <div class="qa-a"><span class="al">A:</span>umask 027 prevents "others" (any user not in the file's group) from reading any files created by the application. Files get 640, directories get 750. Critical for: log files containing sensitive data, config files with credentials, financial/healthcare application data. The "others" bits (last digit) become 0 with umask 027.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ setfacl ════ -->
+<div class="card" id="setfacl">
+  <div class="cmd-head h-setfacl">
+    <div class="cmd-mono">setfacl</div>
+    <div class="cmd-meta"><div class="cmd-label">Set ACL</div><div class="cmd-tagline">Set Access Control Lists — granular permissions beyond owner/group/other</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn2">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">setfacl</span> sets Access Control Lists (ACLs) — an extension to standard Linux permissions that allows granting different permissions to multiple specific users/groups on the same file. The traditional model supports only one owner and one group; ACLs allow: "alice gets read, bob gets read+write, devteam gets read, others get nothing."</p>
+    <p class="desc">In production, ACLs are used for: shared NFS mounts where multiple teams need different access, ML model files shared between data scientists and production systems, and compliance environments requiring fine-grained audit trails.</p>
+
+    <div class="sl"><span class="sn sn2">2</span><span class="st">Syntax</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="cm">setfacl</span> <span class="fl">[OPTIONS]</span> <span class="di">ACLS</span> <span class="st2">FILE...</span>
+
+  <span class="c">ACL format:  [d:]TYPE:NAME:PERMS</span>
+  <span class="c">  d: = default ACL (new files inherit)</span>
+  <span class="c">  TYPE: u (user), g (group), o (other), m (mask)</span>
+  <span class="c">  NAME: username, groupname, or empty for owner/owning-group</span>
+  <span class="c">  PERMS: rwx combinations</span></code></pre></div>
+
+    <div class="sl"><span class="sn sn2">3</span><span class="st">Key Options</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-m ACLS</td><td>Modify/add ACL entry</td><td>setfacl -m u:alice:rwx file</td></tr>
+        <tr><td>-x ACLS</td><td>Remove specific ACL entry</td><td>setfacl -x u:alice file</td></tr>
+        <tr><td>-b</td><td>Remove ALL ACL entries</td><td>setfacl -b file</td></tr>
+        <tr><td>-R</td><td>Recursive — apply to directory tree</td><td>setfacl -Rm u:alice:rx /data/</td></tr>
+        <tr><td>-d</td><td>Set default ACL (new files inherit)</td><td>setfacl -m d:u:alice:rx /dir/</td></tr>
+        <tr><td>-k</td><td>Remove default ACL only</td><td>setfacl -k /dir/</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn sn2">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Grant specific user read+write to a file (without changing owner)</span>
+<span class="cm">setfacl</span> <span class="fl">-m u:alice:rw</span> /data/report.csv
+
+<span class="c"># Grant a group read-only access to ML models</span>
+<span class="cm">setfacl</span> <span class="fl">-Rm g:datascientists:rx</span> /opt/models/
+
+<span class="c"># Set default ACL — new files in dir inherit these permissions</span>
+<span class="cm">setfacl</span> <span class="fl">-m d:u:alice:rwx,d:g:devteam:rx</span> /shared/project/
+
+<span class="c"># Grant multiple users different permissions</span>
+<span class="cm">setfacl</span> <span class="fl">-m u:alice:rwx,u:bob:rx,u:charlie:r</span> /data/db.sqlite
+
+<span class="c"># View ACL</span>
+<span class="cm">getfacl</span> /data/report.csv
+<span class="out"># file: data/report.csv
+# owner: admin
+# group: admin
+# user::rw-
+# user:alice:rw-     ← ACL entry
+# group::r--
+# mask::rw-
+# other::---</span>
+
+<span class="c"># Remove specific user's ACL</span>
+<span class="cm">setfacl</span> <span class="fl">-x u:alice</span> /data/report.csv
+
+<span class="c"># Remove ALL ACLs (revert to standard permissions)</span>
+<span class="cm">setfacl</span> <span class="fl">-b</span> /data/report.csv
+
+<span class="c"># Copy ACLs from one dir to another</span>
+<span class="cm">getfacl</span> /source/dir | <span class="cm">setfacl</span> <span class="fl">--set-file=-</span> /dest/dir</code></pre></div>
+
+    <div class="sl"><span class="sn sn2">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>When would you use ACLs instead of traditional permissions?</div>
+      <div class="qa-a"><span class="al">A:</span>Traditional permissions support ONE owner + ONE group. Use ACLs when: (1) Multiple users need different access levels to the same file/directory — e.g., alice=rwx, bob=rx, charlie=r. (2) A user not in the file's group needs access without changing the group. (3) Default ACLs needed so all new files in a dir automatically get specific permissions. (4) NFS shares accessed by teams with different access needs.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>What is the "mask" entry in ACL output?</div>
+      <div class="qa-a"><span class="al">A:</span>The mask is the maximum effective permissions that can be granted to any named user or group (not the owner). <span class="ic">mask::rw-</span> means no matter what you grant via ACL, the effective permission cannot exceed rw-. When you <span class="ic">chmod g+x file</span> on an ACL file, it updates the mask. This is why after chmod operations, ACL effective permissions might show "effective:---" or reduced permissions.</div></div>
+    </div>
+
+    <div class="box warn"><span class="bi">⚠️</span><div>When you see a <span class="ic">+</span> at the end of <span class="ic">ls -l</span> permissions (e.g., <span class="ic">-rw-rw-r--+</span>), the file has ACLs. Always check with <span class="ic">getfacl</span> before assuming only standard permissions apply.</div></div>
+  </div>
+</div>
+
+<!-- ════ getfacl ════ -->
+<div class="card" id="getfacl">
+  <div class="cmd-head h-getfacl">
+    <div class="cmd-mono">getfacl</div>
+    <div class="cmd-meta"><div class="cmd-label">Get ACL</div><div class="cmd-tagline">Get/display Access Control Lists — audit and backup permissions</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn2">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">getfacl</span> displays the ACL (Access Control List) for files and directories. It shows standard permissions AND any extended ACL entries. Essential for security auditing, permission debugging, and backing up/restoring ACL configurations.</p>
+
+    <div class="sl"><span class="sn sn2">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># View ACL of a file</span>
+<span class="cm">getfacl</span> /etc/app/config.yaml
+
+<span class="c"># Recursive — view ACLs of all files in directory</span>
+<span class="cm">getfacl</span> <span class="fl">-R</span> /shared/project/ > acl_backup.txt
+
+<span class="c"># Backup and restore ACLs (server migration)</span>
+<span class="cm">getfacl</span> <span class="fl">-R</span> /data/ > data_acls.txt
+<span class="cm">setfacl</span> <span class="fl">--restore</span>=data_acls.txt   <span class="c"># Restore on new server</span>
+
+<span class="c"># Omit comments (clean output for scripting)</span>
+<span class="cm">getfacl</span> <span class="fl">-c</span> file.txt
+
+<span class="c"># Check if a specific user has ACL access</span>
+<span class="cm">getfacl</span> /data/model.pkl | <span class="cm">grep</span> <span class="st2">"alice"</span></code></pre></div>
+
+    <div class="sl"><span class="sn sn2">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>How do you backup and restore ACLs when migrating a server?</div>
+      <div class="qa-a"><span class="al">A:</span>Backup: <span class="ic">getfacl -R /data/ > data_acls.txt</span>. Restore on new server: <span class="ic">setfacl --restore=data_acls.txt</span>. This preserves all extended permissions that <span class="ic">rsync</span> or <span class="ic">cp</span> would miss. For complete migration: backup ACLs, copy files with rsync, restore ACLs.</div></div>
+    </div>
+
+    <div class="box tip"><span class="bi">✅</span><div><strong>Security audit tip:</strong> <span class="ic">getfacl -R /sensitive/data/ | grep -v "^#" | grep ":"</span> — shows only actual ACL entries without standard permissions — useful for finding unexpected access grants.</div></div>
+  </div>
+</div>
+
+
+
+
+<!-- CHEAT SHEET SECTION 2 -->
+<div class="cheat" id="cheat2">
+  <div class="cheat-h ch-h2">
+    <h2>📋 Quick Reference Cheat Sheet — Section 2: Filesystem Permissions &amp; Security</h2>
+    <p>Essential commands for permissions, ACLs, and secure file management</p>
+  </div>
+  <table class="ct2">
+    <tbody>
+      <tr class="cts"><td colspan="2">CHMOD — CHANGE PERMISSIONS</td></tr>
+      <tr><td>chmod 755 script.sh</td><td>Owner: full; Group+Others: read+execute (standard for scripts)</td></tr>
+      <tr><td>chmod 644 file.txt</td><td>Owner: read+write; Group+Others: read (standard for files)</td></tr>
+      <tr><td>chmod 600 ~/.ssh/id_rsa</td><td>SSH key — owner only (SSH requires this!)</td></tr>
+      <tr><td>chmod -R 755 /var/www/html/</td><td>Recursive on directory</td></tr>
+      <tr><td>chmod +x deploy.sh</td><td>Add execute bit for all</td></tr>
+      <tr><td>chmod u+x,g-w,o=r file</td><td>Symbolic: add owner execute, remove group write, set others read</td></tr>
+      <tr><td>chmod 2775 /shared/</td><td>SGID — new files inherit directory's group</td></tr>
+      <tr><td>chmod 1777 /tmp/shared</td><td>Sticky bit — only owners can delete own files</td></tr>
+      <tr class="cts"><td colspan="2">CHOWN / CHGRP — CHANGE OWNERSHIP</td></tr>
+      <tr><td>chown www-data:www-data file</td><td>Change owner and group</td></tr>
+      <tr><td>chown -R www-data:www-data /var/www/</td><td>Recursive ownership change</td></tr>
+      <tr><td>chown :developers /shared/</td><td>Change group only (same as chgrp)</td></tr>
+      <tr><td>chgrp -R mlteam /opt/models/</td><td>Change group recursively</td></tr>
+      <tr class="cts"><td colspan="2">UMASK — DEFAULT PERMISSIONS</td></tr>
+      <tr><td>umask</td><td>Show current umask (022 = standard)</td></tr>
+      <tr><td>umask 027</td><td>Secure: files=640, dirs=750 (others get nothing)</td></tr>
+      <tr><td>umask -S</td><td>Show symbolic mask (u=rwx,g=rx,o=rx)</td></tr>
+      <tr class="cts"><td colspan="2">SETFACL / GETFACL — ACCESS CONTROL LISTS</td></tr>
+      <tr><td>setfacl -m u:alice:rwx file</td><td>Give alice read+write+execute</td></tr>
+      <tr><td>setfacl -m g:devteam:rx /dir/</td><td>Give devteam read+execute on directory</td></tr>
+      <tr><td>setfacl -m d:u:alice:rwx /dir/</td><td>Default ACL — new files inherit</td></tr>
+      <tr><td>setfacl -Rm g:data:rx /opt/models/</td><td>Recursive ACL on directory</td></tr>
+      <tr><td>setfacl -x u:alice file</td><td>Remove alice's ACL entry</td></tr>
+      <tr><td>setfacl -b file</td><td>Remove ALL ACL entries</td></tr>
+      <tr><td>getfacl file</td><td>Show all ACL entries including mask</td></tr>
+      <tr><td>getfacl -R /data/ > acl_backup.txt</td><td>Backup all ACLs recursively</td></tr>
+      <tr><td>setfacl --restore=acl_backup.txt</td><td>Restore ACLs from backup</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- FINAL TIP -->
+<div class="final-tip">
+  <span class="ti">🎓</span>
+  <div>
+    <h3>Final Interview Tips — Sections 2 &amp; 3</h3>
+    <p>
+      <strong>The #1 gotcha:</strong> <span class="ic">usermod -G</span> vs <span class="ic">usermod -aG</span> — without <span class="ic">-a</span>, ALL existing groups are replaced. This is asked in virtually every Linux interview. Always use <span class="ic">-aG</span>.<br><br>
+      <strong>New group doesn't work:</strong> Group changes need a new login. Interviewers test this — the answer is <span class="ic">newgrp groupname</span> for immediate effect without logout.<br><br>
+      <strong>Permission model shortcut:</strong> 755 for directories/executables, 644 for files, 600 for secrets. Know WHY — directories need x to be traversable, secrets need 600 so only owner reads them.<br><br>
+      <strong>ACLs in modern environments:</strong> Whenever you see "multiple teams need different permissions on the same resource," the answer is ACLs — <span class="ic">setfacl -m u:user:rwx</span>. Traditional permissions can't do this elegantly.<br><br>
+      <strong>Security audit flow:</strong> <span class="ic">find / -perm -4000</span> (SUID) → <span class="ic">find / -nouser</span> (orphaned) → <span class="ic">lastb</span> (failed logins) → <span class="ic">sudo -l</span> (who can do what). Know this flow cold.
+    </p>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <strong>Linux Commands Interview Guide</strong> &nbsp;|&nbsp; Section 2: Filesystem Permissions &amp; Security &nbsp;|&nbsp; DevOps · Data Engineering · AI-ML Engineering
+</footer>
+
+</body>
+</html>

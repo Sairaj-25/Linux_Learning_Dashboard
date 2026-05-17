@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux Process Management: ps, kill, killall, pkill</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --container-bg: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #f0883e;
+            --accent-purple: #bc8cff;
+            --accent-red: #f85149;
+            --accent-cyan: #39d353;
+            --border-color: #30363d;
+            --code-bg: #0d1117;
+            --card-bg: #21262d;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color); color: var(--text-primary);
+            line-height: 1.6; -webkit-font-smoothing: antialiased;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        header {
+            background: linear-gradient(135deg, #161b22 0%, #1a2332 100%);
+            border-bottom: 3px solid var(--accent-red); padding: 2rem 1rem;
+            text-align: center; border-radius: 0 0 15px 15px; margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        header h1 { color: var(--accent-red); font-family: 'Courier New', Courier, monospace; font-size: 2.2rem; margin-bottom: 1rem; }
+        nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        nav a {
+            background-color: var(--card-bg); color: var(--accent-blue);
+            padding: 8px 15px; border-radius: 20px; text-decoration: none;
+            font-size: 0.85rem; font-weight: bold; border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        nav a:hover { background-color: var(--accent-blue); color: var(--bg-color); transform: translateY(-2px); }
+        section {
+            background-color: var(--container-bg); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 25px; margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        h2 {
+            color: var(--accent-blue); font-size: 1.8rem;
+            border-bottom: 2px solid var(--border-color); padding-bottom: 10px;
+            margin-bottom: 20px; font-family: 'Courier New', Courier, monospace;
+        }
+        h3 {
+            color: var(--accent-purple); font-size: 1.3rem; margin-top: 25px;
+            margin-bottom: 15px; padding-left: 10px; border-left: 4px solid var(--accent-purple);
+        }
+        .step-card, .command-card {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 15px; margin-bottom: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .step-card:hover, .command-card:hover {
+            transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-color: var(--accent-blue);
+        }
+        .step-card h3 { color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 0; }
+        .rationale { font-size: 0.9rem; color: var(--text-secondary); margin-top: 10px; font-style: italic; }
+        .rationale strong { color: var(--accent-orange); }
+        code {
+            font-family: 'Courier New', Courier, monospace; background-color: var(--code-bg);
+            padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: var(--accent-orange);
+        }
+        pre {
+            background-color: var(--code-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 12px; overflow-x: auto; margin: 10px 0;
+            font-family: 'Courier New', Courier, monospace; color: var(--accent-green); font-size: 0.9em;
+        }
+        details {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; margin-bottom: 8px; overflow: hidden;
+        }
+        summary {
+            padding: 12px 15px; font-weight: bold; color: var(--accent-blue);
+            cursor: pointer; list-style: none; display: flex; justify-content: space-between;
+            align-items: center; transition: background-color 0.2s;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: '►'; color: var(--text-secondary); font-size: 0.8rem; transition: transform 0.2s; }
+        details[open] summary::after { transform: rotate(90deg); }
+        details[open] summary { background-color: rgba(88, 166, 255, 0.1); border-bottom: 1px solid var(--border-color); }
+        .answer-content { padding: 15px; color: var(--text-primary); }
+        .answer-content ul { margin-left: 20px; margin-top: 10px; }
+        .answer-content li { margin-bottom: 5px; }
+        .table-container { overflow-x: auto; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background-color: var(--code-bg); color: var(--accent-purple); font-family: 'Courier New', Courier, monospace; font-weight: bold; }
+        tr:hover { background-color: rgba(255, 255, 255, 0.03); }
+        .highlight { color: var(--accent-red); font-weight: bold; }
+        .badge {
+            display: inline-block; padding: 3px 8px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: bold; text-transform: uppercase;
+        }
+        .badge-danger { background-color: var(--accent-red); color: white; }
+        .badge-tip { background-color: var(--accent-green); color: black; }
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            header h1 { font-size: 1.5rem; }
+            nav a { font-size: 0.75rem; padding: 6px 10px; }
+            section { padding: 15px; }
+            h2 { font-size: 1.4rem; }
+            pre { font-size: 0.8rem; }
+            th, td { padding: 8px 10px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>💀 LINUX PROCESS MANAGEMENT</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 1rem;">ps, kill, killall, & pkill Commands</p>
+        <nav>
+            <a href="#part1">Part I: Procedure</a>
+            <a href="#part2">Part II: Commands</a>
+            <a href="#part3">Part III: Alternatives</a>
+            <a href="#part4">Part IV: Assignment Q&A</a>
+            <a href="#part5">Part V: Interview</a>
+        </nav>
+    </header>
+    <div class="container">
+
+        <!-- PART I -->
+        <section id="part1">
+            <h2>PART I: STEP-BY-STEP PROCEDURE - PROCESS LIFECYCLE MANAGEMENT</h2>
+            
+            <div class="step-card">
+                <h3>STEP 1: Process Identification</h3>
+                <p>Use <code>ps</code>, <code>pgrep</code>, or <code>top</code> to identify the misbehaving or target process. Note its <strong>PID</strong> (Process ID) or exact name.</p>
+                <p class="rationale"><strong>Rationale:</strong> You must accurately identify the process before terminating it. Killing the wrong PID can crash critical system services.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 2: Graceful Termination (SIGTERM)</h3>
+                <p>Send <code>SIGTERM</code> (signal 15) using <code>kill &lt;PID&gt;</code>. This asks the process to shut down cleanly.</p>
+                <p class="rationale"><strong>Rationale:</strong> Most programs catch SIGTERM and use it to save data, release locks, and close network connections gracefully before exiting.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 3: Forceful Termination (SIGKILL)</h3>
+                <p>If the process ignores SIGTERM, send <code>SIGKILL</code> (signal 9) using <code>kill -9 &lt;PID&gt;</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> SIGKILL cannot be caught or ignored by the process. The kernel immediately halts it. This is a last resort because it prevents cleanup, potentially causing data corruption or orphaned resources.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 4: Bulk/Pattern Termination</h3>
+                <p>If multiple instances of a process are running, use <code>killall &lt;name&gt;</code> or <code>pkill &lt;pattern&gt;</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> Killing processes one-by-one via PID is inefficient when a software crash spawns dozens of instances. Bulk commands save time and ensure all related processes are stopped.</p>
+            </div>
+        </section>
+
+        <!-- PART II -->
+        <section id="part2">
+            <h2>PART II: COMMANDS AND EXPLANATIONS</h2>
+
+            <div class="command-card">
+                <h3><code>ps</code> (Process Status)</h3>
+                <p><span class="syntax">Syntax:</span> <code>ps [options]</code></p>
+                <p><strong>Purpose:</strong> Provides a snapshot of current processes. Essential for finding PIDs and resource usage.</p>
+                <p><span class="example">Example:</span> <code>ps aux</code> (Shows all processes for all users), <code>ps -ef</code> (Full format listing)</p>
+            </div>
+
+            <div class="command-card">
+                <h3><code>kill</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>kill [signal] <PID></code></p>
+                <p><strong>Purpose:</strong> Sends a specific signal to a process using its PID. Default signal is SIGTERM (15).</p>
+                <p><span class="example">Example:</span> <code>kill 1234</code> (Graceful), <code>kill -9 1234</code> (Force)</p>
+            </div>
+
+            <div class="command-card">
+                <h3><code>killall</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>killall [signal] <process_name></code></p>
+                <p><strong>Purpose:</strong> Kills all processes that match the <em>exact</em> process name.</p>
+                <p><span class="example">Example:</span> <code>killall firefox</code> (Kills all firefox processes)</p>
+            </div>
+
+            <div class="command-card">
+                <h3><code>pkill</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>pkill [options] <pattern></code></p>
+                <p><strong>Purpose:</strong> Sends signals to processes based on pattern matching (partial names, regular expressions, or other attributes like user/terminal).</p>
+                <p><span class="example">Example:</span> <code>pkill ssh</code> (Kills sshd, ssh-agent, etc.), <code>pkill -u bob</code> (Kills all processes by user bob)</p>
+            </div>
+        </section>
+
+        <!-- PART III -->
+        <section id="part3">
+            <h2>PART III: ALTERNATIVE COMMANDS</h2>
+
+            <details><summary>1. <code>ps aux</code> vs <code>ps -ef</code> vs <code>top</code></summary><div class="answer-content">
+                <ul>
+                    <li><code>ps aux</code>: BSD syntax. 'a' = all users, 'u' = user-oriented format, 'x' = processes without controlling ttys (daemons).</li>
+                    <li><code>ps -ef</code>: System V syntax. '-e' = all processes, '-f' = full format. Shows PPID (Parent PID) clearly.</li>
+                    <li><code>top</code> / <code>htop</code>: Dynamic, real-time monitoring. <code>ps</code> is a static snapshot; <code>top</code> updates continuously.</li>
+                </ul>
+            </div></details>
+
+            <details><summary>2. <code>kill</code> vs <code>pkill</code> vs <code>killall</code></summary><div class="answer-content">
+                <ul>
+                    <li><code>kill</code>: Oldest, most precise. Requires exact PID. Safest for targeted termination.</li>
+                    <li><code>killall</code>: Requires exact process name. Will fail if name doesn't match exactly. Safer than pkill for bulk operations.</li>
+                    <li><code>pkill</code>: Uses regex/partial matching. Extremely powerful but dangerous (e.g., <code>pkill sh</code> will kill bash, sshd, etc.). Use <code>pgrep</code> first to preview matches.</li>
+                </ul>
+            </div></details>
+
+            <details><summary>3. <code>pgrep</code> (The Safe Partner to pkill)</summary><div class="answer-content">
+                <p><code>pgrep</code> uses the exact same matching logic as <code>pkill</code>, but instead of killing the processes, it just lists their PIDs. <strong>Best Practice:</strong> Always run <code>pgrep &lt;pattern&gt;</code> to see what will be killed before running <code>pkill &lt;pattern&gt;</code>.</p>
+            </div></details>
+        </section>
+
+        <!-- PART IV -->
+        <section id="part4">
+            <h2>PART IV: ASSIGNMENT SOLUTIONS</h2>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan);">Section A: Multiple Choice Questions</h3>
+            <details><summary>1. Which command is used to display running processes?</summary><div class="answer-content"><p><strong>b) ps</strong></p></div></details>
+            <details><summary>2. Which command kills a process using PID?</summary><div class="answer-content"><p><strong>c) kill</strong></p></div></details>
+            <details><summary>3. Which command kills processes by process name?</summary><div class="answer-content"><p><strong>a) killall</strong></p></div></details>
+            <details><summary>4. Which command supports pattern-based process termination?</summary><div class="answer-content"><p><strong>b) pkill</strong></p></div></details>
+            <details><summary>5. Which command displays real-time process information?</summary><div class="answer-content"><p><strong>a) top</strong></p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section B: Fill in the Blanks</h3>
+            <details><summary>1. The __________ command displays process information.</summary><div class="answer-content"><p><strong>ps</strong></p></div></details>
+            <details><summary>2. The __________ command is used to terminate a process using PID.</summary><div class="answer-content"><p><strong>kill</strong></p></div></details>
+            <details><summary>3. The __________ command kills all processes with the same name.</summary><div class="answer-content"><p><strong>killall</strong></p></div></details>
+            <details><summary>4. The __________ command can kill processes using patterns.</summary><div class="answer-content"><p><strong>pkill</strong></p></div></details>
+            <details><summary>5. Process ID is also called __________.</summary><div class="answer-content"><p><strong>PID</strong></p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section C: True or False</h3>
+            <details><summary>1. The ps command shows running processes.</summary><div class="answer-content"><p><strong>True.</strong></p></div></details>
+            <details><summary>2. The kill command uses process names directly.</summary><div class="answer-content"><p><strong>False.</strong> <code>kill</code> uses PIDs. <code>killall</code> uses names.</p></div></details>
+            <details><summary>3. killall can terminate multiple processes.</summary><div class="answer-content"><p><strong>True.</strong> It kills all instances matching the name.</p></div></details>
+            <details><summary>4. pkill supports partial process name matching.</summary><div class="answer-content"><p><strong>True.</strong> It uses regular expressions/patterns.</p></div></details>
+            <details><summary>5. kill -9 forcefully terminates a process.</summary><div class="answer-content"><p><strong>True.</strong> Signal 9 is SIGKILL, which cannot be caught or ignored.</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section D: Short Answer Questions</h3>
+            <details><summary>1. What is the purpose of the ps command?</summary><div class="answer-content"><p>To provide a static snapshot of the currently running processes in the system, including their PIDs, CPU/Memory usage, and associated terminals.</p></div></details>
+            <details><summary>2. What is PID in Linux?</summary><div class="answer-content"><p>PID stands for Process Identifier. It is a unique numerical ID assigned by the kernel to every running process, used to track and manage the process.</p></div></details>
+            <details><summary>3. Explain the kill command.</summary><div class="answer-content"><p><code>kill</code> sends a signal to a specific process via its PID. While primarily used to terminate processes, it can send various signals like SIGTERM (graceful stop) or SIGHUP (reload config).</p></div></details>
+            <details><summary>4. What is the difference between kill and killall?</summary><div class="answer-content"><p><code>kill</code> targets a single process using its exact PID. <code>killall</code> targets all processes that match a specific exact process name.</p></div></details>
+            <details><summary>5. Explain one use case of pkill.</summary><div class="answer-content"><p><code>pkill</code> is useful when you want to kill a process but only remember part of its name, or when you want to kill all processes belonging to a specific user (e.g., <code>pkill -u guest</code> to log out a guest user entirely).</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section E: Command Writing</h3>
+            <details><summary>1. Write a command to display all running processes.</summary><div class="answer-content"><pre>ps aux</pre></div></details>
+            <details><summary>2. Write a command to search for SSH processes.</summary><div class="answer-content"><pre>ps aux | grep ssh
+# OR
+pgrep -l ssh</pre></div></details>
+            <details><summary>3. Write a command to kill process PID 1234.</summary><div class="answer-content"><pre>kill 1234</pre></div></details>
+            <details><summary>4. Write a command to forcefully kill PID 1234.</summary><div class="answer-content"><pre>kill -9 1234</pre></div></details>
+            <details><summary>5. Write a command to kill all Firefox processes.</summary><div class="answer-content"><pre>killall firefox</pre></div></details>
+            <details><summary>6. Write a command to kill all Apache-related processes using pattern matching.</summary><div class="answer-content"><pre>pkill httpd
+# OR
+pkill apache2</pre></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section F: Scenario-Based Questions</h3>
+            <details><summary>1. A process is hanging and not responding. Which command can forcefully terminate it?</summary><div class="answer-content"><p>Find its PID using <code>ps</code> or <code>top</code>, then use <code>kill -9 &lt;PID&gt;</code> to send SIGKILL.</p></div></details>
+            <details><summary>2. Multiple instances of Firefox are running. Which command can terminate all of them together?</summary><div class="answer-content"><p><code>killall firefox</code> is the safest and most direct command to kill all instances by name.</p></div></details>
+            <details><summary>3. An administrator wants to find the PID of a running SSH service. Which command can be used?</summary><div class="answer-content"><pre>pgrep sshd
+# OR
+ps -ef | grep sshd</pre></div></details>
+            <details><summary>4. A user wants to kill all processes related to “apache”. Which command is suitable?</summary><div class="answer-content"><p><code>pkill apache</code> or <code>pkill httpd</code> (depending on the distro), as it will match the base name pattern.</p></div></details>
+            <details><summary>5. Why should kill -9 be used carefully?</summary><div class="answer-content"><p><code>kill -9</code> (SIGKILL) immediately halts the process without allowing it to execute any cleanup code. This can result in data corruption (if a database is writing), orphaned temporary files, or locked resources that remain allocated until reboot.</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section G: Practical Questions</h3>
+            <details><summary>1. Display all processes running in the system.</summary><div class="answer-content"><pre>ps -e</pre></div></details>
+            <details><summary>2. Search for a running process named nginx.</summary><div class="answer-content"><pre>pgrep -l nginx</pre></div></details>
+            <details><summary>3. Stop a process using its PID.</summary><div class="answer-content"><pre>kill 4567  # Assuming 4567 is the PID</pre></div></details>
+            <details><summary>4. Kill all processes named chrome.</summary><div class="answer-content"><pre>killall chrome</pre></div></details>
+            <details><summary>5. Use pkill to terminate all SSH-related processes.</summary><div class="answer-content"><pre>pkill ssh</pre></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section H: Long Answer Questions</h3>
+            <details><summary>1. Explain the ps command with examples.</summary><div class="answer-content"><p><code>ps</code> reports a snapshot of current processes. <br>- <code>ps</code>: Shows processes for the current shell only.<br>- <code>ps -e</code> or <code>ps -A</code>: Selects all processes.<br>- <code>ps aux</code>: BSD style showing all users, user-oriented format, and daemons.<br>- <code>ps -ef</code>: System V style showing full details, including PPID (Parent PID).<br>- <code>ps -eo pid,ppid,cmd,%mem,%cpu</code>: Custom formatting to show specific columns.</p></div></details>
+            <details><summary>2. Describe different signals used with the kill command.</summary><div class="answer-content"><div class="table-container"><table><tr><th>Signal</th><th>Number</th><th>Purpose</th></tr><tr><td>SIGHUP</td><td>1</td><td>Hangup. Often used to reload configuration files without stopping the process.</td></tr><tr><td>SIGINT</td><td>2</td><td>Interrupt. Sent when you press Ctrl+C. Stops the foreground process.</td></tr><tr><td>SIGQUIT</td><td>3</td><td>Quit. Like SIGINT but also produces a core dump.</td></tr><tr><td>SIGTERM</td><td>15</td><td>Termination. The default <code>kill</code> signal. Asks the process to exit gracefully.</td></tr><tr><td>SIGKILL</td><td>9</td><td>Kill. Immediate termination by the kernel. Cannot be caught or ignored.</td></tr><tr><td>SIGSTOP</td><td>19</td><td>Stop. Pauses the process. Cannot be caught or ignored.</td></tr><tr><td>SIGCONT</td><td>18</td><td>Continue. Resumes a process stopped by SIGSTOP.</td></tr></table></div></div></details>
+            <details><summary>3. Explain the difference between kill, killall, and pkill.</summary><div class="answer-content"><div class="table-container"><table><tr><th>Feature</th><th>kill</th><th>killall</th><th>pkill</th></tr><tr><td>Targeting</td><td>Exact PID</td><td>Exact Process Name</td><td>Pattern / Regex / Attribute</td></tr><tr><td>Precision</td><td>Highest (1 process)</td><td>Medium (all exact matches)</td><td>Lowest (broad pattern matches)</td></tr><tr><td>Danger Level</td><td>Low</td><td>Medium</td><td>High (can kill unintended processes)</td></tr><tr><td>Example</td><td>kill 1234</td><td>killall sshd</td><td>pkill ssh</td></tr></table></div></div></details>
+            <details><summary>4. Explain how Linux process management works using these commands.</summary><div class="answer-content"><p>Linux assigns a unique PID to every running program. When a process misbehaves (consuming 100% CPU, locking files, or crashing), administrators use <code>ps</code> or <code>top</code> to identify the PID. They first attempt a graceful shutdown using <code>kill &lt;PID&gt;</code> (SIGTERM), which allows the program to clean up. If it doesn't respond, <code>kill -9 &lt;PID&gt;</code> forces the kernel to terminate it. For software that spawns many instances (like web servers or browsers), <code>killall</code> efficiently targets them by name, while <code>pkill</code> is used for complex filtering (e.g., killing all processes attached to a specific user or TTY). This suite of tools allows precise, dynamic control over system resources without rebooting.</p></div></details>
+        </section>
+
+        <!-- PART V -->
+        <section id="part5">
+            <h2>PART V: INTERVIEW QUESTIONS AND ANSWERS</h2>
+
+            <details><summary>Q1: What happens if you kill a process with signal 9 (SIGKILL) instead of 15 (SIGTERM)?</summary><div class="answer-content"><p>SIGTERM (15) is a polite request. The process can catch it, execute cleanup routines (closing files, sockets), and exit cleanly. SIGKILL (9) cannot be caught. The kernel immediately steps in and forces the process to stop. This bypasses cleanup, potentially leaving behind orphaned child processes, corrupted files, or locked memory segments.</p></div></details>
+
+            <details><summary>Q2: Can you kill a process in "D" (Uninterruptible Sleep) state using `kill -9`?</summary><div class="answer-content"><p><strong>No.</strong> A process in the "D" state is waiting for an I/O operation to complete (usually a disk or network resource that has failed). Even the kernel cannot kill it immediately because killing it while it holds kernel locks or awaits hardware could crash the system. The only way to clear a "D" state process is usually to fix the underlying hardware issue or reboot the machine.</p></div></details>
+
+            <details><summary>Q3: What is a Zombie process, and can `kill -9` remove it?</summary><div class="answer-content"><p>A Zombie (state "Z") is a process that has already finished execution but still has an entry in the process table because its parent hasn't read its exit status via <code>wait()</code>. <code>kill -9</code> <strong>will not work</strong> on a zombie because it is already dead. To remove it, you must either get the parent process to read the exit status, or kill the parent process, at which point the zombie is adopted by <code>init</code> (PID 1) and reaped.</p></div></details>
+
+            <details><summary>Q4: Why is `pkill` considered more dangerous than `killall`?</summary><div class="answer-content"><p><code>killall</code> requires an exact string match of the process name. If you type <code>killall sshd</code>, it only kills processes literally named "sshd". <code>pkill</code> uses regular expressions. If you type <code>pkill ssh</code>, it will kill "sshd", "ssh-agent", "sshfs", and anything else containing "ssh". A typo in a pkill regex can easily bring down a production server.</p></div></details>
+
+            <details><summary>Q5: How would you kill all processes owned by a specific user without knowing their PIDs?</summary><div class="answer-content"><pre># Method 1: Using pkill
+pkill -u username
+
+# Method 2: Using killall
+killall -u username
+
+# Method 3: Using traditional kill + pgrep
+kill $(pgrep -u username)</pre></div></details>
+        </section>
+
+    </div>
+    <footer style="text-align: center; padding: 20px; color: var(--text-secondary); border-top: 1px solid var(--border-color); margin-top: 30px;">
+        Linux Process Management &copy; 2023 | Advanced Administration Notes
+    </footer>
+</body>
+</html>

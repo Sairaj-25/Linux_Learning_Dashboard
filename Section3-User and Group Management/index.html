@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Sections 3 — User & Group Management </title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --navy:    #080F1C;
+    --blue:    #1565C0;
+    --sky:     #0288D1;
+    --teal:    #00695C;
+    --green:   #2E7D32;
+    --orange:  #E65100;
+    --red:     #B71C1C;
+    --purple:  #6A1B9A;
+    --indigo:  #283593;
+    --amber:   #F57F17;
+    --pink:    #AD1457;
+    --bg:      #EFF5FC;
+    --surface: #FFFFFF;
+    --surf2:   #E4EFF9;
+    --border:  #C1D3EB;
+    --text:    #0A1829;
+    --text2:   #1F3248;
+    --text3:   #486075;
+    --codebg:  #070F1B;
+    --sh-s:    0 1px 4px rgba(8,15,28,.07);
+    --sh-m:    0 4px 16px rgba(8,15,28,.10);
+    --sh-l:    0 14px 44px rgba(8,15,28,.13);
+    --r:       14px;
+    --rs:      9px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; }
+  ::-webkit-scrollbar { width: 6px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ══ HERO ══ */
+  .hero {
+    background: linear-gradient(150deg, #030810 0%, #080F1C 22%, #0C1F3A 50%, #10285A 75%, #142E6E 100%);
+    padding: 66px 24px 54px; text-align: center; position: relative; overflow: hidden;
+  }
+  .hero::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 18% 65%, rgba(21,101,192,.22) 0%, transparent 50%),
+                radial-gradient(ellipse at 82% 18%, rgba(0,105,92,.16) 0%, transparent 48%),
+                radial-gradient(ellipse at 50% 95%, rgba(106,27,154,.12) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .hero-in { position: relative; z-index: 1; }
+  .h-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.18); color: #90CAF9; font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 7px 20px; border-radius: 100px; margin-bottom: 20px; }
+  .hero h1 { font-size: clamp(1.9rem, 5vw, 3.1rem); font-weight: 800; color: #fff; letter-spacing: -.03em; line-height: 1.15; margin-bottom: 12px; }
+  .hero h1 em { font-style: normal; color: #64B5F6; }
+  .hero-desc { font-size: .95rem; color: #90CAF9; max-width: 700px; margin: 0 auto 24px; line-height: 1.7; }
+  .hero-sections { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 20px; }
+  .hs-card { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.15); border-radius: 10px; padding: 10px 18px; text-align: center; }
+  .hs-card .hs-num { font-size: .65rem; font-weight: 700; color: rgba(255,255,255,.5); letter-spacing: .1em; text-transform: uppercase; }
+  .hs-card .hs-title { font-size: .85rem; font-weight: 700; color: #fff; margin-top: 2px; }
+  .hs-card .hs-cmds { font-size: .72rem; color: #81D4FA; margin-top: 3px; }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; }
+  .chip { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.13); color: #B3E5FC; font-size: .72rem; font-weight: 500; padding: 4px 12px; border-radius: 100px; }
+
+  /* ══ NAV ══ */
+  .nav { position: sticky; top: 0; z-index: 200; background: rgba(255,255,255,.94); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); box-shadow: var(--sh-s); }
+  .nav-in { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 2px; height: 50px; padding: 0 14px; overflow-x: auto; white-space: nowrap; }
+  .nav-in a { text-decoration: none; color: var(--text2); font-size: .73rem; font-weight: 600; padding: 4px 10px; border-radius: 100px; transition: all .15s; flex-shrink: 0; }
+  .nav-in a:hover { background: var(--surf2); color: var(--sky); }
+  .nav-sep { color: var(--border); font-size: .9rem; margin: 0 1px; flex-shrink: 0; }
+  .nav-sec { color: var(--text3); font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 4px 8px; flex-shrink: 0; }
+
+  /* ══ LAYOUT ══ */
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 40px 20px 90px; }
+
+  /* ══ SECTION BANNER ══ */
+  .sec-banner { border-radius: var(--r); padding: 22px 28px; margin-bottom: 28px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .sb2 { background: linear-gradient(135deg, #1A0A2A, #6A1B9A, #AD1457); }
+  .sb3 { background: linear-gradient(135deg, #0A1A0A, #1B5E20, #2E7D32); }
+  .sb-num { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); color: rgba(255,255,255,.7); font-size: .7rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; padding: 4px 13px; border-radius: 100px; flex-shrink: 0; }
+  .sb-title { font-size: clamp(1rem, 2.5vw, 1.45rem); font-weight: 800; color: #fff; }
+  .sb-sub { color: rgba(255,255,255,.65); font-size: .83rem; margin-top: 2px; }
+  .sb-count { margin-left: auto; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); color: #fff; font-size: .74rem; font-weight: 700; padding: 4px 13px; border-radius: 100px; flex-shrink: 0; }
+
+  /* ══ CMD CARD ══ */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-m); margin-bottom: 32px; overflow: hidden; }
+
+  /* Color themes */
+  .h-chmod  { background: linear-gradient(135deg, #1A0834, #6A1B9A); }
+  .h-chown  { background: linear-gradient(135deg, #0A1A34, #1565C0); }
+  .h-chgrp  { background: linear-gradient(135deg, #001A20, #00695C); }
+  .h-umask  { background: linear-gradient(135deg, #2A1A00, #E65100); }
+  .h-setfacl{ background: linear-gradient(135deg, #1A0014, #AD1457); }
+  .h-getfacl{ background: linear-gradient(135deg, #0A0020, #283593); }
+  .h-useradd{ background: linear-gradient(135deg, #001A0A, #2E7D32); }
+  .h-adduser{ background: linear-gradient(135deg, #001808, #1B5E20); }
+  .h-userdel{ background: linear-gradient(135deg, #1A0000, #B71C1C); }
+  .h-usermod{ background: linear-gradient(135deg, #001A2A, #0277BD); }
+  .h-passwd { background: linear-gradient(135deg, #2A1400, #BF360C); }
+  .h-chage  { background: linear-gradient(135deg, #1A1400, #F57F17); }
+  .h-id     { background: linear-gradient(135deg, #0A0020, #4527A0); }
+  .h-whoami { background: linear-gradient(135deg, #001814, #00695C); }
+  .h-su     { background: linear-gradient(135deg, #1A0818, #880E4F); }
+  .h-sudo   { background: linear-gradient(135deg, #1A0814, #C62828); }
+  .h-last   { background: linear-gradient(135deg, #001A20, #006064); }
+  .h-who    { background: linear-gradient(135deg, #0A1A00, #558B2F); }
+  .h-groupadd{ background: linear-gradient(135deg, #001830, #1565C0); }
+  .h-groupdel{ background: linear-gradient(135deg, #1A0A00, #E64A19); }
+  .h-groupmod{ background: linear-gradient(135deg, #0A0018, #6A1B9A); }
+  .h-groups { background: linear-gradient(135deg, #001818, #00838F); }
+  .h-newgrp { background: linear-gradient(135deg, #001A10, #2E7D32); }
+  .h-gpasswd{ background: linear-gradient(135deg, #1A1400, #E65100); }
+
+  .cmd-head { padding: 18px 24px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+  .cmd-mono { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 700; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); border-radius: 8px; padding: 5px 15px; flex-shrink: 0; color: #E0E0E0; }
+  .cmd-meta { flex: 1; min-width: 180px; }
+  .cmd-label { color: rgba(255,255,255,.5); font-size: .69rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .cmd-tagline { color: #fff; font-size: .9rem; font-weight: 600; margin-top: 2px; }
+  .cmd-body { padding: 22px; }
+
+  /* ══ SECTION LABELS ══ */
+  .sl { display: flex; align-items: center; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid var(--border); margin: 22px 0 11px; }
+  .sl:first-of-type { margin-top: 0; }
+  .sn { width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: #fff; font-size: .66rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sn2 { background: var(--purple); }
+  .sn3 { background: var(--green); }
+  .st { font-size: .93rem; font-weight: 700; color: var(--text); }
+  .sub { font-size: .71rem; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: .09em; margin: 13px 0 6px; }
+  .desc { font-size: .875rem; color: var(--text2); line-height: 1.82; margin-bottom: 9px; }
+
+  /* ══ INLINE CODE ══ */
+  .ic { font-family: 'JetBrains Mono', monospace; background: #E8EEF8; color: #B71C1C; padding: 2px 6px; border-radius: 4px; font-size: .79rem; border: 1px solid #C5D5F0; }
+
+  /* ══ CODE BLOCK ══ */
+  .cw { margin-bottom: 12px; border-radius: var(--rs); overflow: hidden; }
+  .ct { background: #0D1B2C; padding: 6px 14px; display: flex; align-items: center; justify-content: space-between; font-size: .67rem; font-weight: 700; color: #3A5E7A; letter-spacing: .09em; text-transform: uppercase; }
+  .ct .lang { color: #29B6F6; }
+  pre.p { background: var(--codebg); padding: 14px 18px; overflow-x: auto; margin: 0; border-top: 1px solid #121E30; }
+  pre.p code { font-family: 'JetBrains Mono', monospace; font-size: .79rem; line-height: 1.88; color: #90CAF9; background: none; padding: 0; }
+  .c  { color: class#4ccfff; }
+  .k  { color: #FF8A80; font-weight: 600; }
+  .cm { color: #64B5F6; }
+  .fl { color: #FFCC80; }
+  .st2{ color: #A5D6A7; }
+  .sc { color: #CE93D8; font-weight: 600; }
+  .di { color: #FFD54F; }
+  .nu { color: #80CBC4; }
+  .out{ color: #499767; }
+  .va { color: #FFE082; }
+
+  /* ══ FLAG TABLE ══ */
+  .tw { overflow-x: auto; border-radius: var(--rs); border: 1px solid var(--border); margin-bottom: 12px; }
+  table.ft { width: 100%; border-collapse: collapse; font-size: .81rem; }
+  table.ft thead tr { background: linear-gradient(90deg, #0D1E34, #1565C0); }
+  table.ft thead th { padding: 10px 12px; color: #fff; font-size: .7rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; text-align: left; border: none; white-space: nowrap; }
+  table.ft tbody tr:nth-child(odd)  { background: #FAFCFF; }
+  table.ft tbody tr:nth-child(even) { background: #EEF4FB; }
+  table.ft tbody tr:hover { background: #DBE8F8; }
+  table.ft td { padding: 9px 12px; border-bottom: 1px solid #DDEAF8; vertical-align: top; color: var(--text2); line-height: 1.5; font-size: .82rem; }
+  table.ft td:first-child { font-family: 'JetBrains Mono', monospace; font-size: .74rem; font-weight: 600; color: #B71C1C; white-space: nowrap; border-right: 1px solid var(--border); }
+  table.ft td:last-child  { font-family: 'JetBrains Mono', monospace; font-size: .74rem; color: #37474F; background: rgba(0,0,0,.013); }
+  table.ft .cat td { background: linear-gradient(90deg, #E2EAF8, #EEF4FB) !important; font-weight: 700; font-size: .7rem; color: var(--navy); text-transform: uppercase; letter-spacing: .07em; padding: 6px 12px; font-family: 'Inter', sans-serif; }
+
+  /* ══ CALLOUTS ══ */
+  .box { display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; border-radius: var(--rs); margin-bottom: 10px; font-size: .855rem; line-height: 1.7; }
+  .box .bi { font-size: 1.05rem; flex-shrink: 0; margin-top: 1px; }
+  .box strong { display: block; margin-bottom: 2px; font-size: .82rem; }
+  .box.info   { background: #E3F2FD; border-left: 4px solid #1E88E5; color: #0D2B4E; }
+  .box.tip    { background: #E8F5E9; border-left: 4px solid #43A047; color: #1B5E20; }
+  .box.warn   { background: #FFF8E1; border-left: 4px solid #F9A825; color: #4E342E; }
+  .box.danger { background: #FEEBEA; border-left: 4px solid #E53935; color: #7F1D1D; }
+  .box.purple { background: #F3E5F5; border-left: 4px solid #8E24AA; color: #3E0D5C; }
+  .box.teal   { background: #E0F2F1; border-left: 4px solid #00897B; color: #004D40; }
+  .box.orange { background: #FBE9E7; border-left: 4px solid #E64A19; color: #4E1500; }
+
+  /* ══ Q&A ══ */
+  .qs { display: flex; flex-direction: column; gap: 10px; }
+  .qa { border-radius: var(--rs); overflow: hidden; border: 1px solid var(--border); box-shadow: var(--sh-s); }
+  .qq { background: linear-gradient(90deg, #0D1E34, #1A3D6B); padding: 11px 15px; display: flex; gap: 10px; align-items: flex-start; font-size: .84rem; font-weight: 600; color: #E3F2FD; }
+  .qb { background: rgba(255,255,255,.14); color: #64B5F6; font-size: .66rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+  .qa-a { background: #fff; padding: 11px 15px 11px 32px; font-size: .84rem; color: var(--text2); line-height: 1.78; border-top: 1px solid var(--border); }
+  .qa-a .al { color: var(--teal); font-weight: 700; margin-right: 5px; }
+
+  /* ══ BULLETS ══ */
+  ul.bl { list-style: none; padding: 0; margin-bottom: 9px; }
+  ul.bl li { display: flex; gap: 10px; align-items: flex-start; padding: 5px 0; border-bottom: 1px solid #F0F4FB; font-size: .845rem; color: var(--text2); line-height: 1.65; }
+  ul.bl li:last-child { border-bottom: none; }
+  ul.bl li::before { content: '▸'; color: var(--sky); flex-shrink: 0; margin-top: 2px; font-size: .68rem; }
+  ul.bl li strong { color: var(--text); }
+
+  /* ══ PERMISSION VISUAL ══ */
+  .perm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .perm-col { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--rs); padding: 12px; text-align: center; }
+  .perm-col .pc-label { font-size: .68rem; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+  .perm-col .pc-bits { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--blue); }
+  .perm-col .pc-name { font-size: .75rem; color: var(--text2); margin-top: 3px; }
+  .perm-col.owner { border-color: #90CAF9; background: #E3F2FD; }
+  .perm-col.group { border-color: #A5D6A7; background: #E8F5E9; }
+  .perm-col.other { border-color: #EF9A9A; background: #FEEBEA; }
+
+  /* ══ CHEAT SHEET ══ */
+  .cheat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-m); overflow: hidden; margin-bottom: 32px; }
+  .cheat-h { padding: 16px 22px; }
+  .ch-h2 { background: linear-gradient(135deg, #1A0828, #6A1B9A, #AD1457); }
+  .ch-h3 { background: linear-gradient(135deg, #0A1A08, #1B5E20, #2E7D32); }
+  .cheat-h h2 { color: #fff; font-size: .95rem; font-weight: 700; }
+  .cheat-h p  { color: rgba(255,255,255,.65); font-size: .8rem; margin-top: 2px; }
+  table.ct2 { width: 100%; border-collapse: collapse; font-size: .8rem; }
+  table.ct2 tr { border-bottom: 1px solid #E0EAF8; }
+  table.ct2 tr:nth-child(odd)  { background: #FAFCFF; }
+  table.ct2 tr:nth-child(even) { background: #EEF4FB; }
+  table.ct2 tr:hover { background: #DCE8F8; }
+  table.ct2 td { padding: 8px 14px; vertical-align: middle; }
+  table.ct2 td:first-child { font-family: 'JetBrains Mono', monospace; color: #1565C0; font-size: .74rem; font-weight: 600; border-right: 1px solid var(--border); background: rgba(21,101,192,.04); width: 44%; }
+  table.ct2 td:last-child { color: var(--text2); }
+  .cts td { background: linear-gradient(90deg, #0D1E34, #1565C0) !important; color: #fff !important; font-weight: 700 !important; font-size: .68rem !important; letter-spacing: .1em; text-transform: uppercase; font-family: 'Inter', sans-serif !important; padding: 6px 14px !important; border-bottom: none !important; }
+
+  /* ══ FINAL TIP ══ */
+  .final-tip { background: linear-gradient(135deg, #0A1830, #142B58); border-radius: var(--r); padding: 24px 28px; display: flex; gap: 16px; align-items: flex-start; box-shadow: var(--sh-l); margin-bottom: 32px; }
+  .final-tip .ti { font-size: 2rem; flex-shrink: 0; }
+  .final-tip h3 { color: #BBDEFB; font-size: .73rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 7px; }
+  .final-tip p  { color: #E3F2FD; font-size: .87rem; line-height: 1.82; }
+
+  footer { text-align: center; padding: 22px; border-top: 1px solid var(--border); font-size: .74rem; color: var(--text3); }
+  footer strong { color: var(--blue); }
+
+  @media (max-width: 660px) {
+    .hero { padding: 40px 14px 36px; }
+    .wrap { padding: 18px 12px 60px; }
+    .cmd-body { padding: 14px; }
+    table.ft td:last-child { display: none; }
+    .perm-grid { grid-template-columns: 1fr; }
+    .final-tip { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-in">
+    <div class="h-pill">🐧 Linux Commands — Interview Guide</div>
+    <h1>Sections 3:<br><em>User & Group Management</em></h1>
+    <p class="hero-desc">Complete command reference covering the full user/group lifecycle — with deep interview Q&A, real-world scenarios, and pro tips for DevOps, Data Engineering, and AI-ML roles.</p>
+    <div class="hero-sections">
+      <div class="hs-card">
+        <div class="hs-num">Section 3</div>
+        <div class="hs-title">👤 User &amp; Group Management</div>
+        <div class="hs-cmds">useradd · adduser · userdel · usermod · passwd · chage · id · whoami · su · sudo · last · who · groupadd · groupdel · groupmod · groups · newgrp · gpasswd</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-in">
+    <a href="#useradd">useradd</a><span class="nav-sep">·</span>
+    <a href="#adduser">adduser</a><span class="nav-sep">·</span>
+    <a href="#userdel">userdel</a><span class="nav-sep">·</span>
+    <a href="#usermod">usermod</a><span class="nav-sep">·</span>
+    <a href="#passwd">passwd</a><span class="nav-sep">·</span>
+    <a href="#chage">chage</a><span class="nav-sep">·</span>
+    <a href="#id">id</a><span class="nav-sep">·</span>
+    <a href="#su">su/sudo</a><span class="nav-sep">·</span>
+    <a href="#last">last/who</a><span class="nav-sep">·</span>
+    <a href="#groupadd">groups</a><span class="nav-sep">·</span>
+    <a href="#cheat3">📋 §3</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ══════════════════════════════════════
+     SECTION 3: USER & GROUP MANAGEMENT
+══════════════════════════════════════ -->
+<div class="sec-banner sb3">
+  <div>
+    <span class="sb-num">Section 3</span>
+    <div class="sb-title">👤 User &amp; Group Management</div>
+    <div class="sb-sub">useradd · adduser · userdel · usermod · passwd · chage · id · whoami · su · sudo · last · who · groupadd · groupdel · groupmod · groups · newgrp · gpasswd</div>
+  </div>
+  <div class="sb-count">18 Commands</div>
+</div>
+
+<!-- ════ useradd ════ -->
+<div class="card" id="useradd">
+  <div class="cmd-head h-useradd">
+    <div class="cmd-mono">useradd</div>
+    <div class="cmd-meta"><div class="cmd-label">Add User</div><div class="cmd-tagline">Create a new user account — low-level, scriptable</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn3">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">useradd</span> is the low-level command for creating user accounts. Unlike <span class="ic">adduser</span>, it doesn't ask interactive questions — making it ideal for automation, scripts, Ansible playbooks, and Dockerfiles. It reads defaults from <span class="ic">/etc/default/useradd</span> and <span class="ic">/etc/login.defs</span>.</p>
+
+    <div class="sl"><span class="sn sn3">3</span><span class="st">Commonly Used Options</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-m</td><td>Create home directory</td><td>useradd -m alice</td></tr>
+        <tr><td>-s SHELL</td><td>Set login shell</td><td>useradd -s /bin/bash alice</td></tr>
+        <tr><td>-d DIR</td><td>Custom home directory path</td><td>useradd -d /opt/alice alice</td></tr>
+        <tr><td>-g GROUP</td><td>Set primary group (name or GID)</td><td>useradd -g developers alice</td></tr>
+        <tr><td>-G GROUPS</td><td>Add to supplementary groups</td><td>useradd -G docker,sudo alice</td></tr>
+        <tr><td>-c COMMENT</td><td>GECOS field (full name, description)</td><td>useradd -c "Alice Smith" alice</td></tr>
+        <tr><td>-u UID</td><td>Set specific UID</td><td>useradd -u 1050 alice</td></tr>
+        <tr><td>-e DATE</td><td>Account expiry date (YYYY-MM-DD)</td><td>useradd -e 2024-12-31 contractor</td></tr>
+        <tr><td>-f DAYS</td><td>Days after password expiry to disable</td><td>useradd -f 7 alice</td></tr>
+        <tr><td>-r</td><td>Create system account (UID < 1000, no home)</td><td>useradd -r nginx</td></tr>
+        <tr><td>-M</td><td>Do NOT create home directory</td><td>useradd -M -s /sbin/nologin svcuser</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn sn3">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Create standard interactive user</span>
+<span class="cm">sudo useradd</span> <span class="fl">-m -s</span> /bin/bash <span class="fl">-c</span> <span class="st2">"Alice Smith DevOps"</span> alice
+
+<span class="c"># Create user with groups, set password</span>
+<span class="cm">sudo useradd</span> <span class="fl">-m -s</span> /bin/bash <span class="fl">-G</span> docker,sudo,developers alice
+<span class="cm">sudo passwd</span> alice
+
+<span class="c"># Create service account (no home, no shell, no login)</span>
+<span class="cm">sudo useradd</span> <span class="fl">-r -M -s</span> /sbin/nologin <span class="fl">-c</span> <span class="st2">"Nginx Web Server"</span> nginx
+
+<span class="c"># Create ML service user with custom UID (for consistency across servers)</span>
+<span class="cm">sudo useradd</span> <span class="fl">-u 2001 -m -s</span> /bin/bash <span class="fl">-g</span> mlteam <span class="fl">-G</span> docker mlservice
+
+<span class="c"># Create temporary contractor account expiring on Dec 31</span>
+<span class="cm">sudo useradd</span> <span class="fl">-m -s</span> /bin/bash <span class="fl">-e</span> 2024-12-31 <span class="fl">-c</span> <span class="st2">"Temp Contractor"</span> contractor
+
+<span class="c"># Verify user was created</span>
+<span class="cm">id</span> alice
+<span class="cm">grep</span> alice /etc/passwd
+<span class="cm">ls</span> <span class="fl">-la</span> /home/alice/</code></pre></div>
+
+    <div class="sl"><span class="sn sn3">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the difference between useradd and adduser?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">useradd</span> is the low-level binary — no prompts, no defaults, exactly what you specify. Perfect for automation. <span class="ic">adduser</span> is a high-level Perl/shell script (Debian/Ubuntu) that wraps useradd — it prompts interactively, automatically creates home directory, sets skeleton files, and is more user-friendly. For scripts and Ansible: use <span class="ic">useradd</span>. For manual one-off creation on Debian: use <span class="ic">adduser</span>.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>How do you create a service account that cannot log in interactively?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">sudo useradd -r -M -s /sbin/nologin -c "Service Account" servicename</span>. The <span class="ic">-r</span> flag creates a system account (UID below 1000), <span class="ic">-M</span> skips home directory creation, and <span class="ic">-s /sbin/nologin</span> prevents interactive login. If someone tries to <span class="ic">su - servicename</span> they get "This account is currently not available."</div></div>
+    </div>
+
+    <div class="box tip"><span class="bi">✅</span><div><strong>Defaults file:</strong> View/edit useradd defaults with <span class="ic">useradd -D</span> or <span class="ic">cat /etc/default/useradd</span>. Set default shell, home base dir, and expiry here to ensure consistency across all new accounts.</div></div>
+  </div>
+</div>
+
+<!-- ════ adduser ════ -->
+<div class="card" id="adduser">
+  <div class="cmd-head h-adduser">
+    <div class="cmd-mono">adduser</div>
+    <div class="cmd-meta"><div class="cmd-label">Add User (Interactive)</div><div class="cmd-tagline">High-level user creation — interactive, sets up home with skeleton files</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn3">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">adduser</span> is a user-friendly wrapper (Debian/Ubuntu) over <span class="ic">useradd</span>. It prompts for password, full name, and other details, automatically creates the home directory with skeleton files from <span class="ic">/etc/skel</span>, and is the recommended command for manual user creation on Debian systems.</p>
+
+    <div class="sl"><span class="sn sn3">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Interactive user creation (Debian/Ubuntu)</span>
+<span class="cm">sudo adduser</span> alice
+<span class="out"># Adding user 'alice' ...
+# Adding new group 'alice' (1001) ...
+# Adding new user 'alice' (1001) with group 'alice' ...
+# Creating home directory '/home/alice' ...
+# Copying files from '/etc/skel' ...
+# New password: [prompt]
+# Full Name []: Alice Smith
+# ...</span>
+
+<span class="c"># Add existing user to a group using adduser</span>
+<span class="cm">sudo adduser</span> alice docker
+<span class="c"># "Adding user alice to group docker"</span>
+
+<span class="c"># Non-interactive adduser (via --quiet + GECOS data)</span>
+<span class="cm">echo</span> <span class="st2">"alice:password:::"</span> | <span class="cm">sudo adduser</span> <span class="fl">--gecos</span> <span class="st2">""</span> <span class="fl">--quiet --disabled-password</span> alice</code></pre></div>
+
+    <div class="box info"><span class="bi">💡</span><div>On RHEL/CentOS, <span class="ic">adduser</span> is a symlink to <span class="ic">useradd</span>. On Debian/Ubuntu it's a separate script. Always check which system you're on. For cross-platform scripts, use <span class="ic">useradd</span>.</div></div>
+  </div>
+</div>
+
+<!-- ════ userdel ════ -->
+<div class="card" id="userdel">
+  <div class="cmd-head h-userdel">
+    <div class="cmd-mono">userdel</div>
+    <div class="cmd-meta"><div class="cmd-label">Delete User</div><div class="cmd-tagline">Remove user account — with or without home directory</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn3">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">userdel</span> removes a user account from the system. By default it only removes the account from <span class="ic">/etc/passwd</span> and <span class="ic">/etc/shadow</span> — the home directory is preserved. Use <span class="ic">-r</span> to also remove the home directory and mail spool.</p>
+
+    <div class="sl"><span class="sn sn3">3</span><span class="st">Key Options</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-r</td><td>Remove home directory and mail spool</td><td>userdel -r alice</td></tr>
+        <tr><td>-f</td><td>Force — even if user is logged in</td><td>userdel -f alice</td></tr>
+        <tr><td>-Z</td><td>Remove SELinux user mapping</td><td>userdel -Z alice</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn sn3">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Remove user but KEEP home directory (data preserved)</span>
+<span class="cm">sudo userdel</span> alice
+
+<span class="c"># Remove user AND home directory (complete cleanup)</span>
+<span class="cm">sudo userdel</span> <span class="fl">-r</span> alice
+
+<span class="c"># Production best practice: lock first, delete later</span>
+<span class="cm">sudo usermod</span> <span class="fl">-L</span> alice          <span class="c"># Lock account first</span>
+<span class="cm">sudo usermod</span> <span class="fl">-s</span> /sbin/nologin alice  <span class="c"># Disable shell</span>
+<span class="c"># Wait for confirmation no data is needed...</span>
+<span class="cm">sudo userdel</span> <span class="fl">-r</span> alice          <span class="c"># Then delete</span>
+
+<span class="c"># Find files owned by deleted user (orphaned files)</span>
+<span class="cm">sudo find</span> / <span class="fl">-nouser -ls</span> 2>/dev/null
+<span class="cm">sudo find</span> / <span class="fl">-user</span> 1001 <span class="fl">-ls</span> 2>/dev/null  <span class="c"># By UID if user gone</span></code></pre></div>
+
+    <div class="sl"><span class="sn sn3">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>An employee leaves the company. What's the proper procedure before deleting their account?</div>
+      <div class="qa-a"><span class="al">A:</span>1. Lock account immediately: <span class="ic">usermod -L username</span>. 2. Change shell to nologin: <span class="ic">usermod -s /sbin/nologin username</span>. 3. Archive home directory: <span class="ic">tar -czf /backup/username_$(date +%Y%m%d).tar.gz /home/username/</span>. 4. Transfer ownership of any shared files. 5. Revoke SSH keys and sudo access. 6. After data retention period: <span class="ic">userdel -r username</span>. 7. Find orphaned files: <span class="ic">find / -nouser</span>.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ usermod ════ -->
+<div class="card" id="usermod">
+  <div class="cmd-head h-usermod">
+    <div class="cmd-mono">usermod</div>
+    <div class="cmd-meta"><div class="cmd-label">Modify User</div><div class="cmd-tagline">Modify existing user accounts — the most versatile user admin command</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn3">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">usermod</span> modifies an existing user account's properties. It's the Swiss Army knife of user administration — changing username, shell, groups, home directory, and account lock/unlock. The most commonly tested in interviews is the <span class="ic">-aG</span> distinction.</p>
+
+    <div class="sl"><span class="sn sn3">3</span><span class="st">Commonly Used Options</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr class="cat"><td colspan="3">Group Management</td></tr>
+        <tr><td>-aG GROUPS</td><td>APPEND to supplementary groups (keeps existing!)</td><td>usermod -aG docker alice</td></tr>
+        <tr><td>-G GROUPS</td><td>SET supplementary groups (REPLACES all existing!)</td><td>usermod -G docker,sudo alice</td></tr>
+        <tr><td>-g GROUP</td><td>Change primary group</td><td>usermod -g developers alice</td></tr>
+        <tr class="cat"><td colspan="3">Account Properties</td></tr>
+        <tr><td>-l NEWNAME</td><td>Rename user (login name only)</td><td>usermod -l alice_smith alice</td></tr>
+        <tr><td>-d DIR</td><td>Change home directory</td><td>usermod -d /newhome/alice alice</td></tr>
+        <tr><td>-m</td><td>Move home directory contents to new location</td><td>usermod -d /newhome -m alice</td></tr>
+        <tr><td>-s SHELL</td><td>Change login shell</td><td>usermod -s /bin/zsh alice</td></tr>
+        <tr><td>-c COMMENT</td><td>Change GECOS comment field</td><td>usermod -c "Alice Smith Lead" alice</td></tr>
+        <tr><td>-u UID</td><td>Change UID</td><td>usermod -u 1100 alice</td></tr>
+        <tr class="cat"><td colspan="3">Account Status</td></tr>
+        <tr><td>-L</td><td>LOCK account (prepends ! to password hash)</td><td>usermod -L alice</td></tr>
+        <tr><td>-U</td><td>UNLOCK account (removes ! prefix)</td><td>usermod -U alice</td></tr>
+        <tr><td>-e DATE</td><td>Set account expiry date</td><td>usermod -e 2024-12-31 alice</td></tr>
+        <tr><td>-f DAYS</td><td>Days after password expiry before disable</td><td>usermod -f 14 alice</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn sn3">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Add user to docker group (CRITICAL: always use -aG not -G!)</span>
+<span class="cm">sudo usermod</span> <span class="fl">-aG</span> docker alice
+<span class="c"># New group takes effect on NEXT login</span>
+<span class="c"># For current session: newgrp docker</span>
+
+<span class="c"># Add user to multiple groups at once</span>
+<span class="cm">sudo usermod</span> <span class="fl">-aG</span> docker,sudo,developers,databricks alice
+
+<span class="c"># Lock account (employee on leave)</span>
+<span class="cm">sudo usermod</span> <span class="fl">-L</span> alice
+<span class="cm">sudo passwd</span> <span class="fl">-S</span> alice   <span class="c"># Verify: shows 'L' for locked</span>
+
+<span class="c"># Unlock account</span>
+<span class="cm">sudo usermod</span> <span class="fl">-U</span> alice
+
+<span class="c"># Change shell (e.g., after zsh install)</span>
+<span class="cm">sudo usermod</span> <span class="fl">-s</span> /usr/bin/zsh alice
+
+<span class="c"># Disable interactive login for service account</span>
+<span class="cm">sudo usermod</span> <span class="fl">-s</span> /sbin/nologin nginx
+
+<span class="c"># Rename user (login only, home dir still old name)</span>
+<span class="cm">sudo usermod</span> <span class="fl">-l</span> alice_smith alice
+<span class="c"># Rename home too:</span>
+<span class="cm">sudo usermod</span> <span class="fl">-l</span> alice_smith <span class="fl">-d</span> /home/alice_smith <span class="fl">-m</span> alice
+
+<span class="c"># Set account expiry for contractor</span>
+<span class="cm">sudo usermod</span> <span class="fl">-e</span> 2024-06-30 contractor_bob</code></pre></div>
+
+    <div class="sl"><span class="sn sn3">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the critical difference between <span class="ic">usermod -G</span> and <span class="ic">usermod -aG</span>?</div>
+      <div class="qa-a"><span class="al">A:</span>This is one of the most commonly tested Linux interview questions. <span class="ic">-G groups</span> REPLACES all supplementary groups — if alice is in docker,sudo,developers and you run <span class="ic">usermod -G databricks alice</span>, she's now ONLY in databricks. She lost docker, sudo, and developers! <span class="ic">-aG groups</span> APPENDS — adds to existing groups. ALWAYS use <span class="ic">-aG</span> when adding a user to a group.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>You added alice to the docker group but she still gets "permission denied." Why?</div>
+      <div class="qa-a"><span class="al">A:</span>Group changes take effect at NEXT login — the current session still has the old group membership. Solutions: (1) Log out and log back in. (2) <span class="ic">newgrp docker</span> — creates a new shell with the new group active. (3) <span class="ic">su - alice</span> — refresh session. Verify groups in current session: <span class="ic">id</span>.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ passwd ════ -->
+<div class="card" id="passwd">
+  <div class="cmd-head h-passwd">
+    <div class="cmd-mono">passwd</div>
+    <div class="cmd-meta"><div class="cmd-label">Password</div><div class="cmd-tagline">Change user password — lock, unlock, expire accounts</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn3">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">passwd</span> changes user passwords and manages password states. Regular users can change their own password; root can change any password. The command reads from and writes to <span class="ic">/etc/shadow</span> (hashed passwords) via SUID mechanism.</p>
+
+    <div class="sl"><span class="sn sn3">3</span><span class="st">Key Options</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-l</td><td>Lock account (prepend ! to hash)</td><td>passwd -l alice</td></tr>
+        <tr><td>-u</td><td>Unlock account (remove !)</td><td>passwd -u alice</td></tr>
+        <tr><td>-d</td><td>Delete password (passwordless — dangerous!)</td><td>passwd -d alice</td></tr>
+        <tr><td>-e</td><td>Expire immediately — force change at next login</td><td>passwd -e alice</td></tr>
+        <tr><td>-S</td><td>Show password status</td><td>passwd -S alice</td></tr>
+        <tr><td>-n DAYS</td><td>Minimum days before password can be changed</td><td>passwd -n 7 alice</td></tr>
+        <tr><td>-x DAYS</td><td>Maximum days before password must be changed</td><td>passwd -x 90 alice</td></tr>
+        <tr><td>-w DAYS</td><td>Warning days before expiry</td><td>passwd -w 14 alice</td></tr>
+        <tr><td>-i DAYS</td><td>Inactivity days after expiry before locking</td><td>passwd -i 30 alice</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn sn3">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Change own password</span>
+<span class="cm">passwd</span>
+
+<span class="c"># Root changes alice's password</span>
+<span class="cm">sudo passwd</span> alice
+
+<span class="c"># Set password non-interactively (for automation/scripts)</span>
+<span class="cm">echo</span> <span class="st2">'alice:SecureP@ss123'</span> | <span class="cm">sudo chpasswd</span>
+<span class="c"># chpasswd reads user:password pairs from stdin</span>
+
+<span class="c"># Force password change at next login (new employee onboarding)</span>
+<span class="cm">sudo passwd</span> <span class="fl">-e</span> alice
+
+<span class="c"># Lock account</span>
+<span class="cm">sudo passwd</span> <span class="fl">-l</span> alice
+
+<span class="c"># Check password status</span>
+<span class="cm">sudo passwd</span> <span class="fl">-S</span> alice
+<span class="out"># alice P 2024-01-10 0 90 14 30
+#       ^                        </span>
+<span class="c"># P=has password, L=locked, NP=no password</span>
+
+<span class="c"># Set 90-day max age, 7-day warning</span>
+<span class="cm">sudo passwd</span> <span class="fl">-x 90 -w 7</span> alice</code></pre></div>
+
+    <div class="sl"><span class="sn sn3">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>How does the passwd command work even for non-root users to modify /etc/shadow?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">/usr/bin/passwd</span> has the SUID bit set (<span class="ic">ls -l /usr/bin/passwd</span> shows <span class="ic">-rwsr-xr-x</span>). When any user runs it, it executes as root (the file owner), allowing it to write to <span class="ic">/etc/shadow</span>. It validates that you can only change your own password (unless you are root). This is the SUID mechanism in practice.</div></div>
+    </div>
+
+    <div class="box tip"><span class="bi">✅</span><div><strong>Non-interactive password setting:</strong> Use <span class="ic">chpasswd</span> for automation — <span class="ic">echo 'user:password' | sudo chpasswd</span>. This avoids the interactive prompt. In Ansible: use the <span class="ic">password_hash</span> filter instead of cleartext.</div></div>
+  </div>
+</div>
+
+<!-- ════ chage ════ -->
+<div class="card" id="chage">
+  <div class="cmd-head h-chage">
+    <div class="cmd-mono">chage</div>
+    <div class="cmd-meta"><div class="cmd-label">Change Age</div><div class="cmd-tagline">Password expiry and account aging policy — compliance and security</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn3">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">chage</span> (Change Age) manages user password aging policies. It sets when passwords expire, how long they're valid, warning periods, and when accounts become inactive. Critical for security compliance (PCI-DSS, HIPAA, SOC2) requiring regular password rotation.</p>
+
+    <div class="sl"><span class="sn sn3">3</span><span class="st">Key Options</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-l</td><td>List current aging info</td><td>chage -l alice</td></tr>
+        <tr><td>-M DAYS</td><td>Maximum password age (days before forced change)</td><td>chage -M 90 alice</td></tr>
+        <tr><td>-m DAYS</td><td>Minimum password age (can't change before N days)</td><td>chage -m 7 alice</td></tr>
+        <tr><td>-W DAYS</td><td>Warning days before expiry</td><td>chage -W 14 alice</td></tr>
+        <tr><td>-I DAYS</td><td>Inactive days after expiry before account locks</td><td>chage -I 30 alice</td></tr>
+        <tr><td>-E DATE</td><td>Account expiry date (YYYY-MM-DD or -1 for never)</td><td>chage -E 2024-12-31 alice</td></tr>
+        <tr><td>-d DATE</td><td>Last password change date (0 = force change now)</td><td>chage -d 0 alice</td></tr>
+        <tr><td>-i</td><td>Interactive mode — prompts for all values</td><td>chage alice</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn sn3">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># View complete password aging info</span>
+<span class="cm">sudo chage</span> <span class="fl">-l</span> alice
+<span class="out"># Last password change           : Jan 10, 2024
+# Password expires                : Apr 09, 2024   (90 days)
+# Password inactive               : May 09, 2024   (30 days after expiry)
+# Account expires                 : Dec 31, 2024
+# Minimum days between changes    : 7
+# Maximum days between changes    : 90
+# Number of days of warning       : 14</span>
+
+<span class="c"># Set 90-day max, 7-day min, 14-day warning (security policy)</span>
+<span class="cm">sudo chage</span> <span class="fl">-M 90 -m 7 -W 14</span> alice
+
+<span class="c"># Force password change at next login (new employee)</span>
+<span class="cm">sudo chage</span> <span class="fl">-d 0</span> alice
+
+<span class="c"># Set account to never expire</span>
+<span class="cm">sudo chage</span> <span class="fl">-E -1</span> alice
+
+<span class="c"># Apply policy to all users (for compliance)</span>
+<span class="k">for</span> user in $(getent passwd | <span class="cm">awk</span> <span class="fl">-F:</span> <span class="st2">'$3 >= 1000 && $3 != 65534 {print $1}'</span>); <span class="k">do</span>
+    <span class="cm">sudo chage</span> <span class="fl">-M 90 -W 14</span> <span class="va">$user</span>
+<span class="k">done</span></code></pre></div>
+
+    <div class="sl"><span class="sn sn3">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>How do you enforce a 90-day password policy across all users for compliance?</div>
+      <div class="qa-a"><span class="al">A:</span>Two approaches: (1) <span class="ic">chage</span> per user. (2) Set system default in <span class="ic">/etc/login.defs</span> — set <span class="ic">PASS_MAX_DAYS 90</span>, <span class="ic">PASS_MIN_DAYS 7</span>, <span class="ic">PASS_WARN_AGE 14</span> — these apply to NEW accounts. For existing accounts, loop with <span class="ic">chage -M 90 username</span>. Then audit compliance: <span class="ic">for user in $(cut -d: -f1 /etc/passwd); do chage -l $user; done | grep "Password expires"</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ id / whoami ════ -->
+<div class="card" id="id">
+  <div class="cmd-head h-id">
+    <div class="cmd-mono">id &amp; whoami</div>
+    <div class="cmd-meta"><div class="cmd-label">Identity</div><div class="cmd-tagline">Display user and group identity — scripting and verification</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn3">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">id</span> prints the UID, GID, and all group memberships of the current or specified user. <span class="ic">whoami</span> simply prints the effective username. Both are essential in scripts to verify execution context, and in debugging to confirm user identity after <span class="ic">su</span> or <span class="ic">sudo</span>.</p>
+
+    <div class="sl"><span class="sn sn3">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># id — show full identity including all groups</span>
+<span class="cm">id</span>
+<span class="out"># uid=1001(alice) gid=1001(alice) groups=1001(alice),4(adm),27(sudo),999(docker)</span>
+
+<span class="cm">id</span> alice         <span class="c"># Check another user's identity</span>
+<span class="cm">id</span> <span class="fl">-u</span>            <span class="c"># Print only UID (useful in scripts)</span>
+<span class="cm">id</span> <span class="fl">-g</span>            <span class="c"># Print only GID</span>
+<span class="cm">id</span> <span class="fl">-G</span>            <span class="c"># Print all group IDs (numeric)</span>
+<span class="cm">id</span> <span class="fl">-Gn</span>           <span class="c"># Print all group NAMES</span>
+
+<span class="c"># whoami — effective username</span>
+<span class="cm">whoami</span>
+<span class="out"># alice</span>
+
+<span class="c"># Script pattern: check if running as root</span>
+<span class="k">if</span> [[ $(<span class="cm">id</span> <span class="fl">-u</span>) <span class="fl">-ne</span> <span class="nu">0</span> ]]; <span class="k">then</span>
+    <span class="cm">echo</span> <span class="st2">"ERROR: This script must run as root"</span>
+    <span class="cm">exit</span> <span class="nu">1</span>
+<span class="k">fi</span>
+
+<span class="c"># Verify user has docker group before running docker command</span>
+<span class="k">if</span> ! <span class="cm">id</span> <span class="fl">-Gn</span> | <span class="cm">grep</span> <span class="fl">-q</span> <span class="st2">"docker"</span>; <span class="k">then</span>
+    <span class="cm">echo</span> <span class="st2">"Not in docker group — run: sudo usermod -aG docker $USER"</span>
+    <span class="cm">exit</span> <span class="nu">1</span>
+<span class="k">fi</span></code></pre></div>
+
+    <div class="sl"><span class="sn sn3">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What's the difference between <span class="ic">id</span> and <span class="ic">whoami</span>?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">whoami</span> prints the effective username. <span class="ic">id</span> prints comprehensive identity: UID, primary GID, and ALL supplementary groups. In scripts, use <span class="ic">id -u</span> to check if root (UID=0), and <span class="ic">id -Gn</span> to check group membership without needing sudo.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ su / sudo ════ -->
+<div class="card" id="su">
+  <div class="cmd-head h-sudo">
+    <div class="cmd-mono">su &amp; sudo</div>
+    <div class="cmd-meta"><div class="cmd-label">Switch User / SuperUser Do</div><div class="cmd-tagline">Elevate privileges — su switches user, sudo executes as another user</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn3">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">su</span> (Switch User) switches to another user account — you need THAT user's password (except root can su to anyone). <span class="ic">sudo</span> (SuperUser Do) executes a command with elevated privileges — you need YOUR OWN password, and access is controlled by <span class="ic">/etc/sudoers</span>. In modern production: prefer <span class="ic">sudo</span> over <span class="ic">su</span> — it audits every command in <span class="ic">/var/log/auth.log</span>.</p>
+
+    <div class="sl"><span class="sn sn3">3</span><span class="st">Key Options</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Command</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr class="cat"><td colspan="3">su — Switch User</td></tr>
+        <tr><td>su username</td><td>Switch to user (environment NOT reset)</td><td>su alice</td></tr>
+        <tr><td>su - username</td><td>Login shell — full environment of target user</td><td>su - alice</td></tr>
+        <tr><td>su -</td><td>Switch to root with full root environment</td><td>su -</td></tr>
+        <tr><td>su -c CMD user</td><td>Execute command as user without interactive shell</td><td>su -c "id" alice</td></tr>
+        <tr class="cat"><td colspan="3">sudo — Execute as Another User</td></tr>
+        <tr><td>sudo CMD</td><td>Run command as root</td><td>sudo apt-get update</td></tr>
+        <tr><td>sudo -u USER CMD</td><td>Run command as specific user</td><td>sudo -u postgres psql</td></tr>
+        <tr><td>sudo -i</td><td>Interactive root shell (full environment)</td><td>sudo -i</td></tr>
+        <tr><td>sudo -s</td><td>Shell as root (current environment)</td><td>sudo -s</td></tr>
+        <tr><td>sudo -l</td><td>List what sudo commands current user can run</td><td>sudo -l</td></tr>
+        <tr><td>sudo -k</td><td>Invalidate sudo timestamp (require password again)</td><td>sudo -k</td></tr>
+        <tr><td>sudo !! </td><td>Re-run last command with sudo</td><td>sudo !!</td></tr>
+        <tr><td>visudo</td><td>Edit sudoers file safely (with syntax check)</td><td>sudo visudo</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn sn3">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># su examples</span>
+<span class="cm">su</span> - alice          <span class="c"># Full login as alice (prompts for alice's password)</span>
+<span class="cm">su</span> -                <span class="c"># Switch to root (prompts for root password)</span>
+
+<span class="c"># sudo basic usage</span>
+<span class="cm">sudo</span> apt-get update
+<span class="cm">sudo</span> systemctl restart nginx
+
+<span class="c"># Run as postgres user (common for DB admin)</span>
+<span class="cm">sudo</span> <span class="fl">-u</span> postgres psql -d mydb
+
+<span class="c"># Get root shell</span>
+<span class="cm">sudo</span> <span class="fl">-i</span>   <span class="c"># Full root environment</span>
+
+<span class="c">═══ SUDOERS CONFIGURATION (/etc/sudoers) ═══</span>
+<span class="c"># ALWAYS edit with: sudo visudo</span>
+
+<span class="c"># Give alice full sudo</span>
+<span class="c"># alice ALL=(ALL:ALL) ALL</span>
+
+<span class="c"># Give alice passwordless sudo for specific commands only</span>
+<span class="c"># alice ALL=(ALL) NOPASSWD: /usr/bin/systemctl, /usr/bin/docker</span>
+
+<span class="c"># Give devops group sudo for package management</span>
+<span class="c"># %devops ALL=(ALL) /usr/bin/apt-get, /usr/bin/yum</span>
+
+<span class="c"># View what you can run with sudo</span>
+<span class="cm">sudo</span> <span class="fl">-l</span>
+<span class="out"># User alice may run the following commands on server:
+#     (ALL : ALL) NOPASSWD: /usr/bin/systemctl
+#     (ALL : ALL) /usr/bin/apt-get</span></code></pre></div>
+
+    <div class="sl"><span class="sn sn3">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the difference between <span class="ic">su -</span> and <span class="ic">su</span> (without dash)?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">su username</span> switches user but inherits the current user's environment (HOME, PATH, etc.). <span class="ic">su - username</span> (login shell) creates a completely fresh environment as if you logged in as that user — loads their ~/.bashrc, ~/.profile, sets their HOME, PATH, and all environment variables. In production, always use <span class="ic">su -</span> to avoid environment conflicts that cause "command not found" errors.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>Why should you always use visudo to edit the sudoers file?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">visudo</span> validates the sudoers syntax before saving. If you directly edit <span class="ic">/etc/sudoers</span> with vi/nano and introduce a syntax error, ALL sudo access is broken — no one can use sudo, potentially locking everyone out of root access. <span class="ic">visudo</span> catches errors before committing. Also, if two admins edit simultaneously, visudo uses file locking to prevent corruption.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q3</span>How do you grant a user sudo access for specific commands only?</div>
+      <div class="qa-a"><span class="al">A:">sudo visudo</span> then add: <span class="ic">alice ALL=(ALL) NOPASSWD: /usr/bin/systemctl, /usr/bin/docker</span>. This allows alice to run systemctl and docker with sudo, without a password prompt. The <span class="ic">NOPASSWD</span> is optional — remove it to require alice's password. This follows the principle of least privilege — alice can restart services and manage containers, but cannot rm system files or modify /etc/passwd.</div></div>
+    </div>
+
+    <div class="box danger"><span class="bi">❌</span><div><strong>Never share root password</strong> — use sudo instead. sudo creates an audit trail in /var/log/auth.log with exact commands, timestamps, and usernames. Shared root password has no accountability.</div></div>
+  </div>
+</div>
+
+<!-- ════ last / who ════ -->
+<div class="card" id="last">
+  <div class="cmd-head h-last">
+    <div class="cmd-mono">last &amp; who</div>
+    <div class="cmd-meta"><div class="cmd-label">Login History</div><div class="cmd-tagline">Track user logins — audit trail and active session monitoring</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn3">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">last</span> shows login history from <span class="ic">/var/log/wtmp</span> — who logged in, from where, and for how long. <span class="ic">who</span> shows currently logged-in users. Both are critical for security auditing, detecting unauthorized access, and compliance reporting.</p>
+
+    <div class="sl"><span class="sn sn3">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c">═══ last — Login history ═══</span>
+<span class="cm">last</span>                     <span class="c"># All recent logins</span>
+<span class="cm">last</span> alice               <span class="c"># Alice's login history</span>
+<span class="cm">last</span> <span class="fl">-n 20</span>              <span class="c"># Last 20 logins</span>
+<span class="cm">last</span> <span class="fl">-F</span>                  <span class="c"># Full date/time format</span>
+<span class="cm">last</span> <span class="fl">-a</span>                  <span class="c"># Show hostname in last column</span>
+<span class="out"># alice    pts/1  10.0.1.50   Mon Jan 15 09:30  still logged in
+# bob      pts/0  10.0.1.25   Mon Jan 15 08:00 - 09:00 (01:00)</span>
+
+<span class="cm">lastb</span>                    <span class="c"># Failed login attempts (bad logins)</span>
+<span class="cm">lastlog</span>                  <span class="c"># Most recent login for each user</span>
+
+<span class="c">═══ who — Current logins ═══</span>
+<span class="cm">who</span>                      <span class="c"># Currently logged-in users</span>
+<span class="out"># alice    pts/1  2024-01-15 09:30 (10.0.1.50)
+# bob      pts/0  2024-01-15 08:00 (10.0.1.25)</span>
+
+<span class="cm">who</span> am i                 <span class="c"># Current login session info</span>
+<span class="cm">w</span>                        <span class="c"># More detailed: shows what users are running</span>
+<span class="out"># USER  TTY   FROM      LOGIN@  IDLE  JCPU  PCPU  WHAT
+# alice pts/1 10.0.1.50 09:30   5:00  0.05  0.02  vim config.yaml</span>
+
+<span class="c"># Security audit: detect logins outside business hours</span>
+<span class="cm">last</span> <span class="fl">-F</span> | <span class="cm">grep</span> <span class="fl">-E</span> <span class="st2">"[0-1][0-9]:00|2[0-3]:[0-9]"</span>
+
+<span class="c"># Find all users who logged in from external IPs</span>
+<span class="cm">last</span> <span class="fl">-a</span> | <span class="cm">grep</span> <span class="fl">-v</span> <span class="st2">"^reboot\|^shutdown\|10\.0\.\|192\.168\."</span></code></pre></div>
+
+    <div class="sl"><span class="sn sn3">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>How do you find all failed login attempts for security auditing?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">sudo lastb</span> — shows bad (failed) login attempts from <span class="ic">/var/log/btmp</span>. Also: <span class="ic">grep "Failed password" /var/log/auth.log | awk '{print $(NF-3)}' | sort | uniq -c | sort -rn | head -20</span> — finds top IPs with failed SSH attempts (potential brute force). For blocking: <span class="ic">fail2ban</span> automates this.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ groupadd / groupdel / groupmod ════ -->
+<div class="card" id="groupadd">
+  <div class="cmd-head h-groupadd">
+    <div class="cmd-mono">groupadd · groupdel · groupmod</div>
+    <div class="cmd-meta"><div class="cmd-label">Group Management</div><div class="cmd-tagline">Create, delete, and modify groups — access control foundation</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn3">1</span><span class="st">Command Overview</span></div>
+    <p class="desc">Groups are the core mechanism for granting shared access to resources. Services, teams, and functional roles map to Linux groups. A user can be in multiple groups simultaneously, and their effective access is the union of all their groups' permissions.</p>
+
+    <div class="sl"><span class="sn sn3">3</span><span class="st">Key Options</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Command</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr class="cat"><td colspan="3">groupadd — Create Group</td></tr>
+        <tr><td>groupadd GROUP</td><td>Create a new group</td><td>groupadd developers</td></tr>
+        <tr><td>groupadd -g GID GROUP</td><td>Create with specific GID</td><td>groupadd -g 2000 mlteam</td></tr>
+        <tr><td>groupadd -r GROUP</td><td>Create system group (GID < 1000)</td><td>groupadd -r nginx</td></tr>
+        <tr class="cat"><td colspan="3">groupdel — Delete Group</td></tr>
+        <tr><td>groupdel GROUP</td><td>Delete a group (fails if primary group)</td><td>groupdel oldteam</td></tr>
+        <tr class="cat"><td colspan="3">groupmod — Modify Group</td></tr>
+        <tr><td>groupmod -n NEW OLD</td><td>Rename a group</td><td>groupmod -n datateam mlteam</td></tr>
+        <tr><td>groupmod -g GID GROUP</td><td>Change GID</td><td>groupmod -g 2001 developers</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn sn3">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Create functional groups for a data platform</span>
+<span class="cm">sudo groupadd</span> datascientists
+<span class="cm">sudo groupadd</span> dataengineers
+<span class="cm">sudo groupadd</span> <span class="fl">-g 2500</span> mlops       <span class="c"># Specific GID for consistency</span>
+
+<span class="c"># Create system group for nginx service</span>
+<span class="cm">sudo groupadd</span> <span class="fl">-r</span> nginx
+
+<span class="c"># Add multiple users to a group</span>
+<span class="cm">sudo usermod</span> <span class="fl">-aG</span> datascientists alice
+<span class="cm">sudo usermod</span> <span class="fl">-aG</span> datascientists bob
+
+<span class="c"># Rename group (org restructure)</span>
+<span class="cm">sudo groupmod</span> <span class="fl">-n</span> ml-platform mlops
+
+<span class="c"># Delete unused group</span>
+<span class="cm">sudo groupdel</span> oldteam
+
+<span class="c"># View all groups</span>
+<span class="cm">cat</span> /etc/group | <span class="cm">grep</span> <span class="fl">-E</span> <span class="st2">"datascientists|dataengineers|mlops"</span>
+<span class="cm">getent group</span> datascientists   <span class="c"># Show group with members</span></code></pre></div>
+  </div>
+</div>
+
+<!-- ════ groups / newgrp / gpasswd ════ -->
+<div class="card" id="groups">
+  <div class="cmd-head h-groups">
+    <div class="cmd-mono">groups · newgrp · gpasswd</div>
+    <div class="cmd-meta"><div class="cmd-label">Group Tools</div><div class="cmd-tagline">List groups, switch active group, manage group passwords &amp; members</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn sn3">1</span><span class="st">Command Overview</span></div>
+    <ul class="bl">
+      <li><strong>groups:</strong> Displays all groups a user belongs to — simple output, quick check.</li>
+      <li><strong>newgrp:</strong> Switches the active/effective group for the current session — new group is immediately active without logging out. Creates a new shell with that group effective.</li>
+      <li><strong>gpasswd:</strong> Administers the <span class="ic">/etc/group</span> and <span class="ic">/etc/gshadow</span> files — set group passwords, add/remove members, designate group administrators.</li>
+    </ul>
+
+    <div class="sl"><span class="sn sn3">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c">═══ groups — List group memberships ═══</span>
+<span class="cm">groups</span>                   <span class="c"># Current user's groups</span>
+<span class="out"># alice : alice adm sudo docker developers</span>
+
+<span class="cm">groups</span> alice             <span class="c"># Specific user's groups</span>
+<span class="cm">groups</span> alice bob charlie  <span class="c"># Multiple users at once</span>
+
+<span class="c">═══ newgrp — Switch active group ═══</span>
+<span class="c"># Problem: added to docker group, but current session doesn't know</span>
+<span class="cm">id</span>  <span class="c"># docker not shown — need to re-login or...</span>
+<span class="cm">newgrp</span> docker          <span class="c"># Immediately activates docker group!</span>
+<span class="cm">id</span>  <span class="c"># Now shows docker in groups</span>
+<span class="cm">docker ps</span>              <span class="c"># Works now without logout</span>
+<span class="c"># exit  ← returns to previous shell</span>
+
+<span class="c">═══ gpasswd — Manage group membership ═══</span>
+<span class="c"># Add user to group (alternative to usermod -aG)</span>
+<span class="cm">sudo gpasswd</span> <span class="fl">-a</span> alice developers
+
+<span class="c"># Remove user from group</span>
+<span class="cm">sudo gpasswd</span> <span class="fl">-d</span> bob developers
+
+<span class="c"># Add group administrator (can manage group members)</span>
+<span class="cm">sudo gpasswd</span> <span class="fl">-A</span> alice developers   <span class="c"># alice can now add/remove devs</span>
+
+<span class="c"># Set group password (rarely used — prefer sudo/ACLs)</span>
+<span class="cm">sudo gpasswd</span> developers
+
+<span class="c"># View group members</span>
+<span class="cm">getent group</span> developers
+<span class="out"># developers:x:1050:alice,bob,charlie,diana</span></code></pre></div>
+
+    <div class="sl"><span class="sn sn3">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>How do you immediately apply a new group membership without logging out?</div>
+      <div class="qa-a"><span class="al">A:</span>Two methods: (1) <span class="ic">newgrp groupname</span> — creates a new shell with the group active immediately. Type <span class="ic">exit</span> to return to previous shell. (2) <span class="ic">exec su - $USER</span> — restarts the login shell with all new group memberships. Or simply log out and back in. In scripts: use <span class="ic">sg groupname -c "command"</span> to run a command with a specific group active.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>What is the difference between adding a user with gpasswd -a vs usermod -aG?</div>
+      <div class="qa-a"><span class="al">A:</span>Both add a user to a supplementary group, but the mechanism differs. <span class="ic">usermod -aG group user</span> modifies <span class="ic">/etc/passwd</span> group supplementary field. <span class="ic">gpasswd -a user group</span> modifies the <span class="ic">/etc/group</span> member list directly. The net result is identical. <span class="ic">gpasswd</span> also supports group administrators who can manage group membership without root — via <span class="ic">gpasswd -A</span>.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CHEAT SHEET SECTION 3 -->
+<div class="cheat" id="cheat3">
+  <div class="cheat-h ch-h3">
+    <h2>📋 Quick Reference Cheat Sheet — Section 3: User &amp; Group Management</h2>
+    <p>Complete user lifecycle commands from creation to deletion</p>
+  </div>
+  <table class="ct2">
+    <tbody>
+      <tr class="cts"><td colspan="2">USER CREATION</td></tr>
+      <tr><td>useradd -m -s /bin/bash -c "Name" -G docker alice</td><td>Create user with home, bash, comment, and groups</td></tr>
+      <tr><td>useradd -r -M -s /sbin/nologin -c "Service" svc</td><td>Create service account (no home, no login)</td></tr>
+      <tr><td>adduser alice</td><td>Interactive user creation (Debian/Ubuntu)</td></tr>
+      <tr><td>adduser alice docker</td><td>Add alice to docker group (Debian adduser syntax)</td></tr>
+      <tr class="cts"><td colspan="2">USER MODIFICATION</td></tr>
+      <tr><td>usermod -aG docker,sudo alice</td><td>APPEND alice to groups (never -G without -a!)</td></tr>
+      <tr><td>usermod -s /bin/zsh alice</td><td>Change login shell</td></tr>
+      <tr><td>usermod -L alice</td><td>Lock account</td></tr>
+      <tr><td>usermod -U alice</td><td>Unlock account</td></tr>
+      <tr><td>usermod -e 2024-12-31 alice</td><td>Set account expiry</td></tr>
+      <tr><td>usermod -l newname oldname</td><td>Rename user (login name only)</td></tr>
+      <tr class="cts"><td colspan="2">PASSWORD &amp; AGING</td></tr>
+      <tr><td>passwd alice</td><td>Change alice's password (as root)</td></tr>
+      <tr><td>passwd -e alice</td><td>Expire — force change at next login</td></tr>
+      <tr><td>passwd -l alice</td><td>Lock account</td></tr>
+      <tr><td>passwd -S alice</td><td>Show password status (P/L/NP)</td></tr>
+      <tr><td>echo 'alice:pass' | sudo chpasswd</td><td>Non-interactive password set (scripts)</td></tr>
+      <tr><td>chage -l alice</td><td>List all password aging info</td></tr>
+      <tr><td>chage -M 90 -W 14 alice</td><td>90-day max, 14-day warning (security policy)</td></tr>
+      <tr><td>chage -d 0 alice</td><td>Force password change at next login</td></tr>
+      <tr><td>chage -E 2024-12-31 alice</td><td>Set account expiry date</td></tr>
+      <tr class="cts"><td colspan="2">IDENTITY &amp; PRIVILEGE</td></tr>
+      <tr><td>id alice</td><td>Show UID, GID, all groups</td></tr>
+      <tr><td>id -u</td><td>Print UID only (0 = root, for scripts)</td></tr>
+      <tr><td>id -Gn</td><td>Print all group names</td></tr>
+      <tr><td>whoami</td><td>Print effective username</td></tr>
+      <tr><td>su - alice</td><td>Switch to alice with full environment</td></tr>
+      <tr><td>sudo -u postgres psql</td><td>Run psql as postgres user</td></tr>
+      <tr><td>sudo -l</td><td>List allowed sudo commands</td></tr>
+      <tr><td>sudo visudo</td><td>Safely edit sudoers file</td></tr>
+      <tr class="cts"><td colspan="2">LOGIN MONITORING</td></tr>
+      <tr><td>last -F | head -20</td><td>Recent login history with full timestamps</td></tr>
+      <tr><td>lastb</td><td>Failed login attempts</td></tr>
+      <tr><td>lastlog</td><td>Most recent login per user</td></tr>
+      <tr><td>who</td><td>Currently logged in users</td></tr>
+      <tr><td>w</td><td>Who's logged in and what they're running</td></tr>
+      <tr class="cts"><td colspan="2">GROUP MANAGEMENT</td></tr>
+      <tr><td>groupadd -g 2000 mlteam</td><td>Create group with specific GID</td></tr>
+      <tr><td>groupadd -r nginx</td><td>Create system group</td></tr>
+      <tr><td>groupdel oldteam</td><td>Delete a group</td></tr>
+      <tr><td>groupmod -n newname oldname</td><td>Rename a group</td></tr>
+      <tr><td>groups alice</td><td>Show alice's group memberships</td></tr>
+      <tr><td>newgrp docker</td><td>Switch active group immediately (no re-login)</td></tr>
+      <tr><td>gpasswd -a alice developers</td><td>Add alice to developers group</td></tr>
+      <tr><td>gpasswd -d bob developers</td><td>Remove bob from developers group</td></tr>
+      <tr><td>getent group developers</td><td>Show group with all members</td></tr>
+    </tbody>
+  </table>
+</div>
+
+</main>
+
+<footer>
+  <strong>Linux Commands Interview Guide</strong> &nbsp;|&nbsp; Section 3: User &amp; Group Management &nbsp;|&nbsp; DevOps · Data Engineering · AI-ML Engineering
+</footer>
+
+</body>
+</html>

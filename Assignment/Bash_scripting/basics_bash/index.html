@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bash Scripting in Linux - Comprehensive Notes</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --container-bg: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #f0883e;
+            --accent-purple: #bc8cff;
+            --accent-red: #f85149;
+            --accent-cyan: #39d353;
+            --border-color: #30363d;
+            --code-bg: #0d1117;
+            --card-bg: #21262d;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color); color: var(--text-primary);
+            line-height: 1.6; -webkit-font-smoothing: antialiased;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        header {
+            background: linear-gradient(135deg, #161b22 0%, #1a2332 100%);
+            border-bottom: 3px solid var(--accent-orange); padding: 2rem 1rem;
+            text-align: center; border-radius: 0 0 15px 15px; margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        header h1 { color: var(--accent-orange); font-family: 'Courier New', Courier, monospace; font-size: 2.2rem; margin-bottom: 1rem; }
+        nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        nav a {
+            background-color: var(--card-bg); color: var(--accent-blue);
+            padding: 8px 15px; border-radius: 20px; text-decoration: none;
+            font-size: 0.85rem; font-weight: bold; border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        nav a:hover { background-color: var(--accent-blue); color: var(--bg-color); transform: translateY(-2px); }
+        section {
+            background-color: var(--container-bg); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 25px; margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        h2 {
+            color: var(--accent-blue); font-size: 1.8rem;
+            border-bottom: 2px solid var(--border-color); padding-bottom: 10px;
+            margin-bottom: 20px; font-family: 'Courier New', Courier, monospace;
+        }
+        h3 {
+            color: var(--accent-purple); font-size: 1.3rem; margin-top: 25px;
+            margin-bottom: 15px; padding-left: 10px; border-left: 4px solid var(--accent-purple);
+        }
+        .step-card, .command-card {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 15px; margin-bottom: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .step-card:hover, .command-card:hover {
+            transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-color: var(--accent-blue);
+        }
+        .step-card h3 { color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 0; }
+        .rationale { font-size: 0.9rem; color: var(--text-secondary); margin-top: 10px; font-style: italic; }
+        .rationale strong { color: var(--accent-orange); }
+        code {
+            font-family: 'Courier New', Courier, monospace; background-color: var(--code-bg);
+            padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: var(--accent-orange);
+        }
+        pre {
+            background-color: var(--code-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 12px; overflow-x: auto; margin: 10px 0;
+            font-family: 'Courier New', Courier, monospace; color: var(--accent-green); font-size: 0.9em;
+        }
+        details {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; margin-bottom: 8px; overflow: hidden;
+        }
+        summary {
+            padding: 12px 15px; font-weight: bold; color: var(--accent-blue);
+            cursor: pointer; list-style: none; display: flex; justify-content: space-between;
+            align-items: center; transition: background-color 0.2s;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: '►'; color: var(--text-secondary); font-size: 0.8rem; transition: transform 0.2s; }
+        details[open] summary::after { transform: rotate(90deg); }
+        details[open] summary { background-color: rgba(88, 166, 255, 0.1); border-bottom: 1px solid var(--border-color); }
+        .answer-content { padding: 15px; color: var(--text-primary); }
+        .answer-content ul { margin-left: 20px; margin-top: 10px; }
+        .answer-content li { margin-bottom: 5px; }
+        .highlight { color: var(--accent-red); font-weight: bold; }
+        .badge {
+            display: inline-block; padding: 3px 8px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: bold; text-transform: uppercase;
+        }
+        .badge-danger { background-color: var(--accent-red); color: white; }
+        .badge-tip { background-color: var(--accent-green); color: black; }
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            header h1 { font-size: 1.5rem; }
+            nav a { font-size: 0.75rem; padding: 6px 10px; }
+            section { padding: 15px; }
+            h2 { font-size: 1.4rem; }
+            pre { font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📜 BASH SCRIPTING IN LINUX</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Automation, Task Scheduling, & System Management</p>
+        <nav>
+            <a href="#part1">Part I: Procedure</a>
+            <a href="#part2">Part II: Commands</a>
+            <a href="#part3">Part III: Alternatives</a>
+            <a href="#part4">Part IV: Assignment Q&A</a>
+            <a href="#part5">Part V: Interview</a>
+        </nav>
+    </header>
+    <div class="container">
+
+        <!-- PART I -->
+        <section id="part1">
+            <h2>PART I: STEP-BY-STEP PROCEDURE - SCRIPT LIFECYCLE</h2>
+            
+            <div class="step-card">
+                <h3>STEP 1: Script Creation & Shebang</h3>
+                <p>Create a file with <code>.sh</code> extension. The very first line must be the "shebang" (<code>#!/bin/bash</code>), which tells the OS to use the Bash interpreter.</p>
+                <p class="rationale"><strong>Rationale:</strong> Without the shebang, the system might default to <code>sh</code>, which lacks many Bash-specific features, leading to unexpected syntax errors.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 2: Writing Logic & Commands</h3>
+                <p>Write standard Linux commands, variables, loops, and conditionals inside the file. Add comments using <code>#</code> to explain complex logic.</p>
+                <p class="rationale"><strong>Rationale:</strong> Comments make the script maintainable. Scripts are often read by others or by yourself months later.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 3: Setting Execute Permissions</h3>
+                <p>By default, text files lack execute permissions. Use <code>chmod +x script.sh</code> to make it executable.</p>
+                <p class="rationale"><strong>Rationale:</strong> The Linux kernel will refuse to execute a file unless the execute bit is set for the user attempting to run it.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 4: Execution & Debugging</h3>
+                <p>Run the script using <code>./script.sh</code> or <code>bash script.sh</code>. If errors occur, debug using <code>bash -x script.sh</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> <code>./</code> requires execute permissions and uses the shebang. <code>bash</code> bypasses permissions and ignores the shebang. <code>-x</code> prints every command before execution, vital for troubleshooting logic errors.</p>
+            </div>
+        </section>
+
+        <!-- PART II -->
+        <section id="part2">
+            <h2>PART II: COMMANDS AND EXPLANATIONS</h2>
+
+            <div class="command-card">
+                <h3><code>#!/bin/bash</code> (Shebang)</h3>
+                <p><strong>Purpose:</strong> Directive that tells the operating system which interpreter to use to parse the rest of the file. Must be the absolute path.</p>
+            </div>
+
+            <div class="command-card">
+                <h3><code>chmod +x</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>chmod +x script.sh</code></p>
+                <p><strong>Purpose:</strong> Grants execute permissions to the file for the owner, group, and others.</p>
+            </div>
+
+            <div class="command-card">
+                <h3>Core Utility Commands Used in Scripts</h3>
+                <ul style="margin-left: 20px; color: var(--text-primary);">
+                    <li><code>date</code>: Prints current system date/time (useful for timestamping logs).</li>
+                    <li><code>whoami</code>: Outputs the current logged-in username (good for privilege checks).</li>
+                    <li><code>df -h</code>: Reports file system disk space usage (human-readable).</li>
+                    <li><code>free -m</code>: Displays RAM/Swap usage in megabytes.</li>
+                    <li><code>uptime</code>: Shows how long the system has been running.</li>
+                    <li><code>tar -czf</code>: Creates compressed gzip archives (backups).</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- PART III -->
+        <section id="part3">
+            <h2>PART III: ALTERNATIVE COMMANDS & METHODS</h2>
+
+            <details><summary>1. <code>bash script.sh</code> vs <code>./script.sh</code></summary><div class="answer-content">
+                <ul>
+                    <li><code>bash script.sh</code>: Explicitly invokes the Bash shell to run the script. Ignores the shebang. Does <strong>not</strong> require execute permissions on the file (only read permission).</li>
+                    <li><code>./script.sh</code>: Runs the script as an executable program. <strong>Requires</strong> execute permissions. Respects the shebang line to determine the interpreter.</li>
+                </ul>
+            </div></details>
+
+            <details><summary>2. <code>source script.sh</code> (or <code>.</code> command)</summary><div class="answer-content">
+                <p>Unlike the previous methods, <code>source</code> executes the script in the <strong>current shell environment</strong>. This means variables and functions defined in the script persist in your terminal after it finishes. The other methods spawn a <em>subshell</em>, which is destroyed when the script ends.</p>
+            </div></details>
+
+            <details><summary>3. Automation Alternatives: <code>cron</code> vs <code>systemd timers</code></summary><div class="answer-content">
+                <p>While Bash scripts hold the logic, they need a scheduler to run automatically.
+                <ul>
+                    <li><code>cron</code>: Traditional, simple, time-based scheduler (e.g., run every hour).</li>
+                    <li><code>systemd timers</code>: Modern alternative. Offers more flexibility (e.g., run 5 minutes after boot, or run based on system events) and better logging via <code>journalctl</code>.</li>
+                </ul></p>
+            </div></details>
+        </section>
+
+        <!-- PART IV -->
+        <section id="part4">
+            <h2>PART IV: ASSIGNMENT SOLUTIONS</h2>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan);">Section A: Multiple Choice Questions</h3>
+            <details><summary>1. Main purpose of Bash scripting?</summary><div class="answer-content"><p><strong>b) Automate tasks in Linux</strong></p></div></details>
+            <details><summary>2. Command used to execute a Bash script?</summary><div class="answer-content"><p><strong>c) bash script.sh</strong> (or <code>./script.sh</code>)</p></div></details>
+            <details><summary>3. Default extension commonly used?</summary><div class="answer-content"><p><strong>c) .sh</strong></p></div></details>
+            <details><summary>4. Line written at the beginning of a Bash script?</summary><div class="answer-content"><p><strong>a) #!/bin/bash</strong></p></div></details>
+            <details><summary>5. Benefit of Bash scripting?</summary><div class="answer-content"><p><strong>c) Saves time and effort</strong></p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section B: Short Answer Questions</h3>
+            <details><summary>1. What is Bash scripting?</summary><div class="answer-content"><p>Bash scripting is the process of writing a series of commands for the Bash shell to execute sequentially. It allows users to combine multiple Linux commands, variables, and logic structures into a reusable file to automate complex or repetitive tasks.</p></div></details>
+            <details><summary>2. Why is Bash scripting useful in Linux?</summary><div class="answer-content"><p>It eliminates the need to type the same commands repeatedly, reduces human error, ensures consistency in task execution, and allows scheduling of unattended operations (like backups or updates).</p></div></details>
+            <details><summary>3. Role of <code>#!/bin/bash</code> in a script?</summary><div class="answer-content"><p>It is the "shebang." It instructs the operating system to use the Bash interpreter located at <code>/bin/bash</code> to parse and run the script.</p></div></details>
+            <details><summary>4. Command to run a Bash script.</summary><div class="answer-content"><pre>chmod +x script.sh  # (First time only)
+./script.sh</pre></div></details>
+            <details><summary>5. Two uses of Bash scripting.</summary><div class="answer-content"><p>1. Automating system backups using <code>tar</code> and <code>rsync</code>.<br>2. Monitoring system resources (CPU, RAM) and sending alerts via email.</p></div></details>
+            <details><summary>6. How does Bash scripting reduce human errors?</summary><div class="answer-content"><p>By executing a pre-written, tested sequence of commands, it removes the chance of typos, forgotten steps, or incorrect flags that commonly occur during manual typing.</p></div></details>
+            <details><summary>7. What is automation in Linux?</summary><div class="answer-content"><p>Automation is using scripts and tools (like cron or systemd) to perform system tasks without continuous human intervention, allowing tasks to run at specific times or in response to events.</p></div></details>
+            <details><summary>8. Purpose of backup scripts?</summary><div class="answer-content"><p>To systematically copy and compress critical data to a safe location at regular intervals, ensuring data can be recovered in case of hardware failure, accidental deletion, or corruption.</p></div></details>
+            <details><summary>9. How can Bash scripts help in system monitoring?</summary><div class="answer-content"><p>Scripts can parse outputs from <code>df</code>, <code>free</code>, or <code>top</code>, filter for thresholds (e.g., Disk > 90%), and trigger alerts (emails or logs) automatically when the system is under stress.</p></div></details>
+            <details><summary>10. Use of the <code>date</code> command in Bash?</summary><div class="answer-content"><p>It outputs the current system date and time. In scripts, it is heavily used to generate dynamic filenames (e.g., <code>backup_$(date +%F).tar.gz</code>) and to timestamp log entries.</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section C: Practical Questions</h3>
+            <details><summary>1. Script to display current date.</summary><div class="answer-content"><pre>#!/bin/bash
+echo "Today's date is: $(date)"</pre></div></details>
+            <details><summary>2. Script to display logged-in username.</summary><div class="answer-content"><pre>#!/bin/bash
+echo "Currently logged in as: $(whoami)"</pre></div></details>
+            <details><summary>3. Script that prints “Welcome to Linux”.</summary><div class="answer-content"><pre>#!/bin/bash
+echo "Welcome to Linux"</pre></div></details>
+            <details><summary>4. Script to check disk usage.</summary><div class="answer-content"><pre>#!/bin/bash
+echo "Current Disk Usage:"
+df -h</pre></div></details>
+            <details><summary>5. Simple backup script using tar.</summary><div class="answer-content"><pre>#!/bin/bash
+SOURCE="/home/user/documents"
+BACKUP_DIR="/backup"
+DATE=$(date +%F)
+FILE_NAME="backup_$DATE.tar.gz"
+
+echo "Starting backup..."
+tar -czf $BACKUP_DIR/$FILE_NAME $SOURCE
+echo "Backup completed at $BACKUP_DIR/$FILE_NAME"</pre></div></details>
+            <details><summary>6. Script to display system uptime.</summary><div class="answer-content"><pre>#!/bin/bash
+echo "System Uptime Information:"
+uptime</pre></div></details>
+            <details><summary>7. Script to install software automatically.</summary><div class="answer-content"><pre>#!/bin/bash
+# Requires root privileges
+if [ $EUID -ne 0 ]; then
+  echo "Please run as root"
+  exit 1
+fi
+
+echo "Installing packages..."
+apt update && apt install -y nginx git curl  # Use yum/dnf for RHEL
+echo "Installation complete!"</pre></div></details>
+            <details><summary>8. Script to monitor memory usage.</summary><div class="answer-content"><pre>#!/bin/bash
+echo "Memory Usage Report:"
+free -m</pre></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section D: True or False</h3>
+            <details><summary>1. Bash scripting is used for task automation in Linux.</summary><div class="answer-content"><p><strong>True.</strong></p></div></details>
+            <details><summary>2. Bash scripts help reduce repetitive manual work.</summary><div class="answer-content"><p><strong>True.</strong></p></div></details>
+            <details><summary>3. Bash scripting cannot execute Linux commands.</summary><div class="answer-content"><p><strong>False.</strong> Bash scripts are essentially sequences of Linux commands designed to be executed together.</p></div></details>
+            <details><summary>4. .sh is a common extension for Bash scripts.</summary><div class="answer-content"><p><strong>True.</strong> While Linux doesn't require extensions, .sh is the standard convention.</p></div></details>
+            <details><summary>5. Bash scripts can be used for backups and monitoring.</summary><div class="answer-content"><p><strong>True.</strong> These are among the most common use cases for Bash scripts.</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section E: Scenario-Based Questions</h3>
+            <details><summary>1. Admin performs the same backup daily manually. How can Bash help?</summary><div class="answer-content"><p>The admin can write a Bash script containing the <code>tar</code> or <code>rsync</code> commands to archive the necessary directories. Then, schedule this script using <code>cron</code> (e.g., <code>0 2 * * * /path/to/backup.sh</code>) to run automatically at 2 AM daily, eliminating manual effort.</p></div></details>
+            <details><summary>2. Company wants to monitor disk space automatically every hour.</summary><div class="answer-content"><p>Write a Bash script that checks disk usage using <code>df</code> and <code>awk</code>, and sends an email using <code>mail</code> or <code>mutt</code> if usage exceeds 90%. Schedule this script using a cron job with an hourly interval: <code>0 * * * * /path/to/disk_monitor.sh</code>.</p></div></details>
+            <details><summary>3. User wants to install multiple packages with one command.</summary><div class="answer-content"><p>Create a script (e.g., <code>setup.sh</code>) that lists all the <code>apt install</code> or <code>yum install</code> commands with the <code>-y</code> flag. The user simply runs <code>./setup.sh</code> once, and all packages are installed unattended.</p></div></details>
+            <details><summary>4. Team repeatedly checks CPU and memory manually. Explain improvement.</summary><div class="answer-content"><p>Build a monitoring script using <code>top</code>, <code>free</code>, and <code>mpstat</code> that outputs a clean, formatted report. The team can run one script instead of typing five different commands, or the script can append data to a central log file for historical analysis.</p></div></details>
+            <details><summary>5. Admin wants to reduce human errors during repetitive tasks. How can Bash help?</summary><div class="answer-content"><p>By converting the task into a script, the admin ensures the exact same commands, flags, and sequences are used every time. This removes variables like fatigue, typos, or forgotten steps, guaranteeing consistent and error-free execution.</p></div></details>
+        </section>
+
+        <!-- PART V -->
+        <section id="part5">
+            <h2>PART V: INTERVIEW QUESTIONS AND ANSWERS</h2>
+
+            <details><summary>Q1: What is the difference between <code>./script.sh</code> and <code>source script.sh</code>?</summary><div class="answer-content"><p><code>./script.sh</code> executes the script in a <strong>subshell</strong> (a separate process). Any variables created or modified inside the script are destroyed when the script finishes and do not affect the parent terminal.<br><br><code>source script.sh</code> (or <code>. script.sh</code>) executes the script in the <strong>current shell environment</strong>. Variables and functions defined in the script remain active in your terminal after execution. This is commonly used for applying changes to <code>~/.bashrc</code>.</p></div></details>
+
+            <details><summary>Q2: What happens if a Bash script lacks the shebang (<code>#!/bin/bash</code>)?</summary><div class="answer-content"><p>If you run it using <code>bash script.sh</code>, nothing happens because you explicitly invoked Bash. However, if you run it using <code>./script.sh</code>, the system will use your default shell (defined by <code>$SHELL</code>, which might be <code>sh</code>, <code>zsh</code>, or <code>dash</code>). Since Bash contains features not present in POSIX <code>sh</code>, the script will likely throw syntax errors.</p></div></details>
+
+            <details><summary>Q3: How do you debug a Bash script?</summary><div class="answer-content"><p>The most common method is using the <code>-x</code> flag: <code>bash -x script.sh</code>. This prints each command and its arguments to standard error before it is executed, allowing you to trace the flow and see exactly where logic or variable expansion fails.<br><br>Alternatively, you can add <code>set -x</code> at the top of the script to enable debugging for the whole file, or wrap specific sections between <code>set -x</code> and <code>set +x</code>.</p></div></details>
+
+            <details><summary>Q4: Explain Exit Status codes in Bash scripting.</summary><div class="answer-content"><p>Every command executed in Bash returns an exit status (an integer between 0 and 255) to the system. An exit status of <strong>0</strong> indicates <strong>success</strong>. Any non-zero exit status (1-255) indicates <strong>failure</strong>. You can check the exit status of the last run command using the special variable <code>$?</code>. This is fundamental for chaining commands conditionally (e.g., <code>command1 && command2</code>).</p></div></details>
+
+            <details><summary>Q5: What is the significance of <code>set -e</code> in a Bash script?</summary><div class="answer-content"><p>Adding <code>set -e</code> at the top of a script tells Bash to exit immediately if any command exits with a non-zero status (fails). Without it, Bash will execute the next line regardless of whether the previous line failed, which can be dangerous in scripts handling backups or deletions.</p></div></details>
+        </section>
+
+    </div>
+    <footer style="text-align: center; padding: 20px; color: var(--text-secondary); border-top: 1px solid var(--border-color); margin-top: 30px;">
+        Bash Scripting Fundamentals &copy; 2023 | Advanced Administration Notes
+    </footer>
+</body>
+</html>

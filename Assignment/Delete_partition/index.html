@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deleting Partitions in Linux - Comprehensive Notes</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --container-bg: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #f0883e;
+            --accent-purple: #bc8cff;
+            --accent-red: #f85149;
+            --accent-cyan: #39d353;
+            --border-color: #30363d;
+            --code-bg: #0d1117;
+            --card-bg: #21262d;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color); color: var(--text-primary);
+            line-height: 1.6; -webkit-font-smoothing: antialiased;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        header {
+            background: linear-gradient(135deg, #161b22 0%, #1a2332 100%);
+            border-bottom: 3px solid var(--accent-red); padding: 2rem 1rem;
+            text-align: center; border-radius: 0 0 15px 15px; margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        header h1 { color: var(--accent-red); font-family: 'Courier New', Courier, monospace; font-size: 2.2rem; margin-bottom: 1rem; }
+        nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        nav a {
+            background-color: var(--card-bg); color: var(--accent-blue);
+            padding: 8px 15px; border-radius: 20px; text-decoration: none;
+            font-size: 0.85rem; font-weight: bold; border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        nav a:hover { background-color: var(--accent-blue); color: var(--bg-color); transform: translateY(-2px); }
+        section {
+            background-color: var(--container-bg); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 25px; margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        h2 {
+            color: var(--accent-blue); font-size: 1.8rem;
+            border-bottom: 2px solid var(--border-color); padding-bottom: 10px;
+            margin-bottom: 20px; font-family: 'Courier New', Courier, monospace;
+        }
+        h3 {
+            color: var(--accent-purple); font-size: 1.3rem; margin-top: 25px;
+            margin-bottom: 15px; padding-left: 10px; border-left: 4px solid var(--accent-purple);
+        }
+        .step-card, .command-card {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 15px; margin-bottom: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .step-card:hover, .command-card:hover {
+            transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-color: var(--accent-blue);
+        }
+        .step-card h3 { color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 0; }
+        .rationale { font-size: 0.9rem; color: var(--text-secondary); margin-top: 10px; font-style: italic; }
+        .rationale strong { color: var(--accent-orange); }
+        code {
+            font-family: 'Courier New', Courier, monospace; background-color: var(--code-bg);
+            padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: var(--accent-orange);
+        }
+        pre {
+            background-color: var(--code-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 12px; overflow-x: auto; margin: 10px 0;
+            font-family: 'Courier New', Courier, monospace; color: var(--accent-green); font-size: 0.9em;
+        }
+        details {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; margin-bottom: 8px; overflow: hidden;
+        }
+        summary {
+            padding: 12px 15px; font-weight: bold; color: var(--accent-blue);
+            cursor: pointer; list-style: none; display: flex; justify-content: space-between;
+            align-items: center; transition: background-color 0.2s;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: '►'; color: var(--text-secondary); font-size: 0.8rem; transition: transform 0.2s; }
+        details[open] summary::after { transform: rotate(90deg); }
+        details[open] summary { background-color: rgba(88, 166, 255, 0.1); border-bottom: 1px solid var(--border-color); }
+        .answer-content { padding: 15px; color: var(--text-primary); }
+        .answer-content ul { margin-left: 20px; margin-top: 10px; }
+        .answer-content li { margin-bottom: 5px; }
+        .table-container { overflow-x: auto; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background-color: var(--code-bg); color: var(--accent-purple); font-family: 'Courier New', Courier, monospace; font-weight: bold; }
+        tr:hover { background-color: rgba(255, 255, 255, 0.03); }
+        .highlight { color: var(--accent-red); font-weight: bold; }
+        .badge {
+            display: inline-block; padding: 3px 8px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: bold; text-transform: uppercase;
+        }
+        .badge-danger { background-color: var(--accent-red); color: white; }
+        .badge-tip { background-color: var(--accent-green); color: black; }
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            header h1 { font-size: 1.5rem; }
+            nav a { font-size: 0.75rem; padding: 6px 10px; }
+            section { padding: 15px; }
+            h2 { font-size: 1.4rem; }
+            pre { font-size: 0.8rem; }
+            th, td { padding: 8px 10px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🗑️ DELETING PARTITIONS IN LINUX</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Safe Unmounting, fstab Cleanup & fdisk Management</p>
+        <nav>
+            <a href="#part1">Part I: Procedure</a>
+            <a href="#part2">Part II: Commands</a>
+            <a href="#part3">Part III: Alternatives</a>
+            <a href="#part4">Part IV: Assignment Q&A</a>
+            <a href="#part5">Part V: Interview</a>
+        </nav>
+    </header>
+    <div class="container">
+
+        <!-- PART I -->
+        <section id="part1">
+            <h2>PART I: STEP-BY-STEP PROCEDURE - PARTITION DELETION LIFECYCLE</h2>
+            
+            <div class="step-card">
+                <h3>STEP 1: Identify and Unmount</h3>
+                <p>Verify if the partition is mounted using <code>df -h</code> or <code>findmnt</code>. If mounted, unmount it using <code>umount</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> Deleting a mounted partition will cause data corruption, kernel panics, or immediate system crashes if the system tries to read/write to a suddenly missing block device.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 2: Resolve "Target is Busy"</h3>
+                <p>If <code>umount</code> fails, find processes using the mount point with <code>lsof</code> or <code>fuser</code> and terminate them safely.</p>
+                <p class="rationale"><strong>Rationale:</strong> Linux refuses to unmount filesystems in use to prevent data loss. Forcing without investigation risks corrupting open files.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 3: Clean up /etc/fstab</h3>
+                <p>Remove or comment out the corresponding entry in <code>/etc/fstab</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> If the entry remains, the system will enter Emergency Mode on the next boot because it expects a device that no longer exists.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 4: Delete via fdisk</h3>
+                <p>Open <code>fdisk /dev/sdX</code>, use the <code>d</code> command, select the partition number, and write changes with <code>w</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> This modifies the partition table on the disk, marking that space as unallocated.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 5: Inform the Kernel</h3>
+                <p>Run <code>partprobe</code> or <code>udevadm settle</code> to force the kernel to re-read the partition table.</p>
+                <p class="rationale"><strong>Rationale:</strong> The kernel retains the old partition table in memory. Without signaling it, the deleted partition device file (e.g., <code>/dev/sdb1</code>) may persist until reboot.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 6: Verify</h3>
+                <p>Use <code>lsblk</code> or <code>fdisk -l</code> to confirm the partition is gone.</p>
+                <p class="rationale"><strong>Rationale:</strong> Ensures the operation completed successfully before repurposing the freed disk space.</p>
+            </div>
+        </section>
+
+        <!-- PART II -->
+        <section id="part2">
+            <h2>PART II: COMMANDS AND EXPLANATIONS</h2>
+
+            <div class="command-card">
+                <h3><code>umount</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>umount /dev/sdXN</code> or <code>umount /mount/point</code></p>
+                <p><strong>Purpose:</strong> Detaches the filesystem from the directory hierarchy. Must be done before deletion.</p>
+                <pre>umount /dev/sdb1
+umount /mnt/data</pre>
+            </div>
+
+            <div class="command-card">
+                <h3><code>lsof</code> & <code>fuser</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>lsof +D /mount/point</code> / <code>fuser -vm /mount/point</code></p>
+                <p><strong>Purpose:</strong> Lists open files (lsof) or processes (fuser) actively using the filesystem, which prevents unmounting.</p>
+                <pre>fuser -vm /mnt/data
+lsof +D /mnt/data</pre>
+            </div>
+
+            <div class="command-card">
+                <h3><code>fdisk</code> (Deletion)</h3>
+                <p><span class="syntax">Syntax:</span> <code>fdisk /dev/sdX</code></p>
+                <p><strong>Purpose:</strong> Interactive utility to modify partition tables. The <code>d</code> command deletes an entry.</p>
+                <pre>fdisk /dev/sdb
+Command (m for help): d
+Partition number (1-4): 1
+Command (m for help): w</pre>
+            </div>
+
+            <div class="command-card">
+                <h3><code>partprobe</code> & <code>udevadm settle</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>partprobe /dev/sdX</code> / <code>udevadm settle</code></p>
+                <p><strong>Purpose:</strong> Informs the OS kernel of partition table changes, updating device mappings immediately without a reboot.</p>
+            </div>
+
+            <div class="command-card">
+                <h3><code>mount -a</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>mount -a</code></p>
+                <p><strong>Purpose:</strong> Mounts all filesystems mentioned in <code>/etc/fstab</code>. Used to test fstab syntax after editing; if it fails silently, the config is likely correct.</p>
+            </div>
+        </section>
+
+        <!-- PART III -->
+        <section id="part3">
+            <h2>PART III: ALTERNATIVE COMMANDS & METHODS</h2>
+
+            <details><summary>1. Unmounting: <code>umount -l</code> (Lazy) vs <code>umount -f</code> (Force)</summary><div class="answer-content">
+                <ul>
+                    <li><code>umount -l</code> (Lazy): Detaches the filesystem from the hierarchy immediately, but waits for processes to finish to clean up references. <strong>Safe for NFS.</strong></li>
+                    <li><code>umount -f</code> (Force): Forces unmount. Can cause data corruption on local disks if processes are actively writing. Primarily meant for unreachable NFS shares.</li>
+                </ul>
+            </div></details>
+
+            <details><summary>2. Partition Deletion Tools: <code>fdisk</code> vs <code>gdisk</code> vs <code>parted</code></summary><div class="answer-content">
+                <ul>
+                    <li><code>fdisk</code>: For MBR partition tables.</li>
+                    <li><code>gdisk</code>: For GPT partition tables.</li>
+                    <li><code>parted</code>: Handles both MBR and GPT. Can be scripted easily (<code>parted /dev/sdb rm 1</code>).</li>
+                </ul>
+            </div></details>
+
+            <details><summary>3. Informing the Kernel: <code>partprobe</code> vs <code>partx</code> vs <code>udevadm settle</code></summary><div class="answer-content">
+                <ul>
+                    <li><code>partprobe</code>: Most common. Asks the kernel to re-read the partition table.</li>
+                    <li><code>partx -d /dev/sdb1</code>: Specifically tells the kernel to drop a partition device. Very precise.</li>
+                    <li><code>udevadm settle</code>: Waits for udev event queue to settle after changes. Less about forcing re-reads, more about waiting for the system to catch up.</li>
+                </ul>
+            </div></details>
+        </section>
+
+        <!-- PART IV -->
+        <section id="part4">
+            <h2>PART IV: ASSIGNMENT SOLUTIONS</h2>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan);">Section A: Short Answer Questions</h3>
+            <details><summary>1. Why check mounted partitions before deleting?</summary><div class="answer-content"><p>Deleting a mounted partition can cause data corruption, application crashes, and kernel errors because the OS assumes the block device is still available for I/O operations.</p></div></details>
+            <details><summary>2. Command to list mounted partitions?</summary><div class="answer-content"><p><code>df -h</code>, <code>findmnt</code>, or <code>mount | grep sdX</code>.</p></div></details>
+            <details><summary>3. What does df -h show?</summary><div class="answer-content"><p>Displays free and used disk space for all currently mounted filesystems in human-readable format (KB, MB, GB).</p></div></details>
+            <details><summary>4. Purpose of umount?</summary><div class="answer-content"><p>To logically detach a filesystem from the Linux directory tree, making it inaccessible and safe for modification or removal.</p></div></details>
+            <details><summary>5. Can you delete a mounted partition?</summary><div class="answer-content"><p>Technically, <code>fdisk</code> might let you, but it is <strong>highly dangerous</strong>. The kernel will still try to use the now-deleted boundaries, leading to immediate corruption or a system crash. You must unmount first.</p></div></details>
+            <details><summary>6. Error if partition is in use while unmounting?</summary><div class="answer-content"><p><code>umount: /mount/point: target is busy</code> (or similar).</p></div></details>
+            <details><summary>7. Command to find processes using a partition?</summary><div class="answer-content"><p><code>fuser -vm /mount/point</code> or <code>lsof +D /mount/point</code>.</p></div></details>
+            <details><summary>8. Use of lsof?</summary><div class="answer-content"><p>Lists Open Files. It identifies which processes have files open on a specific mount point, preventing unmounting.</p></div></details>
+            <details><summary>9. What does fuser -vm do?</summary><div class="answer-content"><p>Displays the PIDs, users, and commands of processes accessing the specified file or filesystem, with verbose and human-readable output.</p></div></details>
+            <details><summary>10. Role of /etc/fstab?</summary><div class="answer-content"><p>File System Table. Defines how and where partitions should be automatically mounted during boot.</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section B: Medium Answer Questions</h3>
+            <details><summary>1. Steps to unmount a partition.</summary><div class="answer-content"><p>1. Verify it is mounted: <code>df -h</code>. 2. Ensure no users/processes are inside it: <code>cd /</code>. 3. Run <code>umount /mount/point</code>. 4. Verify with <code>df -h</code>.</p></div></details>
+            <details><summary>2. Handle "target is busy" error.</summary><div class="answer-content"><p>1. Run <code>fuser -vm /mount/point</code> to find the PID. 2. Kill the process: <code>kill -9 PID</code>. 3. Try <code>umount</code> again. 4. If desperate and safe, use lazy unmount: <code>umount -l /mount/point</code>.</p></div></details>
+            <details><summary>3. Why remove fstab entries before deletion?</summary><div class="answer-content"><p>If you delete the partition but leave the fstab entry, the system will try to mount a non-existent device at boot. This drops the system into Emergency Mode/Recovery Shell, halting the boot process.</p></div></details>
+            <details><summary>4. How to test /etc/fstab after editing?</summary><div class="answer-content"><p>Run <code>sudo mount -a</code>. If it outputs no errors, the syntax and device paths are valid.</p></div></details>
+            <details><summary>5. Role of mount -a?</summary><div class="answer-content"><p>It reads <code>/etc/fstab</code> and mounts all filesystems defined there that are not currently mounted. It serves as a validation test for fstab changes.</p></div></details>
+            <details><summary>6. Deleting a partition using fdisk.</summary><div class="answer-content"><pre>sudo fdisk /dev/sdb
+Command: d       # Delete
+Partition #: 1   # Select partition
+Command: w       # Write changes</pre></div></details>
+            <details><summary>7. partprobe vs udevadm settle?</summary><div class="answer-content"><p><code>partprobe</code> actively tells the kernel to re-read the partition table. <code>udevadm settle</code> waits for the udev daemon to finish processing device events after a change, ensuring device files are created/removed properly.</p></div></details>
+            <details><summary>8. Verify partition is deleted?</summary><div class="answer-content"><p>Run <code>lsblk /dev/sdb</code> or <code>fdisk -l /dev/sdb</code>. The partition should no longer be listed.</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section C: Long Answer Questions</h3>
+            <details><summary>1. Complete step-by-step process of deleting a partition.</summary><div class="answer-content"><p><strong>Step 1: Identify.</strong> <code>lsblk</code> or <code>df -h</code>. Note the device name and mount point.<br><strong>Step 2: Unmount.</strong> <code>umount /dev/sdb1</code>. Handle busy errors with <code>fuser</code>.<br><strong>Step 3: Edit fstab.</strong> Remove the line from <code>/etc/fstab</code>. Run <code>mount -a</code> to test.<br><strong>Step 4: Delete.</strong> <code>fdisk /dev/sdb</code> -> <code>d</code> -> <code>1</code> -> <code>w</code>.<br><strong>Step 5: Update Kernel.</strong> <code>partprobe /dev/sdb</code>.<br><strong>Step 6: Verify.</strong> <code>lsblk</code>.</p></div></details>
+            <details><summary>2. Importance of unmounting/fstab removal before deletion.</summary><div class="answer-content"><p><strong>Unmounting:</strong> Prevents data corruption. If deleted while mounted, the kernel might try to write buffered data to sectors that no longer exist, causing I/O errors and potential filesystem damage.<br><strong>Fstab removal:</strong> Prevents boot failure. The <code>local-fs.target</code> systemd unit will wait indefinitely for a missing device, ultimately forcing the system into emergency mode.</p></div></details>
+            <details><summary>3. How Linux handles disk changes after deleting a partition.</summary><div class="answer-content"><p>The partition table is stored on the disk, while the kernel maintains an in-memory representation. <code>fdisk w</code> updates the disk. <code>partprobe</code> forces the kernel to flush its memory and re-read the disk. The udev daemon detects the removal event and deletes the <code>/dev/sdXN</code> device file.</p></div></details>
+            <details><summary>4. Troubleshooting if partition cannot be unmounted.</summary><div class="answer-content"><p>1. Check working directory: Ensure your shell isn't inside the mount point.<br>2. <code>fuser -vm /mount</code>: Find and kill processes.<br>3. <code>lsof +D /mount</code>: Find open files.<br>4. Check for nested mounts: Unmount sub-mounts first.<br>5. Last resort: <code>umount -l</code> (Lazy unmount).</p></div></details>
+            <details><summary>5. Workflow from checking partitions to final verification.</summary><div class="answer-content"><p>Check (<code>lsblk</code>) -> Unmount (<code>umount</code>) -> Resolve Conflicts (<code>fuser</code>) -> Clean fstab (<code>vi</code> + <code>mount -a</code>) -> Delete (<code>fdisk d</code>) -> Update Kernel (<code>partprobe</code>) -> Verify (<code>lsblk</code>).</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section D: Practical / Command-Based Questions</h3>
+            <details><summary>1. List all mounted partitions.</summary><div class="answer-content"><pre>df -h</pre></div></details>
+            <details><summary>2. Unmount by device name and mount point.</summary><div class="answer-content"><pre>umount /dev/sdb1   # By device
+umount /mnt/data   # By mount point</pre></div></details>
+            <details><summary>3. Check process using partition.</summary><div class="answer-content"><pre>fuser -vm /mnt/data</pre></div></details>
+            <details><summary>4. Kill processes using partition.</summary><div class="answer-content"><pre>fuser -km /mnt/data  # -k kills, -m specifies mount</pre></div></details>
+            <details><summary>5. Delete partition using fdisk.</summary><div class="answer-content"><pre>fdisk /dev/sdb
+d
+1
+w</pre></div></details>
+            <details><summary>6. Open, View, Delete, Save in fdisk.</summary><div class="answer-content"><pre>sudo fdisk /dev/sdb  # Open
+p                    # View/Print
+d                    # Delete
+w                    # Save/Write</pre></div></details>
+            <details><summary>7. Inform kernel about changes.</summary><div class="answer-content"><pre>sudo partprobe /dev/sdb</pre></div></details>
+            <details><summary>8. Verify deletion.</summary><div class="answer-content"><pre>lsblk /dev/sdb
+# OR
+fdisk -l /dev/sdb</pre></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section E: Scenario-Based Questions</h3>
+            <details><summary>1. Unable to unmount due to "target is busy". Steps?</summary><div class="answer-content"><p>1. Use <code>fuser -vm /mount</code> to see the PIDs.<br>2. If it's a shell, <code>cd /</code> out of the directory.<br>3. If it's a service, stop it: <code>systemctl stop servicename</code>.<br>4. If it's a rogue process, kill it: <code>kill -9 PID</code>.<br>5. Retry <code>umount</code>.</p></div></details>
+            <details><summary>2. Deleted partition still appears. Issue?</summary><div class="answer-content"><p>The kernel has not updated its in-memory partition table. Run <code>partprobe /dev/sdX</code> to force a re-read.</p></div></details>
+            <details><summary>3. Boot error after deleting partition. Reason?</summary><div class="answer-content"><p>The deleted partition's entry remains in <code>/etc/fstab</code>. Boot into emergency mode, remount root as read-write (<code>mount -o remount,rw /</code>), edit fstab to remove the entry, and reboot.</p></div></details>
+            <details><summary>4. Forgot to remove fstab entry before deletion. Problem?</summary><div class="answer-content"><p>System will fail to boot normally. It will drop into emergency mode because systemd cannot find the device defined in fstab.</p></div></details>
+            <details><summary>5. Safely delete partition in production.</summary><div class="answer-content"><p>1. Ensure backups exist. 2. Schedule downtime if the partition is heavily used. 3. Unmount gracefully. 4. Remove fstab. 5. Delete via fdisk. 6. Run partprobe. 7. Verify with lsblk.</p></div></details>
+        </section>
+
+        <!-- PART V -->
+        <section id="part5">
+            <h2>PART V: INTERVIEW QUESTIONS AND ANSWERS</h2>
+
+            <details><summary>Q1: What is the difference between <code>umount -f</code> and <code>umount -l</code>?</summary><div class="answer-content"><p><code>-f</code> (Force) immediately unmounts but risks data corruption if writes are pending; used mainly for dead NFS shares. <code>-l</code> (Lazy) marks the filesystem as unmounted immediately so new processes can't access it, but waits for existing processes to release it before cleaning up; much safer for local disks.</p></div></details>
+
+            <details><summary>Q2: How do you delete a partition non-interactively (for scripting)?</summary><div class="answer-content"><pre>parted /dev/sdb rm 1</pre><p>This deletes partition 1 on /dev/sdb without entering an interactive menu.</p></div></details>
+
+            <details><summary>Q3: You deleted a partition but the device file <code>/dev/sdb1</code> still exists. Why?</summary><div class="answer-content"><p>udev relies on kernel events. If the kernel hasn't re-read the partition table, it still thinks the partition exists. Run <code>partprobe</code> or use <code>partx -d -n 1 /dev/sdb</code> to explicitly tell the kernel to drop the partition.</p></div></details>
+
+            <details><summary>Q4: If you delete a swap partition, what must you also do?</summary><div class="answer-content"><p>Besides unmounting/removing from <code>/etc/fstab</code>, you must also run <code>swapoff /dev/sdXN</code> before deleting it, and remove any resume references in grub or initramfs if it was used for hibernate.</p></div></details>
+
+            <details><summary>Q5: Explain how to recover if you accidentally delete the wrong partition.</summary><div class="answer-content"><p>If you haven't run <code>partprobe</code> or formatted over it, you can often recover by running <code>fdisk</code> and recreating the partition with the <strong>exact same starting sector</strong> as the deleted one. Since the data wasn't overwritten, the filesystem will usually reappear intact.</p></div></details>
+        </section>
+
+    </div>
+    <footer style="text-align: center; padding: 20px; color: var(--text-secondary); border-top: 1px solid var(--border-color); margin-top: 30px;">
+        Linux Partition Management &copy; 2023 | Advanced Administration Notes
+    </footer>
+</body>
+</html>

@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Section 6 — Network Management</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --navy:    #08192E;
+    --blue:    #1565C0;
+    --sky:     #0288D1;
+    --teal:    #00796B;
+    --green:   #2E7D32;
+    --orange:  #E65100;
+    --red:     #B71C1C;
+    --purple:  #6A1B9A;
+    --cyan:    #00838F;
+    --amber:   #F57F17;
+    --bg:      #F0F5FB;
+    --surface: #FFFFFF;
+    --surf2:   #E8F1FA;
+    --border:  #C5D5EC;
+    --text:    #0C1A2E;
+    --text2:   #253850;
+    --text3:   #4E6278;
+    --codebg:  #091520;
+    --sh-s:    0 1px 4px rgba(8,25,46,.07);
+    --sh-m:    0 4px 16px rgba(8,25,46,.10);
+    --sh-l:    0 12px 40px rgba(8,25,46,.14);
+    --r:       14px;
+    --rs:      9px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; }
+  ::-webkit-scrollbar { width: 6px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ══ HERO ══ */
+  .hero {
+    background: linear-gradient(145deg, #040E1C 0%, #081C38 28%, #0A2D55 58%, #0E3D70 100%);
+    padding: 66px 24px 54px; text-align: center; position: relative; overflow: hidden;
+  }
+  .hero::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 20% 60%, rgba(2,136,209,.22) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(0,121,107,.15) 0%, transparent 48%),
+                radial-gradient(ellipse at 50% 100%, rgba(21,101,192,.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero-in { position: relative; z-index: 1; }
+  .h-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.18);
+    color: #81D4FA; font-size: .72rem; font-weight: 700; letter-spacing: .14em;
+    text-transform: uppercase; padding: 7px 20px; border-radius: 100px; margin-bottom: 20px;
+  }
+  .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; color: #fff; letter-spacing: -.03em; line-height: 1.15; margin-bottom: 13px; }
+  .hero h1 em { font-style: normal; color: #4FC3F7; }
+  .hero p { font-size: .97rem; color: #81D4FA; max-width: 620px; margin: 0 auto 26px; line-height: 1.7; }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .chip { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.15); color: #B3E5FC; font-size: .75rem; font-weight: 500; padding: 5px 14px; border-radius: 100px; }
+
+  /* ══ STICKY NAV ══ */
+  .nav { position: sticky; top: 0; z-index: 200; background: rgba(255,255,255,.94); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); box-shadow: var(--sh-s); }
+  .nav-in { max-width: 1180px; margin: 0 auto; display: flex; align-items: center; gap: 2px; height: 50px; padding: 0 20px; overflow-x: auto; white-space: nowrap; }
+  .nav-in a { text-decoration: none; color: var(--text2); font-size: .79rem; font-weight: 500; padding: 5px 12px; border-radius: 100px; transition: all .15s; flex-shrink: 0; }
+  .nav-in a:hover { background: var(--surf2); color: var(--sky); }
+  .ndot { color: var(--border); margin: 0 1px; flex-shrink: 0; }
+
+  /* ══ LAYOUT ══ */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 22px 90px; }
+
+  /* ══ INTRO GRID ══ */
+  .ig { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 13px; margin-bottom: 36px; }
+  .ic { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; display: flex; gap: 13px; align-items: flex-start; box-shadow: var(--sh-s); }
+  .ic .io { font-size: 1.6rem; flex-shrink: 0; }
+  .ic h3 { font-size: .72rem; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: .09em; margin-bottom: 4px; }
+  .ic p { font-size: .84rem; color: var(--text2); line-height: 1.6; }
+
+  /* ══ CMD CARD ══ */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-m); margin-bottom: 38px; overflow: hidden; }
+
+  /* Header themes */
+  .h-ifconfig { background: linear-gradient(135deg, #0D2547, #1565C0); }
+  .h-ip       { background: linear-gradient(135deg, #0A2A3A, #0277BD); }
+  .h-ping     { background: linear-gradient(135deg, #1A2A0A, #558B2F); }
+  .h-netstat  { background: linear-gradient(135deg, #2A0A0A, #B71C1C); }
+  .h-ss       { background: linear-gradient(135deg, #1A0A2A, #6A1B9A); }
+  .h-trace    { background: linear-gradient(135deg, #2A1A0A, #E65100); }
+  .h-dns      { background: linear-gradient(135deg, #0A2020, #00695C); }
+  .h-wget     { background: linear-gradient(135deg, #001A2A, #00838F); }
+  .h-curl     { background: linear-gradient(135deg, #1A1A00, #F57F17); }
+  .h-scp      { background: linear-gradient(135deg, #0A001A, #4527A0); }
+  .h-ssh      { background: linear-gradient(135deg, #1A0010, #880E4F); }
+  .h-ftp      { background: linear-gradient(135deg, #001A1A, #006064); }
+
+  .ch { padding: 20px 26px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .cm { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 700; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 8px; padding: 5px 16px; flex-shrink: 0; }
+  .c-ifconfig { color: #82B1FF; }
+  .c-ip       { color: #40C4FF; }
+  .c-ping     { color: #CCFF90; }
+  .c-netstat  { color: #FF8A80; }
+  .c-ss       { color: #E040FB; }
+  .c-trace    { color: #FFAB40; }
+  .c-dns      { color: #64FFDA; }
+  .c-wget     { color: #80D8FF; }
+  .c-curl     { color: #FFD740; }
+  .c-scp      { color: #B388FF; }
+  .c-ssh      { color: #F48FB1; }
+  .c-ftp      { color: #80CBC4; }
+
+  .cmeta { flex: 1; min-width: 180px; }
+  .clabel { color: rgba(255,255,255,.5); font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .cdesc  { color: #fff; font-size: .93rem; font-weight: 600; margin-top: 2px; }
+
+  .cb { padding: 26px; }
+
+  /* ══ SECTION LABELS ══ */
+  .sl { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin: 28px 0 12px; }
+  .sl:first-of-type { margin-top: 0; }
+  .sn { width: 27px; height: 27px; border-radius: 50%; background: var(--blue); color: #fff; font-size: .67rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .st { font-size: .97rem; font-weight: 700; color: var(--text); }
+  .sub { font-size: .73rem; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: .09em; margin: 16px 0 7px; }
+  .desc { font-size: .875rem; color: var(--text2); line-height: 1.82; margin-bottom: 10px; }
+
+  /* ══ INLINE CODE ══ */
+  .ic2 { font-family: 'JetBrains Mono', monospace; background: #E3F2FD; color: #B71C1C; padding: 2px 7px; border-radius: 4px; font-size: .79rem; border: 1px solid #BBDEFB; }
+
+  /* ══ CODE BLOCK ══ */
+  .cw { margin-bottom: 14px; border-radius: var(--rs); overflow: hidden; }
+  .ct { background: #101E2E; padding: 7px 15px; display: flex; align-items: center; justify-content: space-between; font-size: .68rem; font-weight: 700; color: #3D6080; letter-spacing: .09em; text-transform: uppercase; }
+  .ct .lang { color: #29B6F6; }
+  pre.p { background: var(--codebg); padding: 17px 20px; overflow-x: auto; margin: 0; border-top: 1px solid #162436; }
+  pre.p code { font-family: 'JetBrains Mono', monospace; font-size: .79rem; line-height: 1.88; color: #90CAF9; background: none; padding: 0; }
+  .c  { color: #57A65A; }
+  .k  { color: #FF8A80; font-weight: 600; }
+  .cm2{ color: #64B5F6; }
+  .fl { color: #FFCC80; }
+  .st2{ color: #A5D6A7; }
+  .sc { color: #CE93D8; font-weight: 600; }
+  .di { color: #FFD54F; }
+  .nu { color: #80CBC4; }
+  .url{ color: #80DEEA; }
+  .out{ color: #78909C; }
+
+  /* ══ FLAG TABLE ══ */
+  .tw { overflow-x: auto; border-radius: var(--rs); border: 1px solid var(--border); margin-bottom: 13px; }
+  table.ft { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  table.ft thead tr { background: linear-gradient(90deg, #0D2547, #1565C0); }
+  table.ft thead th { padding: 10px 13px; color: #fff; font-size: .71rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; text-align: left; border: none; white-space: nowrap; }
+  table.ft tbody tr:nth-child(odd)  { background: #FAFCFF; }
+  table.ft tbody tr:nth-child(even) { background: #EEF4FB; }
+  table.ft tbody tr:hover { background: #DBE9F8; }
+  table.ft td { padding: 9px 13px; border-bottom: 1px solid #DDEAF8; vertical-align: top; color: var(--text2); line-height: 1.5; }
+  table.ft td:first-child { font-family: 'JetBrains Mono', monospace; font-size: .75rem; font-weight: 600; color: #B71C1C; white-space: nowrap; border-right: 1px solid var(--border); }
+  table.ft td:last-child  { font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: #37474F; background: rgba(0,0,0,.015); }
+  table.ft .cat td { background: linear-gradient(90deg, #E3EAF8, #EEF4FB) !important; font-weight: 700; font-size: .71rem; color: var(--navy); text-transform: uppercase; letter-spacing: .07em; padding: 7px 13px; font-family: 'Inter', sans-serif; }
+
+  /* ══ CALLOUTS ══ */
+  .box { display: flex; gap: 12px; align-items: flex-start; padding: 13px 17px; border-radius: var(--rs); margin-bottom: 10px; font-size: .86rem; line-height: 1.7; }
+  .box .bi { font-size: 1.05rem; flex-shrink: 0; margin-top: 1px; }
+  .box strong { display: block; margin-bottom: 2px; font-size: .82rem; }
+  .box.info   { background: #E3F2FD; border-left: 4px solid #1E88E5; color: #0D2B4E; }
+  .box.tip    { background: #E8F5E9; border-left: 4px solid #43A047; color: #1B5E20; }
+  .box.warn   { background: #FFF8E1; border-left: 4px solid #F9A825; color: #4E342E; }
+  .box.danger { background: #FEEBEA; border-left: 4px solid #E53935; color: #7F1D1D; }
+  .box.purple { background: #F3E5F5; border-left: 4px solid #8E24AA; color: #3E0D5C; }
+  .box.teal   { background: #E0F2F1; border-left: 4px solid #00897B; color: #004D40; }
+  .box.cyan   { background: #E0F7FA; border-left: 4px solid #00838F; color: #004D40; }
+
+  /* ══ Q&A ══ */
+  .qs { display: flex; flex-direction: column; gap: 11px; }
+  .qa { border-radius: var(--rs); overflow: hidden; border: 1px solid var(--border); box-shadow: var(--sh-s); }
+  .qq { background: linear-gradient(90deg, #0D2547, #183D73); padding: 12px 15px; display: flex; gap: 10px; align-items: flex-start; font-size: .85rem; font-weight: 600; color: #E3F2FD; }
+  .qb { background: rgba(255,255,255,.14); color: #64B5F6; font-size: .67rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+  .qa-a { background: #fff; padding: 12px 15px 12px 33px; font-size: .85rem; color: var(--text2); line-height: 1.78; border-top: 1px solid var(--border); }
+  .qa-a .al { color: var(--teal); font-weight: 700; margin-right: 5px; }
+
+  /* ══ BULLETS ══ */
+  ul.bl { list-style: none; padding: 0; margin-bottom: 10px; }
+  ul.bl li { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid #F0F4FB; font-size: .85rem; color: var(--text2); line-height: 1.65; }
+  ul.bl li:last-child { border-bottom: none; }
+  ul.bl li::before { content: '▸'; color: var(--sky); flex-shrink: 0; margin-top: 2px; font-size: .7rem; }
+  ul.bl li strong { color: var(--text); }
+
+  /* ══ DEPRECATED BADGE ══ */
+  .dep { display: inline-flex; align-items: center; gap: 6px; background: #FFF3E0; border: 1px solid #FFB74D; color: #E65100; font-size: .72rem; font-weight: 700; padding: 3px 11px; border-radius: 100px; margin-left: 10px; }
+
+  /* ══ CHEAT SHEET ══ */
+  .cheat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-m); overflow: hidden; margin-bottom: 38px; }
+  .cheat-h { padding: 17px 24px; background: linear-gradient(135deg, #004D40, #00695C); }
+  .cheat-h h2 { color: #fff; font-size: .97rem; font-weight: 700; }
+  .cheat-h p  { color: #B2DFDB; font-size: .81rem; margin-top: 2px; }
+  table.ct2 { width: 100%; border-collapse: collapse; font-size: .81rem; }
+  table.ct2 tr { border-bottom: 1px solid #C8E6E1; }
+  table.ct2 tr:nth-child(odd)  { background: #F5FFFE; }
+  table.ct2 tr:nth-child(even) { background: #E8FAF7; }
+  table.ct2 tr:hover { background: #D0F0E8; }
+  table.ct2 td { padding: 9px 15px; vertical-align: middle; }
+  table.ct2 td:first-child { font-family: 'JetBrains Mono', monospace; color: #00695C; font-size: .76rem; font-weight: 600; border-right: 1px solid #C8E6E1; background: rgba(0,105,92,.04); width: 46%; }
+  table.ct2 td:last-child { color: var(--text2); }
+  .cts td { background: linear-gradient(90deg, #004D40, #00695C) !important; color: #fff !important; font-weight: 700 !important; font-size: .69rem !important; letter-spacing: .1em; text-transform: uppercase; font-family: 'Inter', sans-serif !important; padding: 7px 15px !important; border-bottom: none !important; }
+
+  /* ══ FINAL TIP ══ */
+  .ft2 { background: linear-gradient(135deg, #0A1A3A, #162B5C); border-radius: var(--r); padding: 26px 30px; display: flex; gap: 17px; align-items: flex-start; box-shadow: var(--sh-l); margin-bottom: 38px; }
+  .ft2 .ti { font-size: 2.1rem; flex-shrink: 0; }
+  .ft2 h3 { color: #BBDEFB; font-size: .75rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px; }
+  .ft2 p  { color: #E3F2FD; font-size: .88rem; line-height: 1.82; }
+
+  footer { text-align: center; padding: 22px; border-top: 1px solid var(--border); font-size: .75rem; color: var(--text3); }
+  footer strong { color: var(--blue); }
+
+  @media (max-width: 660px) {
+    .hero { padding: 42px 16px 36px; }
+    .wrap { padding: 20px 12px 60px; }
+    .cb { padding: 15px; }
+    table.ft td:last-child { display: none; }
+    .ft2 { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-in">
+    <div class="h-pill">🐧 Linux Commands — Interview Guide</div>
+    <h1>Section 6:<br><em>Network Management</em></h1>
+    <p>Master ifconfig, ip, ping, netstat, ss, traceroute, nslookup, dig, wget, curl, scp, ssh, and ftp — the complete network toolkit for DevOps, Data Engineering, and AI-ML infrastructure roles.</p>
+    <div class="chips">
+      <span class="chip">🌐 ifconfig / ip</span><span class="chip">📡 ping</span><span class="chip">🔌 netstat / ss</span>
+      <span class="chip">🔍 traceroute</span><span class="chip">🗺 nslookup / dig</span><span class="chip">⬇ wget / curl</span>
+      <span class="chip">🔐 scp / ssh</span><span class="chip">📁 ftp</span>
+    </div>
+  </div>
+</header>
+
+<!-- STICKY NAV -->
+<nav class="nav">
+  <div class="nav-in">
+    <a href="#ifconfig">🌐 ifconfig</a><span class="ndot">·</span>
+    <a href="#ip">🛜 ip</a><span class="ndot">·</span>
+    <a href="#ping">📡 ping</a><span class="ndot">·</span>
+    <a href="#netstat">🔌 netstat</a><span class="ndot">·</span>
+    <a href="#ss">⚡ ss</a><span class="ndot">·</span>
+    <a href="#traceroute">🔍 traceroute</a><span class="ndot">·</span>
+    <a href="#nslookup">🗺 nslookup</a><span class="ndot">·</span>
+    <a href="#dig">🔎 dig</a><span class="ndot">·</span>
+    <a href="#wget">⬇ wget</a><span class="ndot">·</span>
+    <a href="#curl">🌀 curl</a><span class="ndot">·</span>
+    <a href="#scp">📤 scp</a><span class="ndot">·</span>
+    <a href="#ssh">🔐 ssh</a><span class="ndot">·</span>
+    <a href="#ftp">📁 ftp</a><span class="ndot">·</span>
+    <a href="#cheatsheet">📋 Cheat Sheet</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <!-- Intro Cards -->
+  <div class="ig">
+    <div class="ic"><span class="io">🌐</span><div><h3>Commands Covered</h3><p>14 commands: ifconfig, ip (addr/route/link), ping, netstat, ss, traceroute, nslookup, dig, wget, curl, scp, ssh, ftp — covering full network diagnostics, file transfer, and remote access.</p></div></div>
+    <div class="ic"><span class="io">🎯</span><div><h3>Interview Relevance</h3><p>Network debugging is tested in every SRE, DevOps, and cloud role. Expect scenario questions on connectivity failures, port inspection, DNS resolution, SSH tunneling, and API testing with curl.</p></div></div>
+    <div class="ic"><span class="io">⚠️</span><div><h3>Modern vs Legacy</h3><p>ifconfig/netstat are deprecated — interviewers expect you to know BOTH and understand why ss/ip are preferred. Always mention this distinction; it signals production experience.</p></div></div>
+  </div>
+
+
+  <!-- ══════════════════════ ifconfig ══════════════════════ -->
+  <div class="card" id="ifconfig">
+    <div class="ch h-ifconfig">
+      <div class="cm c-ifconfig">ifconfig</div>
+      <div class="cmeta">
+        <div class="clabel">Network Interface</div>
+        <div class="cdesc">Display and configure network interfaces <span class="dep">⚠ DEPRECATED</span></div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">ifconfig</span> (interface configuration) displays and configures network interfaces — IP addresses, netmasks, broadcast, MAC addresses, and interface statistics. It is part of the <span class="ic2">net-tools</span> package which is deprecated on modern Linux distributions. The modern replacement is <span class="ic2">ip</span> from the <span class="ic2">iproute2</span> package.</p>
+      <p class="desc">Despite being deprecated, <span class="ic2">ifconfig</span> remains widely referenced in legacy documentation, older CI/CD scripts, Docker base images, and in interview questions where knowing the "old vs new" distinction is expected.</p>
+      <div class="box warn"><span class="bi">⚠️</span><div><strong>Deprecated — Use ip Instead</strong> ifconfig is not installed by default on modern Ubuntu (20.04+), RHEL 8+, or Debian 10+. Install with <span class="ic2">apt-get install net-tools</span>. In production scripts, always use <span class="ic2">ip</span> commands instead.</div></div>
+
+      <div class="sl"><span class="sn">2</span><span class="st">Syntax</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="cm2">ifconfig</span> <span class="fl">[interface]</span> <span class="fl">[options]</span>
+
+  <span class="c">No args</span>     — Show all active interfaces
+  <span class="c">interface</span>   — Specific interface (eth0, ens33, lo, docker0)
+  <span class="c">-a</span>          — Show ALL interfaces including inactive</code></pre></div>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Commonly Used Options</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Command</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>ifconfig</td><td>Show all active interfaces with full details</td><td>ifconfig</td></tr>
+          <tr><td>ifconfig -a</td><td>Show ALL interfaces including down ones</td><td>ifconfig -a</td></tr>
+          <tr><td>ifconfig eth0</td><td>Show specific interface details</td><td>ifconfig eth0</td></tr>
+          <tr><td>ifconfig eth0 up</td><td>Bring interface up</td><td>sudo ifconfig eth0 up</td></tr>
+          <tr><td>ifconfig eth0 down</td><td>Bring interface down</td><td>sudo ifconfig eth0 down</td></tr>
+          <tr><td>ifconfig eth0 IP</td><td>Assign IP address temporarily</td><td>sudo ifconfig eth0 192.168.1.10</td></tr>
+          <tr><td>ifconfig eth0 netmask</td><td>Set subnet mask</td><td>sudo ifconfig eth0 netmask 255.255.255.0</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Show all active network interfaces</span>
+<span class="cm2">ifconfig</span>
+<span class="out"># eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+#         inet 10.0.1.5  netmask 255.255.255.0  broadcast 10.0.1.255
+#         ether 02:42:ac:11:00:02  txqueuelen 0  (Ethernet)
+#         RX packets 1234  bytes 102400 (102.4 KB)
+#         TX packets 567   bytes 45678  (45.6 KB)</span>
+
+<span class="c"># Show specific interface only</span>
+<span class="cm2">ifconfig</span> eth0
+
+<span class="c"># Show ALL interfaces including inactive</span>
+<span class="cm2">ifconfig -a</span>
+
+<span class="c"># Get IP of a specific interface (useful in scripts)</span>
+<span class="cm2">ifconfig</span> eth0 | <span class="cm2">grep</span> <span class="st2">'inet '</span> | <span class="cm2">awk</span> <span class="st2">'{print $2}'</span></code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>Why is ifconfig deprecated and what should you use instead?</div>
+        <div class="qa-a"><span class="al">A:</span><span class="ic2">ifconfig</span> is part of the <span class="ic2">net-tools</span> package which hasn't been actively developed since 2001. It lacks support for modern Linux networking features: IPv6 (partially), network namespaces, VLANs, bonding, and advanced routing. The <span class="ic2">iproute2</span> suite (<span class="ic2">ip</span> command) is the modern replacement — actively maintained, namespace-aware, supports all modern features. Use <span class="ic2">ip addr show</span> instead of <span class="ic2">ifconfig</span>.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — Using ifconfig in new scripts</strong> Any script using <span class="ic2">ifconfig</span> will break on fresh Ubuntu 20.04+ or RHEL 8+ systems where net-tools isn't installed. Always use <span class="ic2">ip addr</span> in scripts.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Interview mention</strong> When asked about <span class="ic2">ifconfig</span>, always proactively mention: "ifconfig is deprecated; I prefer <span class="ic2">ip addr show</span> in production scripts. ifconfig is still useful for quick inspection on legacy systems or when net-tools is already installed." This shows maturity.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════ ip ══════════════════════ -->
+  <div class="card" id="ip">
+    <div class="ch h-ip">
+      <div class="cm c-ip">ip</div>
+      <div class="cmeta">
+        <div class="clabel">Modern Network Management</div>
+        <div class="cdesc">ip addr · ip link · ip route — the unified iproute2 network command</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc">The <span class="ic2">ip</span> command from the <span class="ic2">iproute2</span> package is the modern, unified network management tool for Linux. It replaces <span class="ic2">ifconfig</span>, <span class="ic2">route</span>, <span class="ic2">arp</span>, and <span class="ic2">netstat</span> with a consistent, feature-rich interface. It supports network namespaces (critical for Docker/Kubernetes), IPv6, VLAN tagging, bonding, and all modern Linux networking features.</p>
+      <p class="desc">In DevOps and cloud engineering, <span class="ic2">ip</span> is used daily for: verifying assigned IPs on new cloud instances, managing routes, troubleshooting container networking, inspecting network namespaces, and writing portable network configuration scripts.</p>
+
+      <div class="sl"><span class="sn">2</span><span class="st">Syntax</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="cm2">ip</span> <span class="fl">[OPTIONS]</span> <span class="k">OBJECT</span> <span class="fl">[COMMAND]</span>
+
+  <span class="c">OBJECT</span>   — addr | link | route | neigh | rule | tunnel | netns | maddress
+  <span class="c">COMMAND</span>  — show | add | del | set | flush | replace
+  <span class="c">OPTIONS</span>  — -4 (IPv4) | -6 (IPv6) | -s (stats) | -h (human) | -j (JSON) | -br (brief)</span></code></pre></div>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Core ip Subcommands</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Command</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr class="cat"><td colspan="3">ip addr — Address Management (replaces ifconfig)</td></tr>
+          <tr><td>ip addr show</td><td>Show all interfaces with addresses</td><td>ip addr show</td></tr>
+          <tr><td>ip addr show DEV</td><td>Show specific interface</td><td>ip addr show eth0</td></tr>
+          <tr><td>ip -4 addr show</td><td>Show only IPv4 addresses</td><td>ip -4 addr show</td></tr>
+          <tr><td>ip -6 addr show</td><td>Show only IPv6 addresses</td><td>ip -6 addr show</td></tr>
+          <tr><td>ip addr add</td><td>Add IP address to interface</td><td>ip addr add 192.168.1.10/24 dev eth0</td></tr>
+          <tr><td>ip addr del</td><td>Remove IP address</td><td>ip addr del 192.168.1.10/24 dev eth0</td></tr>
+          <tr><td>ip -br addr show</td><td>Brief one-line-per-interface view</td><td>ip -br addr show</td></tr>
+          <tr class="cat"><td colspan="3">ip link — Interface Management</td></tr>
+          <tr><td>ip link show</td><td>Show all interfaces (state, MAC, MTU)</td><td>ip link show</td></tr>
+          <tr><td>ip link set DEV up</td><td>Bring interface up</td><td>sudo ip link set eth0 up</td></tr>
+          <tr><td>ip link set DEV down</td><td>Bring interface down</td><td>sudo ip link set eth0 down</td></tr>
+          <tr><td>ip link set DEV mtu</td><td>Change MTU</td><td>sudo ip link set eth0 mtu 9000</td></tr>
+          <tr class="cat"><td colspan="3">ip route — Routing Table (replaces route command)</td></tr>
+          <tr><td>ip route show</td><td>Display routing table</td><td>ip route show</td></tr>
+          <tr><td>ip route add</td><td>Add a route</td><td>ip route add 10.0.0.0/8 via 192.168.1.1</td></tr>
+          <tr><td>ip route del</td><td>Delete a route</td><td>ip route del 10.0.0.0/8</td></tr>
+          <tr><td>ip route get</td><td>Find route to specific destination</td><td>ip route get 8.8.8.8</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — Daily DevOps usage</span></div>
+      <pre class="p"><code><span class="c"># Show all interfaces with IPs (modern ifconfig replacement)</span>
+<span class="cm2">ip addr show</span>
+<span class="out"># 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536
+#     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+#     inet 127.0.0.1/8 scope host lo
+# 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500
+#     link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff
+#     inet 10.0.1.5/24 brd 10.0.1.255 scope global eth0</span>
+
+<span class="c"># Quick view — brief mode (best for scripts)</span>
+<span class="cm2">ip -br addr show</span>
+<span class="out"># lo               UNKNOWN        127.0.0.1/8
+# eth0             UP             10.0.1.5/24</span>
+
+<span class="c"># Get IP of a specific interface (scripting pattern)</span>
+<span class="cm2">ip -4 addr show</span> eth0 | <span class="cm2">grep -oP</span> <span class="st2">'(?<=inet\s)\d+(\.\d+){3}'</span>
+
+<span class="c"># Show routing table (where does traffic go?)</span>
+<span class="cm2">ip route show</span>
+<span class="out"># default via 10.0.1.1 dev eth0 proto dhcp
+# 10.0.1.0/24 dev eth0 proto kernel scope link</span>
+
+<span class="c"># Find which interface/route would be used for a destination</span>
+<span class="cm2">ip route get</span> 8.8.8.8
+<span class="out"># 8.8.8.8 via 10.0.1.1 dev eth0 src 10.0.1.5</span>
+
+<span class="c"># Show default gateway</span>
+<span class="cm2">ip route show default</span>
+<span class="cm2">ip route | grep</span> default
+
+<span class="c"># JSON output — for Ansible/Python automation</span>
+<span class="cm2">ip -j addr show</span> | <span class="cm2">python3 -m json.tool</span>
+
+<span class="c"># List network namespaces (Docker/Kubernetes debugging)</span>
+<span class="cm2">ip netns list</span>
+<span class="cm2">sudo ip netns exec</span> &lt;namespace&gt; <span class="cm2">ip addr show</span></code></pre></div>
+
+      <div class="sl"><span class="sn">5</span><span class="st">Real-World Use Cases</span></div>
+      <ul class="bl">
+        <li><strong>Cloud instance verification:</strong> After launching EC2/GCP/Azure VM, <span class="ic2">ip addr show</span> confirms the private IP assignment before configuring security groups or DNS records.</li>
+        <li><strong>Kubernetes node networking:</strong> <span class="ic2">ip route show</span> reveals pod CIDR routes added by CNI plugins (Calico, Flannel). Essential for troubleshooting pod connectivity.</li>
+        <li><strong>Docker container debugging:</strong> <span class="ic2">ip netns exec</span> allows inspecting the network namespace of a running container — equivalent to <span class="ic2">docker exec container ip addr</span>.</li>
+        <li><strong>Jumphost/bastion routing:</strong> <span class="ic2">ip route get DEST</span> quickly shows which interface and gateway would be used to reach a target — invaluable for multi-homed server debugging.</li>
+      </ul>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the modern replacement for ifconfig and what advantages does it have?</div>
+        <div class="qa-a"><span class="al">A:</span>The <span class="ic2">ip</span> command from <span class="ic2">iproute2</span>. Advantages: (1) Network namespace support — critical for Docker and Kubernetes, (2) Full IPv6 support, (3) Supports advanced features: VLANs, bonding, bridging, tunnels, (4) Consistent syntax across all network objects, (5) JSON output (<span class="ic2">ip -j</span>) for automation and parsing, (6) Actively maintained. Mapping: <span class="ic2">ifconfig</span> → <span class="ic2">ip addr</span>, <span class="ic2">route</span> → <span class="ic2">ip route</span>, <span class="ic2">arp</span> → <span class="ic2">ip neigh</span>.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q2</span>Scenario: A Kubernetes pod cannot reach the external internet. How do you debug the routing?</div>
+        <div class="qa-a"><span class="al">A:</span><strong>1.</strong> From the node: <span class="ic2">ip route get 8.8.8.8</span> — verify the host itself can route. <strong>2.</strong> Check pod network: <span class="ic2">kubectl exec -it pod -- ip route show</span>. <strong>3.</strong> Verify CNI routes: <span class="ic2">ip route show</span> on the node — CNI should have added pod CIDR routes. <strong>4.</strong> Check iptables NAT rules: <span class="ic2">iptables -t nat -L POSTROUTING -n</span> — ensure MASQUERADE/SNAT rule exists for pod CIDR. <strong>5.</strong> Test from pod network namespace directly.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — ip route get is underused</strong> <span class="ic2">ip route get 10.20.30.40</span> immediately shows which interface and gateway would handle traffic to that destination — saving minutes of routing table analysis. Essential for multi-homed servers.</div></div>
+      <div class="box info"><span class="bi">💡</span><div><strong>Shorthand</strong> <span class="ic2">ip a</span> = <span class="ic2">ip addr show</span>, <span class="ic2">ip r</span> = <span class="ic2">ip route show</span>, <span class="ic2">ip l</span> = <span class="ic2">ip link show</span>. The command accepts any unambiguous prefix of the subcommand.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════ ping ══════════════════════ -->
+  <div class="card" id="ping">
+    <div class="ch h-ping">
+      <div class="cm c-ping">ping</div>
+      <div class="cmeta">
+        <div class="clabel">Network Connectivity Test</div>
+        <div class="cdesc">Send ICMP Echo requests to test host reachability and measure latency</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">ping</span> sends ICMP (Internet Control Message Protocol) Echo Request packets to a target host and waits for Echo Reply responses. It measures round-trip time (RTT), detects packet loss, and verifies basic IP connectivity. It is the most fundamental network diagnostic tool.</p>
+      <p class="desc">Critical caveat: a host not responding to ping does NOT mean it's unreachable — many cloud firewalls and security groups block ICMP by default. Always interpret ping results in context.</p>
+
+      <div class="sl"><span class="sn">2</span><span class="st">Syntax &amp; Key Flags</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="cm2">ping</span> <span class="fl">[OPTIONS]</span> <span class="st2">HOST</span>
+
+  <span class="c">HOST</span> — IP address or hostname (e.g., google.com or 8.8.8.8)</code></pre></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>-c N</td><td>Send exactly N packets then stop (Linux default: infinite)</td><td>ping -c 4 google.com</td></tr>
+          <tr><td>-i SECS</td><td>Interval between packets (default: 1 second)</td><td>ping -i 0.2 host</td></tr>
+          <tr><td>-t TTL</td><td>Set IP Time-To-Live</td><td>ping -t 64 host</td></tr>
+          <tr><td>-s SIZE</td><td>Set packet size in bytes (default: 56)</td><td>ping -s 1472 host</td></tr>
+          <tr><td>-W SECS</td><td>Wait time for response in seconds</td><td>ping -W 2 host</td></tr>
+          <tr><td>-I IFACE</td><td>Send packets from specific interface</td><td>ping -I eth1 host</td></tr>
+          <tr><td>-q</td><td>Quiet — show only summary statistics</td><td>ping -q -c 10 host</td></tr>
+          <tr><td>-f</td><td>Flood ping — maximum speed (root only)</td><td>sudo ping -f -c 1000 host</td></tr>
+          <tr><td>-4 / -6</td><td>Force IPv4 or IPv6</td><td>ping -4 google.com</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Basic connectivity check (stops after 4 packets)</span>
+<span class="cm2">ping -c 4</span> google.com
+<span class="out"># PING google.com (142.250.80.46): 56 data bytes
+# 64 bytes from 142.250.80.46: icmp_seq=0 ttl=118 time=12.4 ms
+# --- google.com ping statistics ---
+# 4 packets transmitted, 4 received, 0% packet loss, time 3005ms
+# rtt min/avg/max/mdev = 11.8/12.4/13.1/0.5 ms</span>
+
+<span class="c"># Test internal gateway reachability</span>
+<span class="cm2">ping -c 3</span> 192.168.1.1
+
+<span class="c"># Quick test for scripting (exit 0 = reachable, exit 1 = not)</span>
+<span class="cm2">ping -c 1 -W 2</span> 8.8.8.8 &amp;&gt;/dev/null &amp;&amp; <span class="cm2">echo</span> <span class="st2">"Online"</span> || <span class="cm2">echo</span> <span class="st2">"Offline"</span>
+
+<span class="c"># Check for packet loss with more samples</span>
+<span class="cm2">ping -c 100 -q</span> database.internal
+<span class="out"># 100 packets transmitted, 98 received, 2% packet loss</span>
+
+<span class="c"># Test MTU size (detect fragmentation issues)</span>
+<span class="cm2">ping -M do -s 1472 -c 3</span> gateway.ip   <span class="c"># -M do = don't fragment</span>
+
+<span class="c"># Monitoring script — alert if host goes down</span>
+<span class="k">while</span> <span class="k">true</span>; <span class="k">do</span>
+    <span class="k">if</span> ! <span class="cm2">ping -c 1 -W 2</span> 10.0.1.5 &amp;&gt;/dev/null; <span class="k">then</span>
+        <span class="cm2">echo</span> <span class="st2">"$(date): Host 10.0.1.5 DOWN!"</span> | <span class="cm2">tee -a</span> /var/log/ping_monitor.log
+    <span class="k">fi</span>
+    <span class="cm2">sleep 30</span>
+<span class="k">done</span></code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>Ping fails to a host. Does this mean the host is down?</div>
+        <div class="qa-a"><span class="al">A:</span>Not necessarily. Multiple explanations: (1) ICMP is blocked by firewall/security group — most common in cloud (AWS blocks ICMP by default), (2) Host is reachable but OS has ICMP disabled (<span class="ic2">net.ipv4.icmp_echo_ignore_all=1</span>), (3) Network routing issue — packets can't reach the host, (4) Host is genuinely down. To distinguish: try connecting to a known open port with <span class="ic2">nc -zv host PORT</span> or <span class="ic2">curl -I http://host</span>. If those work, the host is up — ICMP is simply blocked.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q2</span>What does a high ping RTT but 0% packet loss indicate?</div>
+        <div class="qa-a"><span class="al">A:</span>Network congestion or high geographic distance — packets are arriving but the network path is slow. High RTT (>100ms for local network, >300ms for intercontinental) with 0% loss indicates: (1) routing through many hops, (2) network congestion causing queuing delays, (3) CPU overload on the target (ICMP processing is low priority). For a local datacenter, RTT should be <1ms; for cross-region AWS, 50-100ms is typical.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — Using ping without -c on Linux</strong> Linux ping runs infinitely without <span class="ic2">-c</span>. In scripts, always use <span class="ic2">ping -c N</span> or the script will hang forever waiting for Ctrl+C.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Ping exit code for scripting</strong> Ping exits with 0 if at least one reply was received, 1 if none received (unreachable), 2 for other errors. Use this in deployment health checks: <span class="ic2">ping -c 1 -W 2 $HOST || { echo "Host unreachable"; exit 1; }</span></div></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════ netstat ══════════════════════ -->
+  <div class="card" id="netstat">
+    <div class="ch h-netstat">
+      <div class="cm c-netstat">netstat</div>
+      <div class="cmeta">
+        <div class="clabel">Network Statistics</div>
+        <div class="cdesc">Display network connections, ports, routing tables, stats <span class="dep">⚠ DEPRECATED</span></div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">netstat</span> displays network connections (TCP/UDP), listening ports, routing tables, interface statistics, multicast memberships, and masquerade connections. It is part of the deprecated <span class="ic2">net-tools</span> package — the modern replacement is <span class="ic2">ss</span> which is faster and provides more information.</p>
+      <p class="desc">Despite deprecation, <span class="ic2">netstat</span> questions remain extremely common in interviews, and the flag combinations — especially <span class="ic2">-tulnp</span> — are muscle memory for experienced Linux engineers.</p>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Key Flags — The Famous Combinations</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Flag</th><th>Meaning</th><th>Why You Need It</th></tr></thead>
+        <tbody>
+          <tr><td>-t</td><td>TCP connections</td><td>Show TCP only</td></tr>
+          <tr><td>-u</td><td>UDP connections</td><td>Show UDP only</td></tr>
+          <tr><td>-l</td><td>LISTEN state only</td><td>Show what ports are OPEN/listening</td></tr>
+          <tr><td>-n</td><td>Numeric (no DNS resolution)</td><td>Faster output, shows raw IPs and ports</td></tr>
+          <tr><td>-p</td><td>Show process name/PID</td><td>Know WHICH process owns a port</td></tr>
+          <tr><td>-a</td><td>All connections</td><td>LISTEN + ESTABLISHED + others</td></tr>
+          <tr><td>-r</td><td>Routing table</td><td>Show kernel routing table</td></tr>
+          <tr><td>-s</td><td>Statistics per protocol</td><td>TCP/UDP/ICMP stats</td></tr>
+          <tr><td>-c</td><td>Continuous refresh</td><td>Live monitoring</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — The Essential netstat Patterns</span></div>
+      <pre class="p"><code><span class="c"># THE MOST IMPORTANT NETSTAT COMMAND — memorize this!</span>
+<span class="c"># Show all listening TCP/UDP ports with process names</span>
+<span class="cm2">sudo netstat -tulnp</span>
+<span class="out"># Proto Recv-Q Send-Q Local Address   Foreign Address  State      PID/Program
+# tcp        0      0 0.0.0.0:22      0.0.0.0:*        LISTEN     1234/sshd
+# tcp        0      0 0.0.0.0:80      0.0.0.0:*        LISTEN     5678/nginx
+# tcp        0      0 127.0.0.1:5432  0.0.0.0:*        LISTEN     9012/postgres</span>
+
+<span class="c"># Check if a specific port is in use</span>
+<span class="cm2">netstat -tlnp</span> | <span class="cm2">grep</span> :8080
+
+<span class="c"># Show all established connections</span>
+<span class="cm2">netstat -tn</span> | <span class="cm2">grep</span> ESTABLISHED
+
+<span class="c"># Count connections per state (load analysis)</span>
+<span class="cm2">netstat -tn</span> | <span class="cm2">awk</span> <span class="st2">'{print $6}'</span> | <span class="cm2">sort</span> | <span class="cm2">uniq -c</span> | <span class="cm2">sort -rn</span>
+<span class="out"># 128 ESTABLISHED
+# 45  TIME_WAIT
+# 12  CLOSE_WAIT</span>
+
+<span class="c"># Show routing table</span>
+<span class="cm2">netstat -rn</span>
+
+<span class="c"># Show connections to a specific remote port (e.g., database)</span>
+<span class="cm2">netstat -tn</span> | <span class="cm2">grep</span> :5432</code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>What does the -tulnp flag combination mean?</div>
+        <div class="qa-a"><span class="al">A:</span><strong>t</strong>cp + <strong>u</strong>dp + <strong>l</strong>isten + <strong>n</strong>umeric + <strong>p</strong>rocess. This single combination shows all listening TCP and UDP ports with their numeric addresses (no slow DNS lookups) and the process name/PID that owns each port. It's the first command to run when: deploying a new service (verify it's listening), debugging "port already in use" errors, or auditing which services are exposed on a server.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q2</span>What does a large number of TIME_WAIT connections indicate?</div>
+        <div class="qa-a"><span class="al">A:</span>TIME_WAIT is a TCP state where the connection has been closed but the OS keeps the socket for 2×MSL (Maximum Segment Lifetime, typically 60-120 seconds) to handle late-arriving packets. Many TIME_WAIT connections indicate high connection turnover — the server is closing many short-lived connections. In web servers, this is normal with HTTP/1.0 (no keep-alive). Mitigation: enable HTTP keep-alive, use connection pooling, or tune <span class="ic2">net.ipv4.tcp_tw_reuse=1</span> in sysctl.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box warn"><span class="bi">⚠️</span><div><strong>Always use sudo with -p flag</strong> Without sudo, <span class="ic2">netstat -p</span> shows PID/program only for processes owned by the current user. With sudo, it shows all processes. In production debugging, always run <span class="ic2">sudo netstat -tulnp</span>.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════ ss ══════════════════════ -->
+  <div class="card" id="ss">
+    <div class="ch h-ss">
+      <div class="cm c-ss">ss</div>
+      <div class="cmeta">
+        <div class="clabel">Socket Statistics — Modern netstat Replacement</div>
+        <div class="cdesc">Investigate sockets — faster, richer output than netstat</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">ss</span> (Socket Statistics) is the modern replacement for <span class="ic2">netstat</span>. It reads directly from the kernel's netlink interface, making it significantly faster than netstat (which reads from <span class="ic2">/proc/net/</span>). It shows more detailed TCP socket information including TCP internal state, timers, and congestion control data.</p>
+      <p class="desc">In production environments, <span class="ic2">ss</span> is the preferred tool for socket inspection because of its speed on servers with thousands of connections, richer filtering capabilities, and support for all modern socket types including Unix domain sockets and netlink sockets.</p>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Key Flags (mostly identical to netstat)</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>-t</td><td>TCP sockets</td><td>ss -t</td></tr>
+          <tr><td>-u</td><td>UDP sockets</td><td>ss -u</td></tr>
+          <tr><td>-l</td><td>Listening sockets only</td><td>ss -l</td></tr>
+          <tr><td>-n</td><td>Numeric addresses (no DNS lookup)</td><td>ss -n</td></tr>
+          <tr><td>-p</td><td>Show process using the socket</td><td>sudo ss -p</td></tr>
+          <tr><td>-a</td><td>All sockets (listen + established)</td><td>ss -a</td></tr>
+          <tr><td>-s</td><td>Summary statistics</td><td>ss -s</td></tr>
+          <tr><td>-e</td><td>Extended socket info (inode, uid)</td><td>ss -e</td></tr>
+          <tr><td>-i</td><td>Internal TCP info (cwnd, RTT, retransmits)</td><td>ss -ti</td></tr>
+          <tr><td>-o</td><td>Show timer info</td><td>ss -to</td></tr>
+          <tr><td>-4 / -6</td><td>IPv4 or IPv6 only</td><td>ss -4l</td></tr>
+          <tr><td>-x</td><td>Unix domain sockets</td><td>ss -x</td></tr>
+          <tr><td>dst HOST</td><td>Filter by destination host/port</td><td>ss -t dst :5432</td></tr>
+          <tr><td>src HOST</td><td>Filter by source host/port</td><td>ss -t src :80</td></tr>
+          <tr><td>state STATE</td><td>Filter by TCP state</td><td>ss -t state established</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — ss is the new netstat</span></div>
+      <pre class="p"><code><span class="c"># EQUIVALENT to netstat -tulnp — the daily driver</span>
+<span class="cm2">sudo ss -tulnp</span>
+<span class="out"># Netid  State   Recv-Q  Send-Q  Local Address:Port   Peer Address:Port  Process
+# tcp    LISTEN  0       128     0.0.0.0:22          0.0.0.0:*          users:(("sshd",pid=1234))
+# tcp    LISTEN  0       511     0.0.0.0:80          0.0.0.0:*          users:(("nginx",pid=5678))</span>
+
+<span class="c"># Summary — fastest overview of socket state counts</span>
+<span class="cm2">ss -s</span>
+<span class="out"># Total: 245
+# TCP:   228 (estab 190, closed 12, orphaned 0, timewait 26)</span>
+
+<span class="c"># Show all ESTABLISHED TCP connections</span>
+<span class="cm2">ss -tn state established</span>
+
+<span class="c"># Find which process is using port 8080</span>
+<span class="cm2">sudo ss -tlnp</span> | <span class="cm2">grep</span> :8080
+
+<span class="c"># Show all connections to PostgreSQL port (database monitoring)</span>
+<span class="cm2">ss -tn dst :5432</span>
+<span class="c"># Count them</span>
+<span class="cm2">ss -tn dst :5432</span> | <span class="cm2">wc -l</span>
+
+<span class="c"># Advanced: show TCP internal info (congestion, RTT) for debugging</span>
+<span class="cm2">ss -ti</span> dst 10.0.1.100
+<span class="out"># cubic wscale:7,7 rto:201 rtt:0.8/0.3 cwnd:10 bytes_acked:...</span>
+
+<span class="c"># Watch connections in real time (like top for sockets)</span>
+<span class="cm2">watch -n 1</span> <span class="st2">'ss -s'</span>
+
+<span class="c"># Show Unix domain sockets (useful for Docker, databases)</span>
+<span class="cm2">ss -xlp</span></code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the key difference between ss and netstat?</div>
+        <div class="qa-a"><span class="al">A:</span><span class="ic2">ss</span> reads directly from the kernel's netlink socket, while <span class="ic2">netstat</span> parses <span class="ic2">/proc/net/tcp</span>. Speed difference is dramatic at scale — on a server with 100,000 connections, <span class="ic2">netstat</span> can take 30+ seconds while <span class="ic2">ss</span> returns in under a second. Additionally, <span class="ic2">ss -i</span> provides internal TCP data (congestion window, RTT, retransmission count) that netstat can't access — invaluable for TCP performance tuning.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q2</span>Scenario: A web service is getting connection errors. How would you use ss to diagnose?</div>
+        <div class="qa-a"><span class="al">A:</span><strong>1.</strong> <span class="ic2">ss -s</span> — check TIME_WAIT and CLOSE_WAIT counts. High TIME_WAIT = connection churn; high CLOSE_WAIT = application not closing connections properly. <strong>2.</strong> <span class="ic2">ss -tlnp</span> — verify the service is still listening on the expected port. <strong>3.</strong> <span class="ic2">ss -tn state established | wc -l</span> — count active connections vs expected max. <strong>4.</strong> <span class="ic2">ss -ti</span> to see retransmission counts indicating packet loss. <strong>5.</strong> <span class="ic2">ss -tlnp | grep LISTEN | awk '{print $4}' | cut -d: -f2</span> to list all listening ports for comparison with baseline.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — ss state filtering is powerful</strong> <span class="ic2">ss -t state time-wait | wc -l</span> counts TIME_WAIT sockets. Valid states: <span class="ic2">established, syn-sent, syn-recv, fin-wait-1, fin-wait-2, time-wait, closed, close-wait, last-ack, listen, closing</span>. This granularity is not available in netstat without piping to grep.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════ traceroute ══════════════════════ -->
+  <div class="card" id="traceroute">
+    <div class="ch h-trace">
+      <div class="cm c-trace">traceroute</div>
+      <div class="cmeta">
+        <div class="clabel">Network Path Tracing</div>
+        <div class="cdesc">Trace the route packets take to a destination — identify where delays occur</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">traceroute</span> maps the network path from your machine to a destination by sending probes with incrementally increasing TTL (Time-To-Live) values. Each router along the path decrements the TTL; when it reaches 0, the router sends an ICMP "Time Exceeded" message back — revealing its IP and the latency to reach it.</p>
+      <p class="desc">In production, <span class="ic2">traceroute</span> is used to identify: which network hop is introducing latency, where packet loss is occurring, whether traffic is taking the expected path (e.g., through the intended VPN or VPC peering), and asymmetric routing issues.</p>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Key Flags</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>-n</td><td>Numeric only (skip reverse DNS — much faster)</td><td>traceroute -n 8.8.8.8</td></tr>
+          <tr><td>-T</td><td>Use TCP SYN instead of UDP (bypasses many firewalls)</td><td>traceroute -T -p 80 host</td></tr>
+          <tr><td>-I</td><td>Use ICMP Echo instead of UDP</td><td>traceroute -I host</td></tr>
+          <tr><td>-p PORT</td><td>Destination port to probe</td><td>traceroute -T -p 443 host</td></tr>
+          <tr><td>-m HOPS</td><td>Max number of hops (default: 30)</td><td>traceroute -m 15 host</td></tr>
+          <tr><td>-q N</td><td>Number of probes per hop (default: 3)</td><td>traceroute -q 1 host</td></tr>
+          <tr><td>-w SECS</td><td>Wait time for response (default: 5s)</td><td>traceroute -w 2 host</td></tr>
+          <tr><td>-i IFACE</td><td>Send from specific interface</td><td>traceroute -i eth1 host</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Basic traceroute (UDP default)</span>
+<span class="cm2">traceroute</span> google.com
+
+<span class="c"># Faster: numeric only, skip DNS lookups</span>
+<span class="cm2">traceroute -n</span> 8.8.8.8
+<span class="out"># traceroute to 8.8.8.8 (8.8.8.8), 30 hops max, 60 byte packets
+#  1  10.0.1.1    0.5 ms  0.4 ms  0.5 ms     ← default gateway
+#  2  203.0.113.1 2.1 ms  2.0 ms  2.2 ms     ← ISP router
+#  3  * * *                                   ← firewall blocking probes
+#  4  8.8.8.8    12.4 ms 12.3 ms 12.5 ms     ← destination</span>
+
+<span class="c"># TCP traceroute — bypasses ICMP/UDP firewalls</span>
+<span class="cm2">sudo traceroute -T -p 443 -n</span> github.com
+
+<span class="c"># mtr — better interactive traceroute (combines ping + traceroute)</span>
+<span class="cm2">mtr -n</span> 8.8.8.8
+<span class="c"># Continuous — shows real-time loss% at each hop</span>
+
+<span class="c"># Detect where traffic is being dropped</span>
+<span class="cm2">traceroute -n -q 1</span> database.internal</code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>What do asterisks (***) mean in traceroute output?</div>
+        <div class="qa-a"><span class="al">A:</span>Asterisks mean no response was received for that probe within the timeout period. This usually means: (1) A firewall is silently dropping ICMP Time Exceeded messages, (2) The router at that hop is configured to not respond to traceroute probes. Crucially, asterisks at intermediate hops do NOT necessarily indicate a problem — traffic may still be flowing through. Only asterisks at the FINAL destination indicate a real connectivity issue. Use <span class="ic2">traceroute -T -p 80</span> (TCP) to bypass ICMP-blocking firewalls.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q2</span>What is mtr and when is it better than traceroute?</div>
+        <div class="qa-a"><span class="al">A:</span><span class="ic2">mtr</span> (Matt's Traceroute) combines <span class="ic2">traceroute</span> and <span class="ic2">ping</span> into a continuous interactive tool. It updates live and shows packet loss percentage and RTT statistics per hop over time. It's better than traceroute when diagnosing intermittent packet loss (traceroute is a one-time snapshot; mtr shows patterns over minutes). Install: <span class="ic2">apt-get install mtr</span>. Use: <span class="ic2">mtr --report -n --report-cycles 100 HOST</span> for a 100-cycle automated report.</div></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════ nslookup ══════════════════════ -->
+  <div class="card" id="nslookup">
+    <div class="ch h-dns">
+      <div class="cm c-dns">nslookup</div>
+      <div class="cmeta">
+        <div class="clabel">DNS Query Tool</div>
+        <div class="cdesc">Query Internet name servers interactively — basic DNS lookup</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">nslookup</span> queries DNS servers to resolve hostnames to IPs and perform reverse lookups (IP to hostname). It is simpler than <span class="ic2">dig</span> and available on all platforms (Linux, Windows, macOS), making it a universal DNS diagnostic tool. For advanced DNS debugging, <span class="ic2">dig</span> is preferred.</p>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Forward lookup — hostname to IP</span>
+<span class="cm2">nslookup</span> google.com
+<span class="out"># Server:    8.8.8.8     ← DNS server used
+# Address:   8.8.8.8#53
+# Name:      google.com
+# Address:   142.250.80.46</span>
+
+<span class="c"># Reverse lookup — IP to hostname</span>
+<span class="cm2">nslookup</span> 8.8.8.8
+
+<span class="c"># Query a specific DNS server (bypass system default)</span>
+<span class="cm2">nslookup</span> google.com 1.1.1.1
+
+<span class="c"># Query specific record type</span>
+<span class="cm2">nslookup -type=MX</span> gmail.com     <span class="c"># Mail exchange records</span>
+<span class="cm2">nslookup -type=TXT</span> github.com   <span class="c"># TXT records (SPF, DKIM)</span>
+<span class="cm2">nslookup -type=NS</span> example.com   <span class="c"># Name servers</span>
+<span class="cm2">nslookup -type=CNAME</span> www.example.com  <span class="c"># CNAME alias</span></code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the difference between nslookup and dig?</div>
+        <div class="qa-a"><span class="al">A:</span><span class="ic2">nslookup</span> is simpler, cross-platform (works on Windows too), and provides basic DNS resolution. <span class="ic2">dig</span> (Domain Information Groper) is more powerful — it shows the full DNS response including TTL values, all records returned, query time, and the authoritative server. <span class="ic2">dig</span> output is more detailed and suitable for advanced DNS debugging. In scripts, <span class="ic2">dig +short</span> is preferred over <span class="ic2">nslookup</span> because its output format is more stable and parseable. For cross-platform needs (including Windows troubleshooting), <span class="ic2">nslookup</span> wins.</div></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════ dig ══════════════════════ -->
+  <div class="card" id="dig">
+    <div class="ch h-dns" style="background: linear-gradient(135deg, #002020, #007B7B);">
+      <div class="cm c-dns">dig</div>
+      <div class="cmeta">
+        <div class="clabel">Advanced DNS Lookup</div>
+        <div class="cdesc">Domain Information Groper — detailed DNS query and debugging tool</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">dig</span> (Domain Information Groper) is the professional DNS diagnostic tool that provides complete, detailed DNS responses including TTL values, all record types, query time, and which server responded. It is the preferred DNS tool for engineers because its output is consistent and scriptable.</p>
+      <p class="desc">In DevOps and cloud engineering, <span class="ic2">dig</span> is used for: verifying DNS propagation after domain changes, debugging split-horizon DNS in VPCs, testing DNS-based load balancing, checking TTL values before making changes, and validating SPF/DKIM/DMARC records for email deliverability.</p>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Key Flags</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>+short</td><td>Minimal output — just the answer (great for scripts)</td><td>dig +short google.com</td></tr>
+          <tr><td>+noall +answer</td><td>Show only the answer section</td><td>dig +noall +answer google.com</td></tr>
+          <tr><td>-t TYPE</td><td>Query specific record type</td><td>dig -t MX gmail.com</td></tr>
+          <tr><td>@SERVER</td><td>Query a specific DNS server</td><td>dig @8.8.8.8 google.com</td></tr>
+          <tr><td>-x IP</td><td>Reverse DNS lookup (PTR record)</td><td>dig -x 8.8.8.8</td></tr>
+          <tr><td>+trace</td><td>Trace full DNS delegation chain from root</td><td>dig +trace google.com</td></tr>
+          <tr><td>+tcp</td><td>Use TCP instead of UDP</td><td>dig +tcp google.com</td></tr>
+          <tr><td>+time=N</td><td>Timeout in seconds</td><td>dig +time=2 google.com</td></tr>
+          <tr><td>ANY</td><td>Query all record types</td><td>dig any example.com</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — Production DNS Debugging</span></div>
+      <pre class="p"><code><span class="c"># Full DNS query — shows TTL, authoritative server, query time</span>
+<span class="cm2">dig</span> google.com
+<span class="out"># ;; QUESTION SECTION:
+# ;google.com.    IN  A
+# ;; ANSWER SECTION:
+# google.com.  300  IN  A  142.250.80.46   ← 300s TTL
+# ;; Query time: 12 msec
+# ;; SERVER: 8.8.8.8#53(8.8.8.8)</span>
+
+<span class="c"># Clean output for scripting — just the IP(s)</span>
+<span class="cm2">dig +short</span> google.com
+<span class="out"># 142.250.80.46</span>
+
+<span class="c"># Query from a specific DNS server (test internal vs external DNS)</span>
+<span class="cm2">dig @10.0.0.2</span> internal-service.company.com   <span class="c"># VPC DNS</span>
+<span class="cm2">dig @8.8.8.8</span> internal-service.company.com     <span class="c"># External DNS</span>
+
+<span class="c"># Check TTL before making changes</span>
+<span class="cm2">dig +noall +answer</span> api.example.com
+<span class="out"># api.example.com. 3600 IN A 203.0.113.10   ← TTL = 1 hour</span>
+
+<span class="c"># Query MX records (email routing)</span>
+<span class="cm2">dig -t MX</span> gmail.com +short
+<span class="out"># 5 gmail-smtp-in.l.google.com.
+# 10 alt1.gmail-smtp-in.l.google.com.</span>
+
+<span class="c"># Trace full DNS delegation chain (authoritative lookup)</span>
+<span class="cm2">dig +trace</span> github.com
+
+<span class="c"># Reverse DNS lookup</span>
+<span class="cm2">dig -x</span> 8.8.8.8 <span class="fl">+short</span>
+<span class="out"># dns.google.</span>
+
+<span class="c"># TXT records — SPF, DKIM, domain verification</span>
+<span class="cm2">dig -t TXT</span> _dmarc.google.com +short
+<span class="cm2">dig -t TXT</span> github.com +short | <span class="cm2">grep</span> v=spf1
+
+<span class="c"># Script: wait for DNS to propagate</span>
+<span class="k">until</span> [[ "$(<span class="cm2">dig +short</span> api.example.com @8.8.8.8)" == <span class="st2">"203.0.113.10"</span> ]]; <span class="k">do</span>
+    <span class="cm2">echo</span> <span class="st2">"DNS not propagated yet, waiting..."</span>
+    <span class="cm2">sleep 30</span>
+<span class="k">done</span>
+<span class="cm2">echo</span> <span class="st2">"DNS propagated! Proceeding with deployment."</span></code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>Scenario: After a deployment, users report DNS issues with the new service endpoint. How do you debug?</div>
+        <div class="qa-a"><span class="al">A:</span><strong>1.</strong> <span class="ic2">dig +short api.example.com</span> — check what public DNS resolves to. <strong>2.</strong> <span class="ic2">dig @VPC_DNS_IP api.example.com</span> — check internal VPC DNS separately. <strong>3.</strong> <span class="ic2">dig +noall +answer api.example.com</span> — check TTL, ensure old IP isn't cached. <strong>4.</strong> <span class="ic2">dig +trace api.example.com</span> — verify full delegation chain from root. <strong>5.</strong> Compare results from multiple resolvers (8.8.8.8, 1.1.1.1, your ISP). Different answers = propagation in progress. Same wrong answer = DNS record is wrong.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Always check TTL before DNS changes</strong> Before changing a DNS record, run <span class="ic2">dig +noall +answer hostname</span> to check the current TTL. If TTL is 3600 (1 hour), plan for up to 1 hour of propagation time. Lower TTL to 300 (5 min) a day before making changes, then change the record, then raise TTL again after propagation.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════ wget ══════════════════════ -->
+  <div class="card" id="wget">
+    <div class="ch h-wget">
+      <div class="cm c-wget">wget</div>
+      <div class="cmeta">
+        <div class="clabel">Non-Interactive Downloader</div>
+        <div class="cdesc">Download files via HTTP, HTTPS, FTP — resumable, recursive, background capable</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">wget</span> is a non-interactive network downloader supporting HTTP, HTTPS, and FTP. Key strengths over <span class="ic2">curl</span>: automatic retry on failure, resumable downloads (<span class="ic2">-c</span>), recursive site mirroring, and background operation. It does NOT require piping — it downloads directly to files.</p>
+      <p class="desc">In DevOps, <span class="ic2">wget</span> is used in bootstrap scripts and Docker build steps to download binaries, installers, and datasets without requiring user interaction. In ML workflows, it fetches large model weights and training datasets.</p>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Key Flags</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>-O FILE</td><td>Save output to specific filename</td><td>wget -O model.tar.gz http://url/file</td></tr>
+          <tr><td>-P DIR</td><td>Save to specific directory</td><td>wget -P /opt/models/ http://url</td></tr>
+          <tr><td>-c</td><td>Continue/resume interrupted download</td><td>wget -c http://url/largefile.iso</td></tr>
+          <tr><td>-q</td><td>Quiet — suppress output (for scripts)</td><td>wget -q http://url/file</td></tr>
+          <tr><td>--progress=bar</td><td>Show progress bar</td><td>wget --progress=bar http://url</td></tr>
+          <tr><td>-r</td><td>Recursive download (mirror a site)</td><td>wget -r http://example.com</td></tr>
+          <tr><td>--limit-rate</td><td>Throttle download speed</td><td>wget --limit-rate=1M http://url</td></tr>
+          <tr><td>-i FILE</td><td>Download URLs listed in a file</td><td>wget -i urls.txt</td></tr>
+          <tr><td>--no-check-certificate</td><td>Skip SSL verification (use carefully!)</td><td>wget --no-check-certificate https://url</td></tr>
+          <tr><td>-b</td><td>Download in background</td><td>wget -b http://url/largefile.iso</td></tr>
+          <tr><td>--tries=N</td><td>Retry N times on failure</td><td>wget --tries=5 http://url</td></tr>
+          <tr><td>--timeout=SECS</td><td>Set connection timeout</td><td>wget --timeout=30 http://url</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — DevOps &amp; ML Data Engineering</span></div>
+      <pre class="p"><code><span class="c"># Basic download</span>
+<span class="cm2">wget</span> <span class="url">https://github.com/prometheus/prometheus/releases/download/v2.48.0/prometheus-2.48.0.linux-amd64.tar.gz</span>
+
+<span class="c"># Save with custom name</span>
+<span class="cm2">wget -O</span> prometheus.tar.gz <span class="url">https://github.com/.../prometheus-2.48.0.linux-amd64.tar.gz</span>
+
+<span class="c"># Resume interrupted large download (critical for big ML datasets)</span>
+<span class="cm2">wget -c</span> <span class="url">https://datasets.example.com/imagenet-1k.tar.gz</span>
+
+<span class="c"># Quiet download for scripts (no progress noise)</span>
+<span class="cm2">wget -q -O</span> /tmp/install.sh <span class="url">https://get.docker.com</span>
+
+<span class="c"># Download with progress bar</span>
+<span class="cm2">wget --progress=bar</span> <span class="url">https://url/largefile.zip</span>
+
+<span class="c"># Download multiple URLs from a list file</span>
+<span class="cm2">cat</span> > urls.txt << <span class="st2">EOF</span>
+<span class="url">https://example.com/model_weights_part1.bin</span>
+<span class="url">https://example.com/model_weights_part2.bin</span>
+<span class="st2">EOF</span>
+<span class="cm2">wget -i</span> urls.txt <span class="fl">-P</span> /opt/models/
+
+<span class="c"># Dockerfile: install specific binary version</span>
+<span class="k">RUN</span> <span class="cm2">wget -q -O</span> /usr/local/bin/kubectl \
+    <span class="url">https://dl.k8s.io/release/v1.29.0/bin/linux/amd64/kubectl</span> \
+    && <span class="cm2">chmod +x</span> /usr/local/bin/kubectl
+
+<span class="c"># Download behind authentication</span>
+<span class="cm2">wget --user=admin --password=pass</span> <span class="url">https://private-repo/artifact.jar</span></code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the difference between wget and curl?</div>
+        <div class="qa-a"><span class="al">A:</span><strong>wget:</strong> Specialized for downloading files. Automatic retry, resume (<span class="ic2">-c</span>), recursive mirroring, background downloads. Simpler syntax for just getting a file. Downloads to files by default. <strong>curl:</strong> General-purpose data transfer. Supports 25+ protocols (HTTP, HTTPS, FTP, SFTP, SMTP, LDAP...). Better for API interactions — sends/receives arbitrary data, supports custom headers, methods (POST/PUT/DELETE), authentication. Outputs to stdout by default — better for pipelines. <strong>Rule:</strong> wget for downloading files; curl for API calls and HTTP testing.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Verify downloads with checksums</strong> Always verify downloaded binaries: <span class="ic2">wget https://url/file.tar.gz && wget https://url/file.tar.gz.sha256 && sha256sum -c file.tar.gz.sha256</span>. Critical for security in automated deployment pipelines.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════ curl ══════════════════════ -->
+  <div class="card" id="curl">
+    <div class="ch h-curl">
+      <div class="cm c-curl">curl</div>
+      <div class="cmeta">
+        <div class="clabel">Universal Data Transfer</div>
+        <div class="cdesc">Transfer data with URLs — the essential API testing and HTTP debugging tool</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">curl</span> (Client URL) transfers data to or from a server using any of 25+ supported protocols. In DevOps and engineering, it is primarily used as an HTTP client for: testing REST APIs, checking service health endpoints, debugging HTTP headers and responses, downloading files, and testing authentication. It is the Swiss Army knife of network data transfer.</p>
+      <p class="desc">For AI/ML engineers specifically, <span class="ic2">curl</span> is used to test model inference endpoints (TensorFlow Serving, Triton, MLflow), call Hugging Face APIs, test Airflow REST API, interact with Elasticsearch/OpenSearch, and debug webhook payloads.</p>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Key Flags — The Production Essentials</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr class="cat"><td colspan="3">Output &amp; Basic Options</td></tr>
+          <tr><td>-o FILE</td><td>Write output to file</td><td>curl -o output.json https://api/data</td></tr>
+          <tr><td>-O</td><td>Save with remote filename</td><td>curl -O https://url/file.tar.gz</td></tr>
+          <tr><td>-s</td><td>Silent mode — no progress or error messages</td><td>curl -s https://api/health</td></tr>
+          <tr><td>-S</td><td>Show error even with -s (use with -s)</td><td>curl -sS https://api/endpoint</td></tr>
+          <tr><td>-v</td><td>Verbose — show request/response headers</td><td>curl -v https://api/endpoint</td></tr>
+          <tr><td>-I</td><td>HEAD request — response headers only</td><td>curl -I https://example.com</td></tr>
+          <tr><td>-L</td><td>Follow redirects</td><td>curl -L https://short.url/abc</td></tr>
+          <tr class="cat"><td colspan="3">HTTP Methods &amp; Data</td></tr>
+          <tr><td>-X METHOD</td><td>Specify HTTP method</td><td>curl -X POST https://api/endpoint</td></tr>
+          <tr><td>-d DATA</td><td>POST data (sets method to POST)</td><td>curl -d '{"key":"val"}' https://api</td></tr>
+          <tr><td>-H "Header: Value"</td><td>Add custom header</td><td>curl -H "Authorization: Bearer token"</td></tr>
+          <tr><td>-F "key=@file"</td><td>Multipart form data (file upload)</td><td>curl -F "file=@data.csv" https://api</td></tr>
+          <tr><td>--data-raw</td><td>POST raw string without escaping</td><td>curl --data-raw '{"raw": "data"}'</td></tr>
+          <tr class="cat"><td colspan="3">Auth &amp; TLS</td></tr>
+          <tr><td>-u user:pass</td><td>HTTP Basic authentication</td><td>curl -u admin:secret https://api</td></tr>
+          <tr><td>-k</td><td>Insecure — skip SSL certificate verification</td><td>curl -k https://self-signed.internal</td></tr>
+          <tr><td>--cacert FILE</td><td>Use custom CA certificate</td><td>curl --cacert ca.pem https://api</td></tr>
+          <tr><td>--cert FILE</td><td>Client certificate (mTLS)</td><td>curl --cert client.pem https://api</td></tr>
+          <tr class="cat"><td colspan="3">Timing &amp; Performance</td></tr>
+          <tr><td>-m SECS</td><td>Maximum time for the entire operation</td><td>curl -m 30 https://api/slow</td></tr>
+          <tr><td>--connect-timeout N</td><td>Timeout for connection phase only</td><td>curl --connect-timeout 5 https://api</td></tr>
+          <tr><td>-w FORMAT</td><td>Write-out — print timing/info after transfer</td><td>curl -w "%{time_total}\n" -o /dev/null -s https://url</td></tr>
+          <tr><td>-C OFFSET</td><td>Resume download from offset</td><td>curl -C - -O https://url/largefile</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="sub">REST API Testing (Core DevOps Use)</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — API Testing Patterns</span></div>
+      <pre class="p"><code><span class="c"># GET request — check service health</span>
+<span class="cm2">curl -sS</span> https://api.example.com/health
+<span class="cm2">curl -sS</span> http://localhost:8080/health | <span class="cm2">python3 -m json.tool</span>
+
+<span class="c"># POST JSON data to REST API</span>
+<span class="cm2">curl -sS -X POST</span> \
+    <span class="fl">-H</span> <span class="st2">"Content-Type: application/json"</span> \
+    <span class="fl">-H</span> <span class="st2">"Authorization: Bearer ${API_TOKEN}"</span> \
+    <span class="fl">-d</span> <span class="st2">'{"prompt": "Hello", "max_tokens": 100}'</span> \
+    https://api.openai.com/v1/completions
+
+<span class="c"># Inspect HTTP response headers (check caching, CORS, auth)</span>
+<span class="cm2">curl -sS -I</span> https://api.example.com/v1/data
+
+<span class="c"># Verbose — full request and response headers (SSL debug)</span>
+<span class="cm2">curl -v</span> https://secure.api.com/endpoint
+
+<span class="c"># PUT request — update a resource</span>
+<span class="cm2">curl -X PUT</span> <span class="fl">-H</span> <span class="st2">"Content-Type: application/json"</span> \
+    <span class="fl">-d</span> <span class="st2">'{"status": "active"}'</span> \
+    https://api.example.com/users/123
+
+<span class="c"># DELETE request</span>
+<span class="cm2">curl -X DELETE</span> <span class="fl">-H</span> <span class="st2">"Authorization: Bearer $TOKEN"</span> \
+    https://api.example.com/resource/456</code></pre></div>
+
+      <div class="sub">ML / AI Inference Endpoint Testing</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — ML Serving Patterns</span></div>
+      <pre class="p"><code><span class="c"># Test TensorFlow Serving inference endpoint</span>
+<span class="cm2">curl -sS -X POST</span> http://localhost:8501/v1/models/resnet:predict \
+    <span class="fl">-H</span> <span class="st2">"Content-Type: application/json"</span> \
+    <span class="fl">-d</span> <span class="st2">'{"instances": [[1.0, 2.0, 3.0]]}'</span>
+
+<span class="c"># Test Triton Inference Server</span>
+<span class="cm2">curl -sS</span> http://localhost:8000/v2/health/ready
+
+<span class="c"># Airflow REST API — trigger DAG</span>
+<span class="cm2">curl -X POST</span> \
+    <span class="fl">-H</span> <span class="st2">"Content-Type: application/json"</span> \
+    <span class="fl">-u</span> admin:password \
+    <span class="fl">-d</span> <span class="st2">'{"conf":{}}'</span> \
+    http://localhost:8080/api/v1/dags/my_pipeline/dagRuns
+
+<span class="c"># Measure API latency breakdown</span>
+<span class="cm2">curl -sS -o /dev/null -w</span> \
+    <span class="st2">"DNS: %{time_namelookup}s\nConnect: %{time_connect}s\nTLS: %{time_appconnect}s\nTotal: %{time_total}s\n"</span> \
+    https://api.example.com/endpoint
+
+<span class="c"># Upload file (multipart form)</span>
+<span class="cm2">curl -sS -F</span> <span class="st2">"file=@/data/training_data.csv"</span> \
+    <span class="fl">-F</span> <span class="st2">"model_name=classifier_v2"</span> \
+    https://mlplatform.company.com/api/datasets/upload</code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>How do you test if an API endpoint is returning the correct response in a CI pipeline?</div>
+        <div class="qa-a"><span class="al">A:</span>Health check pattern in CI: <span class="ic2">curl -sS --fail http://service/health | jq '.status == "healthy"'</span>. The <span class="ic2">--fail</span> flag makes curl exit with code 1 on HTTP 4xx/5xx responses (instead of showing the error body and exiting 0). Combined with <span class="ic2">-sS</span> (silent but show errors), this creates a clean CI-friendly check. For detailed timing: <span class="ic2">curl -w "%{http_code}" -o /dev/null -sS URL</span> extracts just the HTTP status code.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q2</span>How would you debug an SSL/TLS issue with curl?</div>
+        <div class="qa-a"><span class="al">A:</span><strong>1.</strong> <span class="ic2">curl -v https://host</span> — verbose mode shows full TLS handshake, certificate chain, and cipher. <strong>2.</strong> If self-signed cert: <span class="ic2">curl --cacert /path/to/ca.pem https://host</span> (add custom CA). <strong>3.</strong> For mTLS (mutual TLS): <span class="ic2">curl --cert client.pem --key client-key.pem https://host</span>. <strong>4.</strong> <span class="ic2">curl -k https://host</span> temporarily skips verification to confirm it's a cert issue (NEVER use -k in production scripts). <strong>5.</strong> <span class="ic2">openssl s_client -connect host:443</span> for detailed TLS debugging.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q3</span>How do you measure API response time with curl?</div>
+        <div class="qa-a"><span class="al">A:</span><span class="ic2">curl -sS -o /dev/null -w "%{time_total}\n" https://api.example.com/endpoint</span>. The <span class="ic2">-w</span> (write-out) flag provides: <span class="ic2">time_namelookup</span> (DNS), <span class="ic2">time_connect</span> (TCP connect), <span class="ic2">time_appconnect</span> (TLS handshake), <span class="ic2">time_pretransfer</span> (before first byte sent), <span class="ic2">time_starttransfer</span> (time to first byte = TTFB), <span class="ic2">time_total</span> (complete. This breakdown immediately reveals whether latency is in DNS, TCP, TLS, or server processing.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — Using -k in production scripts</strong> <span class="ic2">curl -k</span> disables SSL verification — a security vulnerability. It's fine for local testing but NEVER acceptable in production CI/CD scripts. Use <span class="ic2">--cacert</span> with the proper CA certificate instead.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Use --fail in CI scripts</strong> By default, curl exits with 0 even on HTTP 4xx/5xx responses. Add <span class="ic2">--fail</span> to make non-2xx responses fail with exit code 22: <span class="ic2">curl --fail -sS https://api/endpoint || { echo "API check failed"; exit 1; }</span></div></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════ scp ══════════════════════ -->
+  <div class="card" id="scp">
+    <div class="ch h-scp">
+      <div class="cm c-scp">scp</div>
+      <div class="cmeta">
+        <div class="clabel">Secure Remote File Copy</div>
+        <div class="cdesc">Copy files between hosts over SSH — encrypted, authenticated file transfer</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">scp</span> (Secure Copy Protocol) copies files between local and remote systems using SSH for authentication and encryption. It's the simplest encrypted file transfer tool — no server setup required beyond SSH being available. For large-scale or repeated transfers, <span class="ic2">rsync</span> is more efficient; for interactive file management, <span class="ic2">sftp</span> is better.</p>
+
+      <div class="sl"><span class="sn">2</span><span class="st">Syntax</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Local to Remote</span>
+<span class="cm2">scp</span> <span class="fl">[OPTIONS]</span> <span class="st2">LOCAL_FILE user@host:REMOTE_PATH</span>
+
+<span class="c"># Remote to Local</span>
+<span class="cm2">scp</span> <span class="fl">[OPTIONS]</span> <span class="st2">user@host:REMOTE_FILE LOCAL_PATH</span>
+
+<span class="c"># Remote to Remote</span>
+<span class="cm2">scp</span> <span class="fl">[OPTIONS]</span> <span class="st2">user@host1:FILE user@host2:PATH</span></code></pre></div>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Key Flags</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>-r</td><td>Recursively copy directories</td><td>scp -r ./configs/ user@host:/opt/</td></tr>
+          <tr><td>-P PORT</td><td>Specify SSH port (uppercase P!)</td><td>scp -P 2222 file user@host:/path</td></tr>
+          <tr><td>-i KEY</td><td>Use specific SSH private key</td><td>scp -i ~/.ssh/ec2-key.pem file ec2-user@host:/tmp/</td></tr>
+          <tr><td>-p</td><td>Preserve timestamps and permissions</td><td>scp -p config.yml user@host:/etc/app/</td></tr>
+          <tr><td>-C</td><td>Enable compression (useful for slow links)</td><td>scp -C large_log.txt user@host:/logs/</td></tr>
+          <tr><td>-q</td><td>Quiet — suppress progress</td><td>scp -q file user@host:/path</td></tr>
+          <tr><td>-v</td><td>Verbose — debug SSH connection issues</td><td>scp -v file user@host:/path</td></tr>
+          <tr><td>-l LIMIT</td><td>Bandwidth limit in Kbps</td><td>scp -l 1024 file user@host:/path</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Upload file to EC2 instance</span>
+<span class="cm2">scp -i</span> ~/.ssh/ec2-prod.pem deploy.sh ec2-user@10.0.1.50:/opt/app/
+
+<span class="c"># Download log file from remote server</span>
+<span class="cm2">scp</span> ubuntu@db-server:/var/log/postgresql/postgres.log /tmp/
+
+<span class="c"># Copy entire directory recursively</span>
+<span class="cm2">scp -r</span> ./ml_model/ mlserver@10.0.2.100:/opt/models/resnet_v2/
+
+<span class="c"># Custom SSH port</span>
+<span class="cm2">scp -P 2222</span> config.yml admin@bastion.company.com:/etc/nginx/
+
+<span class="c"># Copy via jump host (using SSH ProxyJump)</span>
+<span class="cm2">scp -J</span> jumpuser@bastion.host datafile.csv ubuntu@internal-server:/data/
+
+<span class="c"># Collect logs from multiple servers</span>
+<span class="k">for</span> HOST in worker-{1..5}.internal; <span class="k">do</span>
+    <span class="cm2">scp</span> deploy@${HOST}:/var/log/app/app.log ./logs/${HOST}_app.log
+<span class="k">done</span></code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>When would you use rsync instead of scp?</div>
+        <div class="qa-a"><span class="al">A:</span><span class="ic2">rsync</span> is preferred over <span class="ic2">scp</span> when: (1) transferring large directories where only changed files should be synced (rsync sends delta only), (2) resuming interrupted transfers (<span class="ic2">rsync --partial --progress</span>), (3) syncing files repeatedly on a schedule (rsync is idempotent), (4) preserving all metadata including symlinks, hard links, and extended attributes (<span class="ic2">rsync -aAX</span>). <span class="ic2">scp</span> always copies everything; rsync is intelligent about what to transfer.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box warn"><span class="bi">⚠️</span><div><strong>Note: scp is deprecated in OpenSSH 9.0+</strong> OpenSSH 9.0 deprecated scp in favor of SFTP internally. For new automation, prefer <span class="ic2">rsync -avz -e ssh</span> or SFTP-based tools. scp still works but uses SFTP protocol underneath on modern systems.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — SCP via Bastion Host</strong> Use <span class="ic2">-J</span> flag for jumping through a bastion: <span class="ic2">scp -J bastion-user@bastion.host file internal-user@private-host:/dest/</span>. This eliminates the need to transfer to bastion first then transfer again.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════ ssh ══════════════════════ -->
+  <div class="card" id="ssh">
+    <div class="ch h-ssh">
+      <div class="cm c-ssh">ssh</div>
+      <div class="cmeta">
+        <div class="clabel">Secure Shell</div>
+        <div class="cdesc">Encrypted remote login, command execution, and tunneling</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">ssh</span> (Secure Shell) creates an encrypted, authenticated connection to a remote host for interactive login, remote command execution, port forwarding, and tunneling. It is the standard tool for remote server management, replacing insecure protocols like Telnet and rlogin.</p>
+      <p class="desc">For DevOps and MLOps engineers, SSH is daily infrastructure — connecting to production servers, executing deployment scripts, setting up tunnels for secure database access, configuring bastion hosts, and establishing reverse tunnels for remote debugging of GPU training jobs.</p>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Key Options &amp; Patterns</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Option</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr class="cat"><td colspan="3">Connection Options</td></tr>
+          <tr><td>-i KEY</td><td>Use specific private key for authentication</td><td>ssh -i ~/.ssh/ec2-prod.pem ubuntu@host</td></tr>
+          <tr><td>-p PORT</td><td>Connect to specific port</td><td>ssh -p 2222 user@host</td></tr>
+          <tr><td>-l USER</td><td>Specify login username</td><td>ssh -l ec2-user host</td></tr>
+          <tr><td>-v / -vvv</td><td>Verbose — debug connection issues</td><td>ssh -v user@host</td></tr>
+          <tr><td>-o "Opt=Val"</td><td>SSH config option inline</td><td>ssh -o "StrictHostKeyChecking=no" host</td></tr>
+          <tr><td>-J JUMP</td><td>Connect via jump host (ProxyJump)</td><td>ssh -J bastion.host user@private.host</td></tr>
+          <tr class="cat"><td colspan="3">Remote Command Execution</td></tr>
+          <tr><td>ssh user@host CMD</td><td>Execute single command remotely</td><td>ssh ubuntu@host "df -h"</td></tr>
+          <tr><td>ssh user@host 'script'</td><td>Execute multi-line script remotely</td><td>ssh host 'for i in 1 2 3; do echo $i; done'</td></tr>
+          <tr class="cat"><td colspan="3">Port Forwarding (Tunneling)</td></tr>
+          <tr><td>-L L:H:R</td><td>Local port forward — access remote service locally</td><td>ssh -L 5432:db.internal:5432 bastion</td></tr>
+          <tr><td>-R L:H:R</td><td>Remote port forward — expose local port on remote</td><td>ssh -R 8080:localhost:8080 server</td></tr>
+          <tr><td>-D PORT</td><td>Dynamic port forwarding (SOCKS proxy)</td><td>ssh -D 8888 user@jump-host</td></tr>
+          <tr><td>-N</td><td>No remote command — useful with tunneling</td><td>ssh -N -L 5432:db:5432 bastion</td></tr>
+          <tr><td>-f</td><td>Go to background (after authentication)</td><td>ssh -f -N -L 5432:db:5432 bastion</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — Production SSH Patterns</span></div>
+      <pre class="p"><code><span class="c"># Basic remote login with key</span>
+<span class="cm2">ssh -i</span> ~/.ssh/ec2-prod.pem ubuntu@10.0.1.50
+
+<span class="c"># Execute single remote command (no interactive shell)</span>
+<span class="cm2">ssh</span> ubuntu@server <span class="st2">"sudo systemctl status nginx && df -h"</span>
+
+<span class="c"># Run script on multiple servers</span>
+<span class="k">for</span> HOST in web-{1..5}.prod.internal; <span class="k">do</span>
+    <span class="cm2">echo</span> <span class="st2">"=== $HOST ==="</span>
+    <span class="cm2">ssh</span> deploy@${HOST} <span class="st2">"df -h / && free -h"</span>
+<span class="k">done</span>
+
+<span class="c">═══ PORT FORWARDING — Critical for secure access ═══</span>
+
+<span class="c"># Local forward: Access production PostgreSQL via bastion</span>
+<span class="c"># localhost:5433 → bastion → db.internal:5432</span>
+<span class="cm2">ssh -N -L 5433:db.internal:5432</span> ubuntu@bastion.company.com &amp;
+<span class="cm2">psql -h localhost -p 5433</span> -U myuser mydb
+
+<span class="c"># Local forward: Access private Airflow UI</span>
+<span class="cm2">ssh -N -f -L 8080:airflow.internal:8080</span> ubuntu@bastion
+<span class="c"># Now browse: http://localhost:8080</span>
+
+<span class="c"># SOCKS proxy — route all traffic through jump host</span>
+<span class="cm2">ssh -D 8888 -N -f</span> user@jump.company.com
+<span class="c"># Configure browser to use SOCKS5 proxy: localhost:8888</span>
+
+<span class="c"># Remote forward: expose local ML training progress to team</span>
+<span class="cm2">ssh -N -R 8888:localhost:8888</span> user@public-server.com
+<span class="c"># Team accesses Jupyter at: http://public-server.com:8888</span>
+
+<span class="c">═══ SSH CONFIG FILE — ~/.ssh/config ═══</span></code></pre></div>
+
+      <div class="sub">~/.ssh/config — The Production Essential</div>
+      <div class="cw"><div class="ct"><span class="lang">INI — ~/.ssh/config</span></div>
+      <pre class="p"><code><span class="c"># Short aliases for frequent connections</span>
+<span class="sc">Host</span> bastion
+    <span class="di">HostName</span>      bastion.company.com
+    <span class="di">User</span>          ubuntu
+    <span class="di">IdentityFile</span>  ~/.ssh/prod-key.pem
+    <span class="di">ServerAliveInterval</span> 60
+
+<span class="sc">Host</span> db-prod
+    <span class="di">HostName</span>      10.0.2.50
+    <span class="di">User</span>          ubuntu
+    <span class="di">IdentityFile</span>  ~/.ssh/prod-key.pem
+    <span class="di">ProxyJump</span>     bastion     <span class="c"># Jump through bastion automatically</span>
+
+<span class="sc">Host</span> ml-gpu-*
+    <span class="di">User</span>          ubuntu
+    <span class="di">IdentityFile</span>  ~/.ssh/ml-key.pem
+    <span class="di">ForwardAgent</span>  yes
+
+<span class="c"># Now simply: ssh bastion, ssh db-prod, scp db-prod:/data ./</span>
+<span class="c"># ProxyJump happens automatically for db-prod!</span></code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>Explain SSH local port forwarding and give a production use case.</div>
+        <div class="qa-a"><span class="al">A:</span><span class="ic2">ssh -L LOCAL_PORT:REMOTE_HOST:REMOTE_PORT JUMP_HOST</span> — creates a tunnel where connections to <span class="ic2">localhost:LOCAL_PORT</span> are forwarded through the jump host to <span class="ic2">REMOTE_HOST:REMOTE_PORT</span>. Production example: <span class="ic2">ssh -N -L 5432:prod-db.internal:5432 bastion.company.com</span> — allows a developer to connect their local PostgreSQL client to <span class="ic2">localhost:5432</span> and access the production database without exposing the database to the internet. The database server only accepts connections from the bastion's private IP — enforcing network security.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q2</span>What is the difference between local and remote port forwarding?</div>
+        <div class="qa-a"><span class="al">A:</span><strong>Local (-L):</strong> Forward a local port to a remote service — "bring remote service to me." <span class="ic2">ssh -L 5432:db:5432 bastion</span> — I access prod database via localhost. <strong>Remote (-R):</strong> Forward a remote port to a local service — "expose my service to the remote server." <span class="ic2">ssh -R 8080:localhost:8080 server</span> — the server can access my local service on port 8080. Use case: expose a local Jupyter notebook to a team member via a public server. Remote forwarding requires <span class="ic2">GatewayPorts yes</span> in the server's sshd_config.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q3</span>How do you debug SSH connection failures?</div>
+        <div class="qa-a"><span class="al">A:</span><strong>Client side:</strong> <span class="ic2">ssh -vvv user@host</span> — triple verbose shows every step of connection, key negotiation, and authentication. Look for "Permission denied" (wrong key/user), "Connection refused" (SSH not running or port wrong), "No route to host" (network issue). <strong>Server side:</strong> <span class="ic2">journalctl -u sshd -f</span> or <span class="ic2">tail -f /var/log/auth.log</span> — shows failed login attempts and reasons. Common fixes: check <span class="ic2">~/.ssh/authorized_keys</span> permissions (must be 600), check <span class="ic2">~/.ssh/</span> permissions (must be 700), verify key format matches (ed25519 vs RSA).</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — StrictHostKeyChecking=no in scripts</strong> <span class="ic2">-o StrictHostKeyChecking=no</span> disables host key verification — opens you to MITM attacks. In CI/CD: scan host keys first with <span class="ic2">ssh-keyscan -H host >> ~/.ssh/known_hosts</span> and commit known_hosts to your deployment config. Never use StrictHostKeyChecking=no in production scripts.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Use ~/.ssh/config extensively</strong> A well-maintained SSH config eliminates the need to remember IPs, keys, usernames, and jump hosts. It also enables <span class="ic2">scp, rsync, git</span> to transparently use your custom settings. This is a significant productivity multiplier in production environments.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════ ftp ══════════════════════ -->
+  <div class="card" id="ftp">
+    <div class="ch h-ftp">
+      <div class="cm c-ftp">ftp</div>
+      <div class="cmeta">
+        <div class="clabel">File Transfer Protocol</div>
+        <div class="cdesc">Legacy FTP client — unencrypted file transfer <span class="dep">⚠ INSECURE</span></div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">ftp</span> is the traditional File Transfer Protocol client for uploading and downloading files from FTP servers. <strong>Critical security note:</strong> FTP transmits data, usernames, and passwords in <strong>plain text</strong> with NO encryption. It should never be used on untrusted networks.</p>
+      <div class="box danger"><span class="bi">🚨</span><div><strong>INSECURE — Avoid in Production</strong> FTP sends credentials and data unencrypted over the network — any eavesdropper on the network path can capture your username, password, and all transferred data. Use SFTP (SSH File Transfer Protocol) or FTPS (FTP over TLS) instead. FTP is only relevant when: connecting to legacy FTP servers you don't control, or working with certain IoT/embedded systems.</div></div>
+      <p class="desc">Understanding FTP remains relevant for interviews because many legacy systems (CDNs, ISPs, manufacturing systems, government portals) still expose FTP endpoints. Knowing the secure alternatives and when FTP is unavoidable demonstrates production maturity.</p>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — FTP Client Usage</span></div>
+      <pre class="p"><code><span class="c"># Connect to FTP server</span>
+<span class="cm2">ftp</span> ftp.example.com
+<span class="c"># Enter username and password at prompts</span>
+
+<span class="c"># Common FTP commands (inside the ftp> prompt):</span>
+<span class="out"># ls           — list remote files
+# cd DIR       — change remote directory
+# lcd DIR      — change local directory
+# get file     — download file
+# put file     — upload file
+# mget *.csv   — download multiple files
+# mput *.log   — upload multiple files
+# binary       — switch to binary mode (REQUIRED for non-text files!)
+# ascii        — switch to ASCII mode
+# bye / quit   — disconnect</span>
+
+<span class="c"># Non-interactive FTP (for scripts — use netrc or lftp instead)</span>
+<span class="cm2">ftp -n</span> ftp.example.com <<EOF
+user ftpuser password123
+binary
+get /data/report.csv
+bye
+EOF
+
+<span class="c">═══ SECURE ALTERNATIVES — Use these instead! ═══</span>
+
+<span class="c"># SFTP — FTP-like interface over SSH (ENCRYPTED)</span>
+<span class="cm2">sftp</span> user@server.com
+<span class="cm2">sftp -i</span> ~/.ssh/key.pem user@server.com
+
+<span class="c"># lftp — advanced FTP client supporting FTP, FTPS, SFTP</span>
+<span class="cm2">lftp -e</span> <span class="st2">"mirror /remote/path /local/path; bye"</span> -u user,pass ftp.host.com
+
+<span class="c"># curl with FTP (for scripts)</span>
+<span class="cm2">curl -u user:pass</span> <span class="url">ftp://ftp.example.com/file.csv</span> <span class="fl">-o</span> file.csv
+
+<span class="c"># wget with FTP</span>
+<span class="cm2">wget --user=ftpuser --password=pass</span> <span class="url">ftp://ftp.example.com/data.zip</span></code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>What are the security issues with FTP and what should you use instead?</div>
+        <div class="qa-a"><span class="al">A:</span><strong>FTP security issues:</strong> (1) No encryption — credentials and data in plaintext, (2) Vulnerable to packet sniffing, MITM attacks, credential capture, (3) Active mode FTP opens client-side ports — problematic through NAT/firewalls. <strong>Secure alternatives:</strong> <span class="ic2">SFTP</span> (SSH File Transfer Protocol) — completely different protocol over SSH, fully encrypted, best choice; <span class="ic2">FTPS</span> (FTP over TLS) — FTP with TLS encryption added; <span class="ic2">rsync over SSH</span> — for sync/backup use cases; <span class="ic2">scp</span> — for simple file copies. In 2024, new deployments should never use plain FTP.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box warn"><span class="bi">⚠️</span><div><strong>Binary mode is critical!</strong> Transferring non-text files (images, zip, executables, database dumps) in ASCII mode causes silent file corruption. Always run <span class="ic2">binary</span> inside the ftp prompt before downloading binary files. This is the #1 FTP mistake that corrupts deployment artifacts.</div></div>
+    </div>
+  </div>
+
+
+  <!-- CHEAT SHEET -->
+  <div class="cheat" id="cheatsheet">
+    <div class="cheat-h">
+      <h2>📋 Quick Reference Cheat Sheet — Section 6: Network Management</h2>
+      <p>Most critical commands across all network tools — study these before your interview</p>
+    </div>
+    <table class="ct2">
+      <tbody>
+        <tr class="cts"><td colspan="2">INTERFACE &amp; ROUTING (ip — modern standard)</td></tr>
+        <tr><td>ip addr show</td><td>Show all interfaces with IP addresses (replaces ifconfig)</td></tr>
+        <tr><td>ip -br addr show</td><td>Brief one-liner view per interface</td></tr>
+        <tr><td>ip -4 addr show eth0</td><td>IPv4 address of specific interface</td></tr>
+        <tr><td>ip route show</td><td>Show routing table (replaces route command)</td></tr>
+        <tr><td>ip route get 8.8.8.8</td><td>Which interface/gateway handles this destination?</td></tr>
+        <tr><td>ip route show default</td><td>Show default gateway</td></tr>
+        <tr><td>ip link show</td><td>Show all interfaces with MAC, state, MTU</td></tr>
+        <tr><td>ip -j addr show | python3 -m json.tool</td><td>JSON output for scripting/Ansible</td></tr>
+        <tr class="cts"><td colspan="2">CONNECTIVITY &amp; PATH ANALYSIS</td></tr>
+        <tr><td>ping -c 4 host</td><td>Test reachability (exactly 4 packets)</td></tr>
+        <tr><td>ping -c 1 -W 2 host &gt;&gt;/dev/null &amp;&amp; echo up || echo down</td><td>Binary host check for scripts</td></tr>
+        <tr><td>traceroute -n 8.8.8.8</td><td>Trace network path (numeric, skip DNS)</td></tr>
+        <tr><td>sudo traceroute -T -p 443 -n host</td><td>TCP traceroute (bypass ICMP firewalls)</td></tr>
+        <tr><td>mtr -n host</td><td>Interactive traceroute+ping combined</td></tr>
+        <tr class="cts"><td colspan="2">PORT &amp; SOCKET INSPECTION</td></tr>
+        <tr><td>sudo ss -tulnp</td><td>All listening ports with process names ← MEMORIZE THIS</td></tr>
+        <tr><td>sudo netstat -tulnp</td><td>Same as above (deprecated but still tested)</td></tr>
+        <tr><td>ss -s</td><td>Socket state summary (TCP established/wait counts)</td></tr>
+        <tr><td>sudo ss -tlnp | grep :8080</td><td>Who is listening on port 8080?</td></tr>
+        <tr><td>ss -tn dst :5432</td><td>All connections to PostgreSQL port</td></tr>
+        <tr><td>ss -t state established | wc -l</td><td>Count active TCP connections</td></tr>
+        <tr class="cts"><td colspan="2">DNS LOOKUP</td></tr>
+        <tr><td>dig +short google.com</td><td>Quick IP lookup — best for scripts</td></tr>
+        <tr><td>dig +noall +answer host</td><td>Show only answer with TTL</td></tr>
+        <tr><td>dig @8.8.8.8 domain</td><td>Query specific DNS server</td></tr>
+        <tr><td>dig -t MX gmail.com +short</td><td>Mail exchange records</td></tr>
+        <tr><td>dig +trace domain</td><td>Full DNS delegation trace from root</td></tr>
+        <tr><td>dig -x 8.8.8.8 +short</td><td>Reverse DNS lookup</td></tr>
+        <tr><td>nslookup -type=MX gmail.com</td><td>nslookup for specific record type</td></tr>
+        <tr class="cts"><td colspan="2">FILE DOWNLOAD (wget)</td></tr>
+        <tr><td>wget -O output.tar.gz URL</td><td>Download with custom filename</td></tr>
+        <tr><td>wget -c URL</td><td>Resume interrupted download</td></tr>
+        <tr><td>wget -q URL</td><td>Quiet mode for scripts</td></tr>
+        <tr><td>wget -i urls.txt -P /dest/</td><td>Download list of URLs to directory</td></tr>
+        <tr class="cts"><td colspan="2">API TESTING &amp; DATA TRANSFER (curl)</td></tr>
+        <tr><td>curl -sS https://api/health</td><td>Silent GET request (show errors if fail)</td></tr>
+        <tr><td>curl -sS --fail URL || exit 1</td><td>Fail on HTTP errors (CI/CD pattern)</td></tr>
+        <tr><td>curl -I https://url</td><td>HEAD request — response headers only</td></tr>
+        <tr><td>curl -v https://url</td><td>Verbose — full request/response headers</td></tr>
+        <tr><td>curl -X POST -H "Content-Type: application/json" -d '{...}' URL</td><td>POST JSON to REST API</td></tr>
+        <tr><td>curl -sS -o /dev/null -w "%{time_total}\n" URL</td><td>Measure response time</td></tr>
+        <tr><td>curl -L https://short.url</td><td>Follow redirects</td></tr>
+        <tr class="cts"><td colspan="2">SECURE FILE TRANSFER &amp; REMOTE ACCESS</td></tr>
+        <tr><td>scp -i key.pem file user@host:/dest/</td><td>Upload file via SSH key</td></tr>
+        <tr><td>scp -r dir/ user@host:/dest/</td><td>Recursive directory copy</td></tr>
+        <tr><td>scp -J bastion user@private:/file ./</td><td>Copy via jump host</td></tr>
+        <tr><td>ssh -i key.pem user@host "command"</td><td>Execute remote command</td></tr>
+        <tr><td>ssh -N -L 5432:db:5432 bastion</td><td>Local tunnel to database (no shell)</td></tr>
+        <tr><td>ssh -N -f -L 8080:airflow:8080 bastion</td><td>Background tunnel to Airflow UI</td></tr>
+        <tr><td>ssh -J bastion user@internal</td><td>Connect via jump host</td></tr>
+        <tr><td>sftp user@host</td><td>Secure FTP (encrypted, use instead of ftp!)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- FINAL TIP -->
+  <div class="ft2">
+    <span class="ti">🎓</span>
+    <div>
+      <h3>Final Interview Tips — Network Management</h3>
+      <p>
+        <strong>Must-know command pattern — memorize verbatim:</strong> <span class="ic2">sudo ss -tulnp</span> — shows all listening TCP/UDP ports with process names. Interviewers WILL ask you for the command to "check what ports are open on a server." This is the answer.<br><br>
+        <strong>Old vs New distinction wins interviews:</strong> Always volunteer that <span class="ic2">ifconfig/netstat</span> are deprecated and you prefer <span class="ic2">ip addr/ss</span>. Then mention you still know the old commands for legacy systems. This precision signals real production experience.<br><br>
+        <strong>curl -w is the performance debugging differentiator:</strong> <span class="ic2">curl -o /dev/null -sS -w "TTFB: %{time_starttransfer}s Total: %{time_total}s\n" URL</span> — knowing this immediately diagnoses whether API latency is in DNS, TCP, TLS, or the server. Very few candidates know this — it's a strong differentiator.<br><br>
+        <strong>SSH tunneling scenario is almost always asked:</strong> "How do you securely access a database in a private VPC?" Answer: SSH local port forwarding through a bastion — <span class="ic2">ssh -N -L 5432:db.internal:5432 ubuntu@bastion.host</span>. Know this cold.
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <strong>Linux Commands Interview Guide</strong> &nbsp;|&nbsp; Section 6: Network Management &nbsp;|&nbsp; DevOps · Data Engineering · AI-ML Engineering
+</footer>
+
+</body>
+</html>

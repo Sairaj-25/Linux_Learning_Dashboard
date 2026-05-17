@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Section 5 — Disk Management</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --navy:     #0A1628;
+    --blue:     #1565C0;
+    --sky:      #1E88E5;
+    --teal:     #00796B;
+    --green:    #2E7D32;
+    --orange:   #E65100;
+    --red:      #B71C1C;
+    --purple:   #6A1B9A;
+    --indigo:   #283593;
+    --amber:    #F57F17;
+    --brown:    #4E342E;
+    --bg:       #F2F5FB;
+    --surface:  #FFFFFF;
+    --surf2:    #EAF0FA;
+    --border:   #C8D8EE;
+    --text:     #0D1B2E;
+    --text2:    #2B3E58;
+    --text3:    #52667E;
+    --codebg:   #0B1623;
+    --shadow-s: 0 1px 4px rgba(10,22,40,.07);
+    --shadow-m: 0 4px 16px rgba(10,22,40,.10);
+    --shadow-l: 0 12px 40px rgba(10,22,40,.13);
+    --r:        14px;
+    --rs:       9px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; }
+  ::-webkit-scrollbar { width: 6px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ══ HERO ══ */
+  .hero {
+    background: linear-gradient(145deg, #060E1A 0%, #0B1C35 30%, #0E2B50 60%, #1A3A6E 100%);
+    padding: 68px 24px 56px; text-align: center; position: relative; overflow: hidden;
+  }
+  .hero::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 15% 60%, rgba(21,101,192,.2) 0%, transparent 55%),
+                radial-gradient(ellipse at 85% 15%, rgba(0,121,107,.14) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero-in { position: relative; z-index: 1; }
+  .h-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.18);
+    color: #90CAF9; font-size: .72rem; font-weight: 700; letter-spacing: .14em;
+    text-transform: uppercase; padding: 7px 20px; border-radius: 100px; margin-bottom: 20px;
+  }
+  .hero h1 { font-size: clamp(2rem,5vw,3.2rem); font-weight: 800; color: #fff; letter-spacing: -.03em; line-height: 1.15; margin-bottom: 13px; }
+  .hero h1 em { font-style: normal; color: #64B5F6; }
+  .hero p { font-size: .97rem; color: #90CAF9; max-width: 600px; margin: 0 auto 26px; line-height: 1.7; }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .chip { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.15); color: #B3E5FC; font-size: .75rem; font-weight: 500; padding: 5px 14px; border-radius: 100px; }
+
+  /* ══ NAV ══ */
+  .nav { position: sticky; top: 0; z-index: 200; background: rgba(255,255,255,.94); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); box-shadow: var(--shadow-s); }
+  .nav-in { max-width: 1160px; margin: 0 auto; display: flex; align-items: center; gap: 2px; height: 50px; padding: 0 20px; overflow-x: auto; white-space: nowrap; }
+  .nav-in a { text-decoration: none; color: var(--text2); font-size: .79rem; font-weight: 500; padding: 5px 12px; border-radius: 100px; transition: all .15s; flex-shrink: 0; }
+  .nav-in a:hover { background: var(--surf2); color: var(--sky); }
+  .ndot { color: var(--border); margin: 0 2px; flex-shrink: 0; }
+
+  /* ══ LAYOUT ══ */
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 42px 22px 90px; }
+
+  /* ══ INTRO GRID ══ */
+  .ig { display: grid; grid-template-columns: repeat(auto-fit,minmax(250px,1fr)); gap: 13px; margin-bottom: 38px; }
+  .ic { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; display: flex; gap: 13px; align-items: flex-start; box-shadow: var(--shadow-s); }
+  .ic .io { font-size: 1.6rem; flex-shrink: 0; }
+  .ic h3 { font-size: .72rem; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: .09em; margin-bottom: 4px; }
+  .ic p { font-size: .84rem; color: var(--text2); line-height: 1.6; }
+
+  /* ══ CMD CARD ══ */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--shadow-m); margin-bottom: 40px; overflow: hidden; }
+
+  /* Header colour themes */
+  .h-lsblk  { background: linear-gradient(135deg,#0D2547,#1565C0); }
+  .h-fdisk  { background: linear-gradient(135deg,#1B3A1B,#2E7D32); }
+  .h-parted { background: linear-gradient(135deg,#2A1A0A,#E65100); }
+  .h-blkid  { background: linear-gradient(135deg,#1A0A2A,#6A1B9A); }
+  .h-df     { background: linear-gradient(135deg,#0A2040,#0277BD); }
+  .h-du     { background: linear-gradient(135deg,#1A2A0A,#558B2F); }
+  .h-mkfs   { background: linear-gradient(135deg,#2A0A0A,#B71C1C); }
+  .h-mount  { background: linear-gradient(135deg,#0A1A2A,#00695C); }
+  .h-lvm    { background: linear-gradient(135deg,#1A0A1A,#880E4F); }
+
+  .ch { padding: 20px 26px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .cm { font-family: 'JetBrains Mono',monospace; font-size: 1.2rem; font-weight: 700; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 8px; padding: 5px 16px; flex-shrink: 0; }
+  .cm-lsblk  { color: #82B1FF; }
+  .cm-fdisk  { color: #69F0AE; }
+  .cm-parted { color: #FFAB40; }
+  .cm-blkid  { color: #E040FB; }
+  .cm-df     { color: #40C4FF; }
+  .cm-du     { color: #CCFF90; }
+  .cm-mkfs   { color: #FF8A80; }
+  .cm-mount  { color: #64FFDA; }
+  .cm-lvm    { color: #F48FB1; }
+
+  .cmeta { flex: 1; min-width: 180px; }
+  .clabel { color: rgba(255,255,255,.5); font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .cdesc  { color: #fff; font-size: .93rem; font-weight: 600; margin-top: 2px; }
+
+  .cb { padding: 26px; }
+
+  /* ══ SECTION LABELS ══ */
+  .sl { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin: 28px 0 13px; }
+  .sl:first-of-type { margin-top: 0; }
+  .sn { width: 27px; height: 27px; border-radius: 50%; background: var(--blue); color: #fff; font-size: .67rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .st { font-size: .97rem; font-weight: 700; color: var(--text); }
+
+  .sub { font-size: .73rem; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: .09em; margin: 16px 0 7px; }
+
+  .desc { font-size: .875rem; color: var(--text2); line-height: 1.82; margin-bottom: 10px; }
+
+  /* ══ INLINE CODE ══ */
+  .ic2 { font-family: 'JetBrains Mono',monospace; background: #E8F0FE; color: #B71C1C; padding: 2px 7px; border-radius: 4px; font-size: .79rem; border: 1px solid #C5D5FB; }
+
+  /* ══ CODE BLOCK ══ */
+  .cw { margin-bottom: 14px; border-radius: var(--rs); overflow: hidden; }
+  .ct { background: #162033; padding: 7px 15px; display: flex; align-items: center; justify-content: space-between; font-size: .68rem; font-weight: 700; color: #4D7099; letter-spacing: .09em; text-transform: uppercase; }
+  .ct .lang { color: #4DB6FF; }
+  pre.p { background: var(--codebg); padding: 17px 20px; overflow-x: auto; margin: 0; border-top: 1px solid #1E2F45; }
+  pre.p code { font-family: 'JetBrains Mono',monospace; font-size: .79rem; line-height: 1.88; color: #A8D8FF; background: none; padding: 0; }
+  .c  { color: #5FAD5E; }
+  .k  { color: #FF8A80; font-weight: 600; }
+  .cm2{ color: #82CFFF; }
+  .fl { color: #FFCC80; }
+  .st2{ color: #A5D6A7; }
+  .sc { color: #CE93D8; font-weight: 600; }
+  .di { color: #FFD54F; }
+  .nu { color: #80CBC4; }
+  .at { color: #FF8A80; }
+
+  /* ══ TABLE ══ */
+  .tw { overflow-x: auto; border-radius: var(--rs); border: 1px solid var(--border); margin-bottom: 13px; }
+  table.ft { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  table.ft thead tr { background: linear-gradient(90deg,#0D2547,#1565C0); }
+  table.ft thead th { padding: 10px 13px; color: #fff; font-size: .71rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; text-align: left; border: none; white-space: nowrap; }
+  table.ft tbody tr:nth-child(odd)  { background: #FAFCFF; }
+  table.ft tbody tr:nth-child(even) { background: #EEF4FB; }
+  table.ft tbody tr:hover { background: #DDE8F8; }
+  table.ft td { padding: 9px 13px; border-bottom: 1px solid #E0EAF8; vertical-align: top; color: var(--text2); line-height: 1.5; }
+  table.ft td:first-child { font-family: 'JetBrains Mono',monospace; font-size: .75rem; font-weight: 600; color: #B71C1C; white-space: nowrap; border-right: 1px solid var(--border); }
+  table.ft td:last-child  { font-family: 'JetBrains Mono',monospace; font-size: .75rem; color: #37474F; background: rgba(0,0,0,.015); }
+  table.ft .cat td { background: linear-gradient(90deg,#E3EAF8,#EEF4FB) !important; font-weight: 700; font-size: .71rem; color: var(--navy); text-transform: uppercase; letter-spacing: .07em; padding: 7px 13px; font-family: 'Inter',sans-serif; }
+
+  /* ══ CALLOUTS ══ */
+  .box { display: flex; gap: 12px; align-items: flex-start; padding: 13px 17px; border-radius: var(--rs); margin-bottom: 10px; font-size: .86rem; line-height: 1.7; }
+  .box .bi { font-size: 1.05rem; flex-shrink: 0; margin-top: 1px; }
+  .box strong { display: block; margin-bottom: 2px; font-size: .82rem; }
+  .box.info   { background: #E3F2FD; border-left: 4px solid #1E88E5; color: #0D2B4E; }
+  .box.tip    { background: #E8F5E9; border-left: 4px solid #43A047; color: #1B5E20; }
+  .box.warn   { background: #FFF8E1; border-left: 4px solid #F9A825; color: #4E342E; }
+  .box.danger { background: #FEEBEA; border-left: 4px solid #E53935; color: #7F1D1D; }
+  .box.purple { background: #F3E5F5; border-left: 4px solid #8E24AA; color: #3E0D5C; }
+  .box.teal   { background: #E0F2F1; border-left: 4px solid #00897B; color: #004D40; }
+  .box.orange { background: #FBE9E7; border-left: 4px solid #E64A19; color: #4E1500; }
+  .box.brown  { background: #EFEBE9; border-left: 4px solid #6D4C41; color: #3E2723; }
+
+  /* ══ Q&A ══ */
+  .qs { display: flex; flex-direction: column; gap: 11px; }
+  .qa { border-radius: var(--rs); overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow-s); }
+  .qq { background: linear-gradient(90deg,#0D2547,#1A3D6B); padding: 12px 15px; display: flex; gap: 10px; align-items: flex-start; font-size: .85rem; font-weight: 600; color: #E3F2FD; }
+  .qb { background: rgba(255,255,255,.14); color: #64B5F6; font-size: .67rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+  .qa-a { background: #fff; padding: 12px 15px 12px 33px; font-size: .85rem; color: var(--text2); line-height: 1.78; border-top: 1px solid var(--border); }
+  .qa-a .al { color: var(--teal); font-weight: 700; margin-right: 5px; }
+
+  /* ══ BULLETS ══ */
+  ul.bl { list-style: none; padding: 0; margin-bottom: 10px; }
+  ul.bl li { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid #F0F4FB; font-size: .85rem; color: var(--text2); line-height: 1.65; }
+  ul.bl li:last-child { border-bottom: none; }
+  ul.bl li::before { content: '▸'; color: var(--sky); flex-shrink: 0; margin-top: 2px; font-size: .7rem; }
+  ul.bl li strong { color: var(--text); }
+
+  /* ══ CHEAT SHEET ══ */
+  .cheat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--shadow-m); overflow: hidden; margin-bottom: 40px; }
+  .cheat-h { padding: 17px 24px; background: linear-gradient(135deg,#004D40,#00695C); }
+  .cheat-h h2 { color: #fff; font-size: .97rem; font-weight: 700; }
+  .cheat-h p  { color: #B2DFDB; font-size: .81rem; margin-top: 2px; }
+  table.ct2 { width: 100%; border-collapse: collapse; font-size: .81rem; }
+  table.ct2 tr { border-bottom: 1px solid #C8E6E1; }
+  table.ct2 tr:nth-child(odd)  { background: #F5FFFE; }
+  table.ct2 tr:nth-child(even) { background: #E8FAF7; }
+  table.ct2 tr:hover { background: #D0F0E8; }
+  table.ct2 td { padding: 9px 15px; vertical-align: middle; }
+  table.ct2 td:first-child { font-family: 'JetBrains Mono',monospace; color: #00695C; font-size: .76rem; font-weight: 600; border-right: 1px solid #C8E6E1; background: rgba(0,105,92,.04); width: 47%; }
+  table.ct2 td:last-child  { color: var(--text2); }
+  .cts td { background: linear-gradient(90deg,#004D40,#00695C) !important; color: #fff !important; font-weight: 700 !important; font-size: .69rem !important; letter-spacing: .1em; text-transform: uppercase; font-family: 'Inter',sans-serif !important; padding: 7px 15px !important; border-bottom: none !important; }
+
+  /* ══ FINAL TIP ══ */
+  .ft2 { background: linear-gradient(135deg,#0B1C40,#1A237E); border-radius: var(--r); padding: 26px 30px; display: flex; gap: 17px; align-items: flex-start; box-shadow: var(--shadow-l); margin-bottom: 40px; }
+  .ft2 .ti { font-size: 2.1rem; flex-shrink: 0; }
+  .ft2 h3 { color: #BBDEFB; font-size: .75rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px; }
+  .ft2 p  { color: #E3F2FD; font-size: .88rem; line-height: 1.82; }
+
+  footer { text-align: center; padding: 22px; border-top: 1px solid var(--border); font-size: .75rem; color: var(--text3); }
+  footer strong { color: var(--blue); }
+
+  @media (max-width: 660px) {
+    .hero { padding: 42px 16px 36px; }
+    .wrap { padding: 20px 12px 60px; }
+    .cb { padding: 15px; }
+    table.ft td:last-child { display: none; }
+    .ft2 { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-in">
+    <div class="h-pill">🐧 Linux Commands — Interview Guide</div>
+    <h1>Section 4:<br><em>Disk Management</em></h1>
+    <p>Master lsblk, fdisk, parted, blkid, df, du, mkfs, mount, umount, /etc/fstab, and full LVM stack — critical knowledge for every DevOps, Data Engineering, and AI-ML infrastructure role.</p>
+    <div class="chips">
+      <span class="chip">💾 lsblk</span><span class="chip">⚙ fdisk</span><span class="chip">🔧 parted</span>
+      <span class="chip">🔍 blkid</span><span class="chip">📊 df</span><span class="chip">📁 du</span>
+      <span class="chip">🏗 mkfs</span><span class="chip">🔌 mount/umount</span><span class="chip">📋 fstab</span>
+      <span class="chip">🗄 LVM</span>
+    </div>
+  </div>
+</header>
+
+<!-- STICKY NAV -->
+<nav class="nav">
+  <div class="nav-in">
+    <a href="#lsblk">💾 lsblk</a><span class="ndot">·</span>
+    <a href="#fdisk">⚙ fdisk</a><span class="ndot">·</span>
+    <a href="#parted">🔧 parted</a><span class="ndot">·</span>
+    <a href="#blkid">🔍 blkid</a><span class="ndot">·</span>
+    <a href="#df">📊 df</a><span class="ndot">·</span>
+    <a href="#du">📁 du</a><span class="ndot">·</span>
+    <a href="#mkfs">🏗 mkfs</a><span class="ndot">·</span>
+    <a href="#mount">🔌 mount</a><span class="ndot">·</span>
+    <a href="#lvm">🗄 LVM</a><span class="ndot">·</span>
+    <a href="#cheatsheet">📋 Cheat Sheet</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <!-- Intro cards -->
+  <div class="ig">
+    <div class="ic"><span class="io">🗺️</span><div><h3>Section Coverage</h3><p>lsblk, fdisk, parted, blkid, df, du — block device inspection, partitioning, filesystem space. Plus mkfs, mkswap, fsck, e2fsck, mount, umount, /etc/fstab, and complete LVM lifecycle.</p></div></div>
+    <div class="ic"><span class="io">🎯</span><div><h3>Interview Relevance</h3><p>Disk management questions appear in every SRE, DevOps, and cloud infra interview. Expect questions on disk full scenarios, LVM expansion, mounting NFS/EBS volumes, and partition creation.</p></div></div>
+    <div class="ic"><span class="io">⚠️</span><div><h3>Production Warning</h3><p>Several commands (fdisk, mkfs, dd, lvreduce) are destructive and irreversible. The guide highlights danger zones clearly — crucial for safe production operations.</p></div></div>
+  </div>
+
+
+  <!-- ═══════════════════════════════
+       lsblk
+  ═══════════════════════════════ -->
+  <div class="card" id="lsblk">
+    <div class="ch h-lsblk">
+      <div class="cm cm-lsblk">lsblk</div>
+      <div class="cmeta">
+        <div class="clabel">Block Device Listing</div>
+        <div class="cdesc">List block devices in a tree-like format — disks, partitions, LVM, RAID</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">lsblk</span> reads the <span class="ic2">/sys</span> virtual filesystem to list all block devices (hard drives, SSDs, NVMe, USB drives, LVM volumes, RAID arrays) in a hierarchical tree. It's the fastest, safest way to get a full picture of storage topology without any disk access.</p>
+      <p class="desc">In DevOps and cloud engineering, <span class="ic2">lsblk</span> is the first command run after attaching a new EBS volume, NVMe disk, or SAN LUN — to confirm the kernel has recognised it and to identify its device name before partitioning or formatting.</p>
+
+      <div class="sl"><span class="sn">2</span><span class="st">Syntax</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="cm2">lsblk</span> <span class="fl">[OPTIONS]</span> <span class="st2">[device...]</span>
+
+  <span class="c">device</span>  — Optional: restrict output to specific device (e.g., /dev/sda)
+  <span class="c">OPTIONS</span> — Flags controlling output format and columns</code></pre></div>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Commonly Used Options &amp; Flags</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>-a</td><td>Show all devices including empty ones</td><td>lsblk -a</td></tr>
+          <tr><td>-f</td><td>Show filesystem type, UUID, and mount point</td><td>lsblk -f</td></tr>
+          <tr><td>-o COLS</td><td>Specify output columns</td><td>lsblk -o NAME,SIZE,TYPE,MOUNTPOINT</td></tr>
+          <tr><td>-p</td><td>Print full device paths (/dev/sda1 not sda1)</td><td>lsblk -p</td></tr>
+          <tr><td>-n</td><td>No header line (clean for scripting)</td><td>lsblk -n</td></tr>
+          <tr><td>-d</td><td>Don't print partitions — disks only</td><td>lsblk -d</td></tr>
+          <tr><td>-e LIST</td><td>Exclude device types by major number</td><td>lsblk -e 7 (exclude loopback)</td></tr>
+          <tr><td>-J</td><td>JSON output (for automation)</td><td>lsblk -J | jq '.blockdevices'</td></tr>
+          <tr><td>-b</td><td>Print sizes in bytes</td><td>lsblk -b -o NAME,SIZE</td></tr>
+          <tr><td>-s</td><td>Inverse — show device dependencies (slaves)</td><td>lsblk -s /dev/sda1</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="sub">Beginner — Basic Disk Inspection</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Default tree view — most useful daily command</span>
+<span class="cm2">lsblk</span>
+<span class="c"># NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+# sda      8:0    0  100G  0 disk
+# ├─sda1   8:1    0    1G  0 part /boot
+# ├─sda2   8:2    0   20G  0 part /
+# └─sda3   8:3    0   79G  0 part /data
+# sdb      8:16   0  500G  0 disk        ← NEW unformatted disk</span>
+
+<span class="c"># Show filesystem info — UUID needed for /etc/fstab</span>
+<span class="cm2">lsblk -f</span>
+<span class="c"># NAME   FSTYPE   UUID                                 MOUNTPOINT
+# sda1   ext4     a1b2c3d4-...                         /boot</span>
+
+<span class="c"># Custom columns — most informative for storage planning</span>
+<span class="cm2">lsblk -o</span> NAME,SIZE,TYPE,FSTYPE,UUID,MOUNTPOINT,MODEL</code></pre></div>
+
+      <div class="sub">Intermediate — Cloud &amp; DevOps Tasks</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — AWS EC2 new EBS volume workflow</span></div>
+      <pre class="p"><code><span class="c"># Step 1: Attach EBS in AWS console, then verify kernel sees it</span>
+<span class="cm2">lsblk</span>
+<span class="c"># nvme1n1 is the newly attached volume</span>
+
+<span class="c"># Step 2: Check if it already has a filesystem</span>
+<span class="cm2">lsblk -f</span> /dev/nvme1n1
+<span class="c"># FSTYPE blank = no filesystem yet (safe to format)</span>
+
+<span class="c"># Script: parse new unformatted disks</span>
+<span class="cm2">lsblk</span> <span class="fl">-dn -o</span> NAME,TYPE,FSTYPE | <span class="cm2">awk</span> <span class="st2">'$2=="disk" && $3=="" {print $1}'</span>
+
+<span class="c"># JSON output for Ansible/Terraform fact gathering</span>
+<span class="cm2">lsblk</span> <span class="fl">-J -o</span> NAME,SIZE,TYPE,MOUNTPOINT | <span class="cm2">python3 -m json.tool</span>
+
+<span class="c"># Find all mounted NVMe disks</span>
+<span class="cm2">lsblk -o</span> NAME,SIZE,TYPE,MOUNTPOINT | <span class="cm2">grep</span> nvme</code></pre></div>
+
+      <div class="sl"><span class="sn">5</span><span class="st">Real-World Use Cases</span></div>
+      <ul class="bl">
+        <li><strong>New volume verification:</strong> After attaching AWS EBS, GCP Persistent Disk, or Azure Managed Disk — <span class="ic2">lsblk</span> confirms the device name before partitioning.</li>
+        <li><strong>LVM topology audit:</strong> See which physical disks back which VGs and LVs in a single tree view.</li>
+        <li><strong>CI/CD disk provisioning scripts:</strong> <span class="ic2">lsblk -J</span> output is parsed by Python/Ansible to auto-detect and mount available data volumes.</li>
+        <li><strong>Kubernetes node setup:</strong> Verify NVMe local storage is available for <span class="ic2">local-path-provisioner</span> before joining the cluster.</li>
+      </ul>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the difference between lsblk and fdisk -l?</div>
+        <div class="qa-a"><span class="al">A:</span><span class="ic2">lsblk</span> reads from <span class="ic2">/sys</span> — it's read-only, fast, and safe to run as any user (with sudo for full detail). It shows device topology including LVM and RAID. <span class="ic2">fdisk -l</span> opens each device file and reads partition tables — requires root, may wake sleeping disks, but shows partition table details (type, sectors, start/end) that lsblk doesn't. Use lsblk first for overview, fdisk -l for partition-level details.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q2</span>You attach an EBS volume to an EC2 instance. How do you find its device name?</div>
+        <div class="qa-a"><span class="al">A:</span>Run <span class="ic2">lsblk</span> before and after attaching, or simply <span class="ic2">lsblk -d -o NAME,SIZE,MODEL</span> after attachment. AWS attaches NVMe EBS volumes as <span class="ic2">nvme1n1</span>, <span class="ic2">nvme2n1</span>, etc. The AWS console shows the device name (e.g., <span class="ic2">/dev/sdf</span>) but the kernel may map it to <span class="ic2">/dev/nvme1n1</span>. Always use <span class="ic2">lsblk</span> to confirm the actual kernel device name.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — lsblk -f before any disk operation</strong> Always run <span class="ic2">lsblk -f</span> before formatting — confirms there's no existing filesystem (FSTYPE blank). Formatting a disk with data loses everything.</div></div>
+      <div class="box info"><span class="bi">💡</span><div><strong>Column Reference</strong> Most useful columns: <span class="ic2">NAME,SIZE,TYPE,FSTYPE,UUID,LABEL,MOUNTPOINT,MODEL,SERIAL,ROTA</span> — ROTA=0 means SSD/NVMe, ROTA=1 means HDD (rotational).</div></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════
+       fdisk
+  ═══════════════════════════════ -->
+  <div class="card" id="fdisk">
+    <div class="ch h-fdisk">
+      <div class="cm cm-fdisk">fdisk</div>
+      <div class="cmeta">
+        <div class="clabel">Partition Table Manipulation</div>
+        <div class="cdesc">Interactive partition table manipulator for MBR and GPT disks</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">fdisk</span> is an interactive text-based partition editor. It reads and modifies partition tables on block devices — primarily MBR (Master Boot Record, max 2TB, max 4 primary partitions) and GPT (GUID Partition Table, supports disks &gt;2TB, up to 128 partitions).</p>
+      <p class="desc">In production environments, <span class="ic2">fdisk</span> is used to prepare raw disks before filesystem creation — carving out partitions for OS boot, swap, data volumes, and LVM physical volumes. For disks &gt;2TB, use <span class="ic2">parted</span> or <span class="ic2">gdisk</span> instead.</p>
+      <div class="box danger"><span class="bi">🚨</span><div><strong>DESTRUCTIVE — No Undo!</strong> fdisk writes changes directly to the partition table. Deleting a partition loses ALL data on it. Always verify the device name twice. In production, schedule maintenance windows and have backups before any fdisk operation.</div></div>
+
+      <div class="sl"><span class="sn">2</span><span class="st">Syntax</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="cm2">fdisk</span> <span class="fl">[OPTIONS]</span> <span class="st2">DEVICE</span>
+
+<span class="c">Read-only (safe):</span>
+  <span class="cm2">fdisk -l</span>              <span class="c"># List all disk partition tables</span>
+  <span class="cm2">fdisk -l</span> /dev/sda     <span class="c"># List specific disk</span>
+
+<span class="c">Interactive (requires root):</span>
+  <span class="cm2">sudo fdisk</span> /dev/sdb   <span class="c"># Open fdisk for /dev/sdb</span></code></pre></div>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Interactive Commands (inside fdisk prompt)</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Key</th><th>Description</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>p</td><td>Print partition table</td><td>Safe — read-only, do this first</td></tr>
+          <tr><td>n</td><td>New partition</td><td>Prompts for type, number, start, end</td></tr>
+          <tr><td>d</td><td>Delete a partition</td><td>DESTRUCTIVE — data loss</td></tr>
+          <tr><td>t</td><td>Change partition type</td><td>82=swap, 83=Linux, 8e=LVM, fd=RAID</td></tr>
+          <tr><td>l</td><td>List known partition types</td><td>Shows all type codes</td></tr>
+          <tr><td>w</td><td>Write changes and exit</td><td>PERMANENT — commits to disk</td></tr>
+          <tr><td>q</td><td>Quit WITHOUT saving</td><td>Safe — discards all changes</td></tr>
+          <tr><td>m</td><td>Help menu</td><td>Lists all available commands</td></tr>
+          <tr><td>g</td><td>Create new GPT table</td><td>Destroys existing table!</td></tr>
+          <tr><td>o</td><td>Create new MBR/DOS table</td><td>Destroys existing table!</td></tr>
+          <tr><td>v</td><td>Verify partition table</td><td>Checks for errors</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="sub">Read-Only — Safe Inspection</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># List ALL disk partition tables (most common read-only use)</span>
+<span class="cm2">sudo fdisk -l</span>
+
+<span class="c"># List specific disk</span>
+<span class="cm2">sudo fdisk -l</span> /dev/sda
+<span class="c"># Disk /dev/sda: 100 GiB, 107374182400 bytes
+# Disk model: Virtual disk
+# Device     Boot   Start       End   Sectors  Size Id Type
+# /dev/sda1  *       2048   2099199   2097152    1G 83 Linux
+# /dev/sda2       2099200 209715199 207616000   99G 8e Linux LVM</span></code></pre></div>
+
+      <div class="sub">Creating Partitions on a New Disk</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — Full new disk partitioning workflow</span></div>
+      <pre class="p"><code><span class="c"># Step 1: Identify the new unpartitioned disk</span>
+<span class="cm2">lsblk</span>                         <span class="c"># See /dev/sdb with no partitions</span>
+
+<span class="c"># Step 2: Open fdisk on the new disk</span>
+<span class="cm2">sudo fdisk</span> /dev/sdb
+
+<span class="c"># Inside fdisk — commands to type:</span>
+<span class="c"># g        ← create new GPT partition table</span>
+<span class="c"># n        ← new partition</span>
+<span class="c"># 1        ← partition number 1</span>
+<span class="c"># &lt;Enter&gt;  ← accept default first sector</span>
+<span class="c"># +50G     ← size: 50GB partition</span>
+<span class="c"># n        ← second partition</span>
+<span class="c"># 2        ← partition number 2</span>
+<span class="c"># &lt;Enter&gt;  ← accept default (after sdb1)</span>
+<span class="c"># &lt;Enter&gt;  ← use rest of disk</span>
+<span class="c"># t, 2, 8e ← set type of sdb2 to Linux LVM</span>
+<span class="c"># p        ← print and verify before writing</span>
+<span class="c"># w        ← WRITE and exit (permanent!)</span>
+
+<span class="c"># Step 3: Inform kernel of new partition table</span>
+<span class="cm2">sudo partprobe</span> /dev/sdb
+<span class="c"># or: sudo blockdev --rereadpt /dev/sdb</span>
+
+<span class="c"># Step 4: Verify</span>
+<span class="cm2">lsblk</span> /dev/sdb</code></pre></div>
+
+      <div class="sl"><span class="sn">5</span><span class="st">Real-World Use Cases</span></div>
+      <ul class="bl">
+        <li><strong>Provisioning data nodes:</strong> New bare-metal Kafka, Elasticsearch, or database servers receive raw disks — fdisk creates LVM partitions before volume group setup.</li>
+        <li><strong>Boot partition creation:</strong> Creating <span class="ic2">/boot</span> and <span class="ic2">/boot/efi</span> partitions when reinstalling RHEL/Ubuntu on physical hardware.</li>
+        <li><strong>Swap partition setup:</strong> Create a dedicated swap partition (type 82) on servers with memory-intensive ML model inference workloads.</li>
+      </ul>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the difference between MBR and GPT partition tables?</div>
+        <div class="qa-a"><span class="al">A:</span><strong>MBR (Master Boot Record):</strong> Legacy format. Max disk size 2TB. Max 4 primary partitions (or 3 primary + 1 extended with logical partitions inside). <strong>GPT (GUID Partition Table):</strong> Modern standard. Supports disks up to 9.4ZB. Up to 128 partitions. Has backup partition table at disk end. Required for UEFI boot. Use GPT for all new deployments — fdisk now defaults to GPT on new disks.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q2</span>What happens if you press 'w' in fdisk by mistake?</div>
+        <div class="qa-a"><span class="al">A:</span>The partition table is written to disk immediately and is irreversible. Data recovery may be possible with tools like <span class="ic2">testdisk</span> if the data hasn't been overwritten, but there are no guarantees. Prevention: always use <span class="ic2">p</span> to print and verify the partition layout before pressing <span class="ic2">w</span>. In production, take a partition table backup first: <span class="ic2">sfdisk -d /dev/sda > partition_backup.txt</span>.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q3</span>When would you use parted instead of fdisk?</div>
+        <div class="qa-a"><span class="al">A:</span>Use <span class="ic2">parted</span> when: (1) disk size &gt;2TB — fdisk has limitations with very large disks, (2) you need scripted/non-interactive partitioning — parted supports one-liner commands, (3) you need to resize an existing partition without deleting it, (4) you need to align partitions optimally for SSDs/NVMe (parted has optimal alignment checks). <span class="ic2">fdisk</span> is fine for typical server disks under 2TB.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — Wrong device name</strong> <span class="ic2">fdisk /dev/sda</span> on a production OS disk is catastrophic. Triple-check the device: <span class="ic2">lsblk</span>, <span class="ic2">fdisk -l</span>, compare sizes. In automated scripts, add device validation: assert device is not mounted as root.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Backup partition table first</strong> <span class="ic2">sudo sfdisk -d /dev/sda > /backup/sda_partition_table.txt</span> — saves the partition table as a script that can be replayed with <span class="ic2">sfdisk /dev/sda &lt; partition_backup.txt</span>.</div></div>
+      <div class="box warn"><span class="bi">⚠️</span><div><strong>partprobe after fdisk</strong> After writing changes, run <span class="ic2">sudo partprobe /dev/sdX</span> to signal the kernel to re-read the partition table without requiring a reboot. Without this, the new partitions won't be visible to the OS.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════
+       parted
+  ═══════════════════════════════ -->
+  <div class="card" id="parted">
+    <div class="ch h-parted">
+      <div class="cm cm-parted">parted</div>
+      <div class="cmeta">
+        <div class="clabel">Advanced Partition Manipulation</div>
+        <div class="cdesc">GNU parted — supports GPT, large disks, scripting, and partition resizing</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">parted</span> is a more advanced partition editor than fdisk. Key advantages: supports disks &gt;2TB, can resize partitions without data loss (for some filesystems), works in both interactive and non-interactive (scriptable) modes, and performs partition alignment verification critical for SSD performance.</p>
+      <p class="desc">In modern DevOps workflows, <span class="ic2">parted</span> is preferred over fdisk for cloud disk provisioning scripts because it accepts commands as arguments — enabling fully automated, non-interactive partition creation in Terraform, Ansible, and cloud-init user data.</p>
+
+      <div class="sl"><span class="sn">2</span><span class="st">Syntax</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Interactive mode</span>
+<span class="cm2">sudo parted</span> /dev/sdb
+
+<span class="c"># Non-interactive (scripted) mode — preferred in automation</span>
+<span class="cm2">sudo parted</span> <span class="fl">-s</span> /dev/sdb <span class="st2">COMMAND [ARGUMENTS]</span>
+<span class="cm2">sudo parted</span> <span class="fl">--script</span> /dev/sdb mklabel gpt
+
+  <span class="c">-s / --script</span>  — Non-interactive: don't prompt for confirmation
+  <span class="c">-a optimal</span>    — Align partitions to optimal boundaries (SSD-friendly)</span></code></pre></div>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Key parted Subcommands</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Command</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>print</td><td>Show partition table</td><td>parted /dev/sda print</td></tr>
+          <tr><td>mklabel TYPE</td><td>Create new partition table (gpt/msdos)</td><td>parted -s /dev/sdb mklabel gpt</td></tr>
+          <tr><td>mkpart</td><td>Create a partition</td><td>parted -s /dev/sdb mkpart primary ext4 0% 100%</td></tr>
+          <tr><td>rm NUM</td><td>Delete partition number NUM</td><td>parted /dev/sdb rm 2</td></tr>
+          <tr><td>resizepart</td><td>Resize a partition (expand end)</td><td>parted /dev/sda resizepart 3 100%</td></tr>
+          <tr><td>set NUM FLAG</td><td>Set partition flag (boot, lvm, swap, raid)</td><td>parted -s /dev/sdb set 1 lvm on</td></tr>
+          <tr><td>align-check</td><td>Verify partition is optimally aligned</td><td>parted /dev/sdb align-check optimal 1</td></tr>
+          <tr><td>unit</td><td>Set unit (s=sectors, MB, GB, %)</td><td>parted /dev/sdb unit MB print</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — Automated disk setup (cloud-init / Ansible)</span></div>
+      <pre class="p"><code><span class="c"># Full disk setup in ONE scriptable line (no prompts)</span>
+<span class="cm2">sudo parted</span> <span class="fl">-s</span> /dev/sdb \
+    mklabel gpt \
+    mkpart primary ext4 <span class="nu">0%</span> <span class="nu">100%</span>
+<span class="cm2">sudo partprobe</span> /dev/sdb
+<span class="cm2">sudo mkfs.ext4</span> /dev/sdb1
+
+<span class="c"># Create 3 partitions: boot (1G), swap (8G), data (rest)</span>
+<span class="cm2">sudo parted</span> <span class="fl">-s -a optimal</span> /dev/sdb \
+    mklabel gpt \
+    mkpart primary fat32 <span class="nu">1MiB 1GiB</span> \
+    mkpart primary linux-swap <span class="nu">1GiB 9GiB</span> \
+    mkpart primary ext4 <span class="nu">9GiB 100%</span> \
+    set <span class="nu">1</span> esp on \
+    set <span class="nu">2</span> swap on \
+    set <span class="nu">3</span> lvm on
+
+<span class="c"># Expand last partition to fill disk (after disk resize)</span>
+<span class="cm2">sudo parted</span> /dev/sda resizepart <span class="nu">3 100%</span>
+<span class="cm2">sudo resize2fs</span> /dev/sda3          <span class="c"># Then grow filesystem</span>
+
+<span class="c"># Print partition table in machine-readable format</span>
+<span class="cm2">sudo parted</span> /dev/sda print machine</code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>Scenario: You have an AWS EC2 instance and expanded the root EBS volume from 20GB to 50GB. How do you use the extra space?</div>
+        <div class="qa-a"><span class="al">A:</span>Three steps: <strong>1.</strong> Expand the partition: <span class="ic2">sudo growpart /dev/xvda 1</span> (or use <span class="ic2">parted /dev/xvda resizepart 1 100%</span>). <strong>2.</strong> Grow the filesystem: <span class="ic2">sudo resize2fs /dev/xvda1</span> (ext4) or <span class="ic2">sudo xfs_growfs /</span> (XFS). <strong>3.</strong> Verify: <span class="ic2">df -h /</span>. No reboot required — can be done live on a running system.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Always use -a optimal</strong> <span class="ic2">parted -a optimal</span> aligns partitions to 1MiB boundaries, which aligns to SSD erase blocks and NVMe optimal I/O boundaries. Misaligned partitions can lose 50%+ of SSD performance.</div></div>
+      <div class="box warn"><span class="bi">⚠️</span><div><strong>parted mkpart vs fdisk n</strong> parted's <span class="ic2">mkpart</span> does NOT automatically create a filesystem — it only creates the partition entry. Always run <span class="ic2">mkfs</span> after <span class="ic2">parted</span>. A common mistake is assuming the partition is formatted after <span class="ic2">mkpart</span>.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════
+       blkid
+  ═══════════════════════════════ -->
+  <div class="card" id="blkid">
+    <div class="ch h-blkid">
+      <div class="cm cm-blkid">blkid</div>
+      <div class="cmeta">
+        <div class="clabel">Block Device Identification</div>
+        <div class="cdesc">Locate and display attributes (UUID, LABEL, TYPE) of block devices</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">blkid</span> queries block devices and prints their attributes: UUID (Universally Unique Identifier), filesystem type, partition label, and partition UUID. The UUID is a persistent identifier — unlike device names (<span class="ic2">/dev/sda1</span>) which can change if disks are added or reordered, UUIDs stay constant.</p>
+      <p class="desc">In DevOps, <span class="ic2">blkid</span> is the standard tool for getting the UUID before writing <span class="ic2">/etc/fstab</span> entries. Using UUID in fstab is the production best practice — prevents boot failures from device name changes after disk additions or kernel updates.</p>
+
+      <div class="sl"><span class="sn">2</span><span class="st">Syntax &amp; Key Flags</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="cm2">blkid</span> <span class="fl">[OPTIONS]</span> <span class="st2">[DEVICE...]</span>
+
+  <span class="c">No args</span>   — List ALL block devices with attributes
+  <span class="c">DEVICE</span>    — Query specific device only</code></pre></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>-o FORMAT</td><td>Output format: full, value, list, udev, export</td><td>blkid -o value -s UUID /dev/sda1</td></tr>
+          <tr><td>-s TAG</td><td>Show specific tag only (UUID, TYPE, LABEL)</td><td>blkid -s TYPE /dev/sda1</td></tr>
+          <tr><td>-t TAG=VAL</td><td>Search for device with specific attribute</td><td>blkid -t TYPE=ext4</td></tr>
+          <tr><td>-p</td><td>Low-level probing (bypass cache)</td><td>blkid -p /dev/sda1</td></tr>
+          <tr><td>-u LIST</td><td>Filter by usage: filesystem,raid,crypto</td><td>blkid -u filesystem</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Show all block device attributes</span>
+<span class="cm2">sudo blkid</span>
+<span class="c"># /dev/sda1: UUID="a1b2c3d4-e5f6-..." TYPE="ext4" PARTUUID="..."
+# /dev/sda2: UUID="8765-4321"          TYPE="vfat" PARTLABEL="EFI"</span>
+
+<span class="c"># Get ONLY the UUID of a specific partition (for fstab scripting)</span>
+<span class="cm2">sudo blkid -s UUID -o value</span> /dev/sdb1
+<span class="c"># a1b2c3d4-e5f6-7890-abcd-ef1234567890</span>
+
+<span class="c"># Find all ext4 filesystems</span>
+<span class="cm2">sudo blkid -t TYPE=ext4</span>
+
+<span class="c"># Script: auto-generate fstab entry for new data partition</span>
+<span class="k">UUID</span>=$(<span class="cm2">sudo blkid -s UUID -o value</span> /dev/sdb1)
+<span class="cm2">echo</span> <span class="st2">"UUID=${UUID} /data ext4 defaults,nofail 0 2"</span> | \
+    <span class="cm2">sudo tee -a</span> /etc/fstab</code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>Why should /etc/fstab use UUID instead of device names like /dev/sda1?</div>
+        <div class="qa-a"><span class="al">A:</span>Device names (<span class="ic2">/dev/sda1</span>) are assigned by the kernel based on detection order and can change — adding a second disk might rename <span class="ic2">sda</span> to <span class="ic2">sdb</span> causing boot failure. UUIDs are embedded in the filesystem itself and never change regardless of disk position. This is especially critical in cloud environments where EBS/block device names can change after snapshots or instance type changes. Always use <span class="ic2">UUID=</span> or <span class="ic2">LABEL=</span> in fstab.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Scripting fstab entries</strong> The pattern <span class="ic2">UUID=$(blkid -s UUID -o value /dev/sdX1)</span> extracts the UUID as a clean string for automation. Combine with <span class="ic2">echo "UUID=$UUID /mount ext4 defaults,nofail 0 2" | tee -a /etc/fstab</span> for fully automated mount setup in cloud provisioning scripts.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════
+       df
+  ═══════════════════════════════ -->
+  <div class="card" id="df">
+    <div class="ch h-df">
+      <div class="cm cm-df">df</div>
+      <div class="cmeta">
+        <div class="clabel">Disk Free / Filesystem Space</div>
+        <div class="cdesc">Report filesystem disk space usage — mounted filesystems overview</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">df</span> (disk free) reports the amount of disk space used and available on all mounted filesystems. It queries the kernel's mount table — showing total capacity, used space, available space, and mount points. Unlike <span class="ic2">du</span>, <span class="ic2">df</span> shows filesystem-level totals, not individual file/directory sizes.</p>
+      <p class="desc">In production, <span class="ic2">df</span> is checked in monitoring scripts, Prometheus exporters, cron jobs, and on-call runbooks. "Disk full" incidents (<span class="ic2">df</span> showing 100% usage) are among the most common production outages — they cause application crashes, database corruption, and complete service loss.</p>
+
+      <div class="sl"><span class="sn">2</span><span class="st">Syntax</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="cm2">df</span> <span class="fl">[OPTIONS]</span> <span class="st2">[FILE or FILESYSTEM...]</span>
+
+  <span class="c">No args</span>   — Show all mounted filesystems
+  <span class="c">FILE</span>      — Show filesystem containing that file
+  <span class="c">FILESYSTEM</span>— Show specific mount point or device</code></pre></div>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Commonly Used Flags</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>-h</td><td>Human-readable (KB, MB, GB, TB)</td><td>df -h</td></tr>
+          <tr><td>-H</td><td>Human-readable using powers of 1000 (not 1024)</td><td>df -H</td></tr>
+          <tr><td>-T</td><td>Show filesystem type (ext4, xfs, tmpfs, nfs...)</td><td>df -Th</td></tr>
+          <tr><td>-i</td><td>Show inode usage instead of block usage</td><td>df -i</td></tr>
+          <tr><td>-t TYPE</td><td>Show only filesystems of specific type</td><td>df -t ext4</td></tr>
+          <tr><td>-x TYPE</td><td>Exclude filesystem type from output</td><td>df -x tmpfs -x devtmpfs</td></tr>
+          <tr><td>-a</td><td>Include pseudo/virtual filesystems</td><td>df -a</td></tr>
+          <tr><td>--total</td><td>Add grand total row at bottom</td><td>df -h --total</td></tr>
+          <tr><td>-P</td><td>POSIX output (stable for scripting)</td><td>df -P | awk 'NR>1'</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="sub">Standard Usage</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Human-readable overview — most common command</span>
+<span class="cm2">df -h</span>
+<span class="c"># Filesystem      Size  Used Avail Use% Mounted on
+# /dev/sda2        99G   45G   49G  48% /
+# /dev/sda1       976M  151M  759M  17% /boot
+# tmpfs            16G     0   16G   0% /dev/shm</span>
+
+<span class="c"># Show filesystem type too (great for NFS vs local vs tmpfs)</span>
+<span class="cm2">df -Th</span>
+
+<span class="c"># Show inode usage — critical! "disk full" can be due to inodes</span>
+<span class="cm2">df -i</span>
+<span class="c"># IUse% at 100% = disk full even if blocks are free</span>
+
+<span class="c"># Which filesystem contains /var/log?</span>
+<span class="cm2">df -h</span> /var/log
+
+<span class="c"># Exclude virtual filesystems (clean output)</span>
+<span class="cm2">df -h -x tmpfs -x devtmpfs -x squashfs</span></code></pre></div>
+
+      <div class="sub">Automation &amp; Monitoring</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — Production disk monitoring script</span></div>
+      <pre class="p"><code><span class="c"># Alert if any filesystem is over 85% full</span>
+<span class="cm2">df -h</span> | <span class="cm2">awk</span> <span class="st2">'NR>1 && $5+0 > 85 {
+    printf "ALERT: %s is %s full (threshold: 85%%)\n", $6, $5
+}'</span>
+
+<span class="c"># Get specific filesystem usage as integer (for scripts)</span>
+<span class="k">DISK_USAGE</span>=$(<span class="cm2">df -P</span> / | <span class="cm2">awk</span> <span class="st2">'NR==2 {gsub(/%/,"",$5); print $5}'</span>)
+<span class="k">if</span> [[ <span class="st2">${DISK_USAGE}</span> -gt <span class="nu">90</span> ]]; <span class="k">then</span>
+    <span class="cm2">echo</span> <span class="st2">"CRITICAL: Root disk ${DISK_USAGE}% full!"</span>
+    <span class="c"># send_pagerduty_alert</span>
+<span class="k">fi</span>
+
+<span class="c"># Disk space summary excluding loop/virtual devices</span>
+<span class="cm2">df -Th</span> | <span class="cm2">grep</span> -E <span class="st2">'^/dev/'</span> | <span class="cm2">sort -k6</span>
+
+<span class="c"># Total used space across all real filesystems</span>
+<span class="cm2">df -h --total</span> | <span class="cm2">tail -1</span></code></pre></div>
+
+      <div class="sl"><span class="sn">5</span><span class="st">Real-World Use Cases</span></div>
+      <ul class="bl">
+        <li><strong>Production monitoring:</strong> Prometheus <span class="ic2">node_exporter</span> exposes <span class="ic2">node_filesystem_avail_bytes</span> (sourced from df). Alert rules fire when <span class="ic2">df</span> would show &gt;85% used.</li>
+        <li><strong>ML training server health checks:</strong> Training jobs write large checkpoint files — <span class="ic2">df -h /checkpoints</span> in cron scripts alert before disk fills up and corrupts the checkpoint.</li>
+        <li><strong>Log rotation triggers:</strong> <span class="ic2">/var/log</span> filling up is a common production issue. df-based alerting triggers logrotate or cleanup before the filesystem fills completely.</li>
+        <li><strong>Container host monitoring:</strong> Docker's image/overlay filesystem can fill <span class="ic2">/var/lib/docker</span> — <span class="ic2">df -h /var/lib/docker</span> is the first check when Kubernetes pods fail to start.</li>
+      </ul>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>Scenario: df shows disk is 100% full but du shows much less usage. What could cause this?</div>
+        <div class="qa-a"><span class="al">A:</span>This is the classic <strong>deleted-but-open files</strong> problem. When a process deletes a file but still has it open (via a file descriptor), the OS marks the inode as deleted but doesn't release the disk blocks until the file descriptor is closed. <span class="ic2">du</span> counts only directory-linked files (deleted files aren't counted), while <span class="ic2">df</span> shows actual block usage including these "ghost" files. <strong>Fix:</strong> Find the process holding the open file: <span class="ic2">lsof | grep deleted | sort -k7 -rn | head</span>. Either restart the process or wait for it to close the file.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q2</span>df shows 45% used but the system is reporting "No space left on device". Why?</div>
+        <div class="qa-a"><span class="al">A:</span>Inode exhaustion. Run <span class="ic2">df -i</span> — if <span class="ic2">IUse%</span> shows 100%, the inode table is full even though disk blocks are available. Each file requires one inode. This happens when a process creates millions of small files (log entries, temp files, email spool). <strong>Fix:</strong> Find directory with millions of files: <span class="ic2">find / -xdev -printf '%h\n' | sort | uniq -c | sort -rn | head</span>. Delete small files to free inodes. Long-term fix: format with more inodes using <span class="ic2">mkfs.ext4 -N &lt;count&gt;</span> or switch to XFS which has dynamic inodes.</div></div>
+
+        <div class="qa"><span class="qb" style="display:inline-block;padding:2px 8px;border-radius:4px;background:#1565C0;color:#fff;font-size:.67rem;font-weight:800;margin:12px 16px 0">Q3</span>
+        <div class="qa-a" style="padding:12px 16px;"><span class="al">Q3:</span>What is the difference between df and du?<br><span class="al">A:</span><span class="ic2">df</span> queries the filesystem metadata (kernel mount table) — it reports at the <strong>filesystem/partition level</strong> including reserved blocks and overhead, instantly. <span class="ic2">du</span> actually traverses the directory tree counting file sizes — it works at the <strong>file/directory level</strong> and can be slow on large filesystems. Use <span class="ic2">df</span> to check overall filesystem fullness; use <span class="ic2">du</span> to find WHAT is consuming the space.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — Ignoring inode usage</strong> df -h shows only block usage by default. Always check <span class="ic2">df -i</span> when debugging "no space" errors — inode exhaustion is a common production gotcha, especially on systems processing millions of small files.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Reserved space</strong> By default, <span class="ic2">mkfs.ext4</span> reserves 5% of disk space for root. On large data disks (1TB+), this wastes 50GB. Reduce with <span class="ic2">tune2fs -m 1 /dev/sdX1</span> (reduce to 1%). Only do this on data disks, not root filesystem.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════
+       du
+  ═══════════════════════════════ -->
+  <div class="card" id="du">
+    <div class="ch h-du">
+      <div class="cm cm-du">du</div>
+      <div class="cmeta">
+        <div class="clabel">Disk Usage — File/Directory Level</div>
+        <div class="cdesc">Estimate file space usage — find what is consuming disk space</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">du</span> (disk usage) traverses the directory tree and reports the disk space consumed by files and directories. While <span class="ic2">df</span> tells you a filesystem is full, <span class="ic2">du</span> tells you <em>what</em> is full — pinpointing the directories consuming the most space. It is the essential "disk space forensics" tool.</p>
+      <p class="desc">In AI/ML engineering, <span class="ic2">du</span> is critical for managing model checkpoints, training datasets, Docker image caches, and Python package environments that frequently grow to hundreds of GBs.</p>
+
+      <div class="sl"><span class="sn">2</span><span class="st">Syntax</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="cm2">du</span> <span class="fl">[OPTIONS]</span> <span class="st2">[FILE or DIRECTORY...]</span>
+
+  <span class="c">No args</span>     — Summarize current directory recursively
+  <span class="c">DIRECTORY</span>   — Summarize given path recursively</code></pre></div>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Commonly Used Flags</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>-h</td><td>Human-readable (K, M, G)</td><td>du -h /var</td></tr>
+          <tr><td>-s</td><td>Summary — total only for each argument (no recursion)</td><td>du -sh /var/log</td></tr>
+          <tr><td>-a</td><td>Show all files, not just directories</td><td>du -ah /etc | sort -h</td></tr>
+          <tr><td>-c</td><td>Add grand total at the end</td><td>du -shc /home/*</td></tr>
+          <tr><td>--max-depth=N</td><td>Limit recursion to N levels</td><td>du -h --max-depth=2 /var</td></tr>
+          <tr><td>-d N</td><td>Same as --max-depth (shorthand)</td><td>du -hd1 /</td></tr>
+          <tr><td>--exclude=PAT</td><td>Exclude files matching pattern</td><td>du -sh --exclude='*.pyc' /app</td></tr>
+          <tr><td>-x</td><td>Stay on same filesystem (don't cross mount points)</td><td>du -sx /</td></tr>
+          <tr><td>--apparent-size</td><td>Show apparent size, not disk usage (for sparse files)</td><td>du -sh --apparent-size file</td></tr>
+          <tr><td>-l</td><td>Count hardlinked files multiple times</td><td>du -hl /data</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="sub">Finding Disk Hogs — The Core Use Case</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># TOP 10 largest directories in /var (sorted)</span>
+<span class="cm2">sudo du -h --max-depth=2</span> /var | <span class="cm2">sort -rh</span> | <span class="cm2">head -20</span>
+
+<span class="c"># Summary of ALL top-level directories — find biggest</span>
+<span class="cm2">sudo du -hd1</span> / 2>/dev/null | <span class="cm2">sort -rh</span> | <span class="cm2">head -15</span>
+
+<span class="c"># How big is each user's home directory?</span>
+<span class="cm2">sudo du -shc</span> /home/* | <span class="cm2">sort -rh</span>
+
+<span class="c"># Single directory total</span>
+<span class="cm2">du -sh</span> /var/log
+<span class="cm2">du -sh</span> /opt/conda/envs/ml_env    <span class="c"># ML conda environment size</span>
+
+<span class="c"># All directories under /var, 2 levels deep</span>
+<span class="cm2">du -h --max-depth=2</span> /var | <span class="cm2">sort -rh</span> | <span class="cm2">head -20</span></code></pre></div>
+
+      <div class="sub">AI/ML Specific — Model &amp; Dataset Management</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Check ML checkpoint storage consumption</span>
+<span class="cm2">du -sh</span> /mnt/checkpoints/*/     <span class="c"># Per-experiment sizes</span>
+<span class="cm2">du -sh</span> /mnt/checkpoints/ --total
+
+<span class="c"># Find top 10 largest model files</span>
+<span class="cm2">du -ah</span> /opt/models/ | <span class="cm2">sort -rh</span> | <span class="cm2">head -10</span>
+
+<span class="c"># Docker image cache size (common disk hog)</span>
+<span class="cm2">sudo du -sh</span> /var/lib/docker/
+<span class="cm2">docker system df</span>                 <span class="c"># Better: Docker-native usage</span>
+<span class="cm2">docker system prune</span>              <span class="c"># Clean up unused layers</span>
+
+<span class="c"># Python venv sizes — find bloated environments</span>
+<span class="cm2">du -shc</span> ~/.virtualenvs/* 2>/dev/null | <span class="cm2">sort -rh</span>
+<span class="cm2">du -shc</span> ~/miniconda3/envs/* | <span class="cm2">sort -rh</span>
+
+<span class="c"># Log directory analysis — find which app logs are biggest</span>
+<span class="cm2">sudo du -hd2</span> /var/log/ | <span class="cm2">sort -rh</span> | <span class="cm2">head -15</span>
+
+<span class="c"># Disk usage excluding compiled Python files</span>
+<span class="cm2">du -sh</span> --exclude=<span class="st2">'*.pyc'</span> --exclude=<span class="st2">'__pycache__'</span> /opt/app/</code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>Scenario: Production disk is 95% full. Walk me through how you investigate.</div>
+        <div class="qa-a"><span class="al">A:</span><strong>1.</strong> <span class="ic2">df -h</span> — identify which filesystem is full. <strong>2.</strong> <span class="ic2">df -i</span> — check if it's inode exhaustion instead. <strong>3.</strong> <span class="ic2">sudo du -hd1 /problem_mount 2>/dev/null | sort -rh | head -15</span> — find top directories. <strong>4.</strong> Drill down: <span class="ic2">sudo du -hd2 /problem_dir | sort -rh | head</span>. <strong>5.</strong> <span class="ic2">lsof | grep deleted</span> — check for deleted-but-open files. <strong>6.</strong> Immediate relief: clear old logs <span class="ic2">/var/log/*.gz</span>, Docker cleanup <span class="ic2">docker system prune</span>, rotate logs. <strong>7.</strong> Long-term: set up monitoring alerts at 80% threshold.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — du on network filesystems</strong> <span class="ic2">du</span> traverses every file, which can take hours on large NFS mounts or generate massive network traffic. Always use <span class="ic2">-x</span> flag to stay on local filesystem: <span class="ic2">du -sx /</span>.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — ncdu for interactive exploration</strong> <span class="ic2">ncdu</span> (ncurses disk usage) is a TUI version of du — navigable with arrow keys, much faster than the classic du | sort pipeline. Install: <span class="ic2">apt-get install ncdu</span>. Use: <span class="ic2">sudo ncdu /</span>.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════
+       mkfs / mkswap / fsck / e2fsck
+  ═══════════════════════════════ -->
+  <div class="card" id="mkfs">
+    <div class="ch h-mkfs">
+      <div class="cm cm-mkfs">mkfs</div>
+      <div class="cmeta">
+        <div class="clabel">Filesystem Creation &amp; Repair</div>
+        <div class="cdesc">Build Linux filesystems — mkfs, mkswap, fsck, e2fsck</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">mkfs</span> (make filesystem) creates a new filesystem on a partition or block device. It is a frontend for filesystem-specific tools: <span class="ic2">mkfs.ext4</span>, <span class="ic2">mkfs.xfs</span>, <span class="ic2">mkfs.btrfs</span>, <span class="ic2">mkfs.vfat</span>. <span class="ic2">mkswap</span> prepares a swap area. <span class="ic2">fsck</span>/<span class="ic2">e2fsck</span> check and repair filesystems.</p>
+      <div class="box danger"><span class="bi">🚨</span><div><strong>IRREVERSIBLY DESTRUCTIVE</strong> mkfs completely overwrites all data on the target device. <span class="ic2">mkfs.ext4 /dev/sda</span> (instead of <span class="ic2">/dev/sda1</span>) destroys the entire disk including partition table. There is NO undo. Verify device name multiple times before running.</div></div>
+
+      <div class="sub">mkfs — Create Filesystems</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Create ext4 filesystem (most common Linux FS)</span>
+<span class="cm2">sudo mkfs.ext4</span> /dev/sdb1
+
+<span class="c"># With label (human-readable name — usable in fstab)</span>
+<span class="cm2">sudo mkfs.ext4</span> <span class="fl">-L data_vol</span> /dev/sdb1
+
+<span class="c"># XFS — high-performance for large files (data engineering, ML storage)</span>
+<span class="cm2">sudo mkfs.xfs</span> /dev/sdb1
+
+<span class="c"># XFS with label</span>
+<span class="cm2">sudo mkfs.xfs</span> <span class="fl">-L mldata</span> /dev/sdb1
+
+<span class="c"># Btrfs — modern FS with snapshots and RAID built-in</span>
+<span class="cm2">sudo mkfs.btrfs</span> /dev/sdb1
+
+<span class="c"># FAT32 for USB drives / EFI partitions</span>
+<span class="cm2">sudo mkfs.vfat</span> <span class="fl">-F 32</span> /dev/sdb1
+
+<span class="c"># Tune ext4 for better performance (reduce reserved space)</span>
+<span class="cm2">sudo mkfs.ext4</span> <span class="fl">-m 1</span> -L data /dev/sdb1   <span class="c"># Reserve only 1% (not 5%)</span>
+
+<span class="c"># Optimise for SSDs — set stride/stripe-width</span>
+<span class="cm2">sudo mkfs.ext4</span> <span class="fl">-E stride=128,stripe-width=128</span> /dev/nvme0n1p1</code></pre></div>
+
+      <div class="sub">mkswap — Create Swap</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Create swap on partition</span>
+<span class="cm2">sudo mkswap</span> /dev/sdb2
+
+<span class="c"># Create swap FILE (no extra partition needed)</span>
+<span class="cm2">sudo fallocate -l 4G</span> /swapfile   <span class="c"># Create 4GB file</span>
+<span class="cm2">sudo chmod 600</span> /swapfile          <span class="c"># Secure permissions</span>
+<span class="cm2">sudo mkswap</span> /swapfile             <span class="c"># Format as swap</span>
+<span class="cm2">sudo swapon</span> /swapfile             <span class="c"># Activate swap</span>
+<span class="cm2">swapon --show</span>                     <span class="c"># Verify</span>
+
+<span class="c"># Add to fstab for persistence across reboots</span>
+<span class="cm2">echo</span> <span class="st2">'/swapfile none swap sw 0 0'</span> | <span class="cm2">sudo tee -a</span> /etc/fstab</code></pre></div>
+
+      <div class="sub">fsck / e2fsck — Filesystem Check &amp; Repair</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># IMPORTANT: NEVER run fsck on a MOUNTED filesystem!</span>
+<span class="c"># Boot to rescue mode or unmount first</span>
+
+<span class="c"># Check filesystem (read-only, shows errors only)</span>
+<span class="cm2">sudo fsck</span> <span class="fl">-n</span> /dev/sdb1     <span class="c"># -n = no changes, just check</span>
+
+<span class="c"># Auto-repair — answer yes to all prompts</span>
+<span class="cm2">sudo fsck</span> <span class="fl">-y</span> /dev/sdb1
+
+<span class="c"># Force check on ext4 specifically</span>
+<span class="cm2">sudo e2fsck</span> <span class="fl">-f</span> /dev/sdb1   <span class="c"># -f = force even if clean</span>
+<span class="cm2">sudo e2fsck</span> <span class="fl">-fp</span> /dev/sdb1  <span class="c"># -p = auto preen (fix trivial errors)</span>
+
+<span class="c"># Check and show progress</span>
+<span class="cm2">sudo e2fsck</span> <span class="fl">-fv</span> /dev/sdb1
+
+<span class="c"># Force fsck on next reboot (system disk)</span>
+<span class="cm2">sudo tune2fs</span> <span class="fl">-C 1</span> /dev/sda1  <span class="c"># Set mount count to trigger check</span>
+<span class="cm2">sudo touch</span> /forcefsck         <span class="c"># Alternative method</span></code></pre></div>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>When would you choose XFS over ext4?</div>
+        <div class="qa-a"><span class="al">A:</span><strong>Choose XFS when:</strong> working with large files (video, ML datasets, genomic data, database files), high-throughput sequential workloads, filesystems &gt;16TB (ext4 max is 1EB but XFS performs better at scale), or when using RHEL/CentOS (XFS is the default). <strong>Choose ext4 when:</strong> general-purpose use, systems with many small files, need for easy recovery with e2fsck, or when you need to shrink the filesystem (XFS cannot shrink). For Kafka data directories or Elasticsearch indices — XFS is typically preferred in production.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q2</span>Scenario: A server crashed and the filesystem is corrupted. How do you repair it?</div>
+        <div class="qa-a"><span class="al">A:</span><strong>1.</strong> Boot to rescue/single-user mode or boot from live USB. <strong>2.</strong> UNMOUNT the affected filesystem — NEVER run fsck on a mounted FS. <strong>3.</strong> <span class="ic2">sudo e2fsck -fp /dev/sdXN</span> — auto-repair trivial errors. <strong>4.</strong> If errors remain: <span class="ic2">sudo e2fsck -fy /dev/sdXN</span> — answer yes to all prompts. <strong>5.</strong> If corruption is severe, backup readable files first with <span class="ic2">ddrescue</span> before running fsck. <strong>6.</strong> After repair, remount and verify: <span class="ic2">mount /dev/sdXN /mnt && ls /mnt</span>.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Critical Mistake — Running fsck on mounted filesystem</strong> Running fsck on a mounted filesystem causes severe corruption — never do this. The filesystem MUST be unmounted first. Exception: journaling check tools can run on read-only mounted filesystems.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Filesystem choice for Docker overlay</strong> XFS with <span class="ic2">ftype=1</span> is required for Docker overlay2 storage driver (default since Docker 17.06). Always format Docker storage as: <span class="ic2">mkfs.xfs -n ftype=1 /dev/sdX</span>. Missing this causes Docker to fall back to slower devicemapper.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════
+       mount / umount / fstab
+  ═══════════════════════════════ -->
+  <div class="card" id="mount">
+    <div class="ch h-mount">
+      <div class="cm cm-mount">mount / umount</div>
+      <div class="cmeta">
+        <div class="clabel">Filesystem Mounting</div>
+        <div class="cdesc">Attach/detach filesystems + /etc/fstab for persistent mounts</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+      <p class="desc"><span class="ic2">mount</span> attaches a filesystem to a directory in the Linux directory tree (the mount point), making it accessible. <span class="ic2">umount</span> detaches it. <span class="ic2">/etc/fstab</span> is the configuration file defining mounts that persist across reboots — every permanent mount in production is configured here.</p>
+      <p class="desc">In cloud environments, mounting EBS volumes, NFS shares, EFS (AWS), GCS FUSE, S3 FUSE mounts for ML training data, and Kubernetes persistent volumes all rely on these fundamentals.</p>
+
+      <div class="sl"><span class="sn">2</span><span class="st">Syntax</span></div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="cm2">mount</span> <span class="fl">[OPTIONS]</span> <span class="st2">DEVICE MOUNTPOINT</span>
+<span class="cm2">umount</span> <span class="fl">[OPTIONS]</span> <span class="st2">DEVICE | MOUNTPOINT</span>
+
+  <span class="c">DEVICE</span>      — Block device, NFS share, CIFS share, or UUID
+  <span class="c">MOUNTPOINT</span>  — Directory where filesystem will be attached</code></pre></div>
+
+      <div class="sl"><span class="sn">3</span><span class="st">Key Flags &amp; Mount Options</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Option</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr class="cat"><td colspan="3">mount flags</td></tr>
+          <tr><td>-t TYPE</td><td>Specify filesystem type</td><td>mount -t xfs /dev/sdb1 /data</td></tr>
+          <tr><td>-o OPTIONS</td><td>Mount options (see below)</td><td>mount -o rw,noatime /dev/sdb1 /data</td></tr>
+          <tr><td>-a</td><td>Mount all filesystems in /etc/fstab</td><td>mount -a</td></tr>
+          <tr><td>-r / -o ro</td><td>Read-only mount</td><td>mount -o ro /dev/sdb1 /mnt</td></tr>
+          <tr><td>--bind</td><td>Bind-mount (expose directory at another path)</td><td>mount --bind /opt/data /var/data</td></tr>
+          <tr><td>--move</td><td>Move mount to different path</td><td>mount --move /old /new</td></tr>
+          <tr class="cat"><td colspan="3">Common -o mount options (used in fstab too)</td></tr>
+          <tr><td>defaults</td><td>rw,suid,dev,exec,auto,nouser,async</td><td>defaults</td></tr>
+          <tr><td>noatime</td><td>Don't update access time on reads — performance boost</td><td>defaults,noatime</td></tr>
+          <tr><td>nofail</td><td>Don't fail boot if this device is missing</td><td>defaults,nofail</td></tr>
+          <tr><td>ro / rw</td><td>Read-only / read-write</td><td>ro</td></tr>
+          <tr><td>noexec</td><td>Prevent execution of binaries (security)</td><td>defaults,noexec</td></tr>
+          <tr><td>nosuid</td><td>Ignore SUID bits (security)</td><td>defaults,nosuid</td></tr>
+          <tr><td>_netdev</td><td>Wait for network before mounting (NFS/S3)</td><td>defaults,_netdev,nofail</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="sub">Basic Mounting Operations</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Show all currently mounted filesystems</span>
+<span class="cm2">mount</span> | <span class="cm2">grep</span> <span class="fl">-v</span> <span class="st2">"cgroup\|proc\|sys\|dev"</span>   <span class="c"># Filter virtual</span>
+<span class="c"># Or cleaner:</span>
+<span class="cm2">findmnt</span>                           <span class="c"># Modern tree view of mounts</span>
+<span class="cm2">findmnt -t ext4,xfs</span>              <span class="c"># Only real filesystems</span>
+
+<span class="c"># Mount a partition</span>
+<span class="cm2">sudo mkdir -p</span> /data
+<span class="cm2">sudo mount</span> /dev/sdb1 /data
+
+<span class="c"># Mount with specific type and options</span>
+<span class="cm2">sudo mount</span> <span class="fl">-t xfs -o defaults,noatime</span> /dev/sdb1 /data
+
+<span class="c"># Mount NFS share</span>
+<span class="cm2">sudo mount</span> <span class="fl">-t nfs</span> <span class="st2">192.168.1.100:/export/data</span> /mnt/nfs
+
+<span class="c"># Mount ISO file (loop device)</span>
+<span class="cm2">sudo mount</span> <span class="fl">-o loop</span> ubuntu.iso /mnt/iso
+
+<span class="c"># Read-only mount (for forensics / backup inspection)</span>
+<span class="cm2">sudo mount</span> <span class="fl">-o ro</span> /dev/sdb1 /mnt/backup
+
+<span class="c"># Remount with different options (e.g., make ro volume rw)</span>
+<span class="cm2">sudo mount</span> <span class="fl">-o remount,rw</span> /data
+
+<span class="c"># Unmount</span>
+<span class="cm2">sudo umount</span> /data
+<span class="cm2">sudo umount</span> /dev/sdb1          <span class="c"># By device name</span>
+<span class="cm2">sudo umount -l</span> /data           <span class="c"># Lazy unmount (safe when busy)</span>
+<span class="cm2">sudo umount -f</span> /mnt/nfs        <span class="c"># Force (for stuck NFS mounts)</span></code></pre></div>
+
+      <div class="sub">/etc/fstab — Persistent Mounts</div>
+      <div class="cw"><div class="ct"><span class="lang">INI — /etc/fstab format</span></div>
+      <pre class="p"><code><span class="c"># Format: DEVICE  MOUNTPOINT  FSTYPE  OPTIONS  DUMP  PASS</span>
+<span class="c">#
+# Column 1: Device — UUID= preferred over /dev/sdX
+# Column 2: Mount point
+# Column 3: Filesystem type
+# Column 4: Mount options
+# Column 5: dump (0=no backup, 1=backup)
+# Column 6: fsck pass order (0=skip, 1=root first, 2=others)</span>
+
+<span class="c"># Root filesystem</span>
+UUID=<span class="st2">a1b2c3d4-e5f6-7890-ab12-cd34ef567890</span>  /       ext4  defaults                    <span class="nu">0 1</span>
+
+<span class="c"># Boot partition</span>
+UUID=<span class="st2">8765-4321</span>                               /boot   vfat  defaults,noatime            <span class="nu">0 2</span>
+
+<span class="c"># Data disk — nofail prevents boot failure if disk is missing</span>
+UUID=<span class="st2">f1e2d3c4-b5a6-9087-6543-210fedcba987</span>  /data   xfs   defaults,noatime,nofail     <span class="nu">0 2</span>
+
+<span class="c"># NFS mount — _netdev waits for network, nofail survives missing NFS</span>
+<span class="st2">192.168.1.10:/exports/shared</span>                /mnt/nfs nfs  defaults,_netdev,nofail     <span class="nu">0 0</span>
+
+<span class="c"># Swap</span>
+UUID=<span class="st2">swap-uuid-here</span>                          none    swap  sw                          <span class="nu">0 0</span>
+/swapfile                                    none    swap  sw                          <span class="nu">0 0</span>
+
+<span class="c"># tmpfs (RAM-based) — for high-speed temp storage</span>
+tmpfs                                        /tmp    tmpfs rw,size=4G,nosuid,noexec    <span class="nu">0 0</span>
+
+<span class="c"># Test fstab BEFORE rebooting</span>
+<span class="cm2">sudo mount -a</span>         <span class="c"># Mount all in fstab — shows errors immediately</span>
+<span class="cm2">sudo findmnt --verify</span> <span class="c"># Verify fstab is correct</span></code></pre></div>
+
+      <div class="sl"><span class="sn">5</span><span class="st">Real-World Use Cases</span></div>
+      <ul class="bl">
+        <li><strong>AWS EBS volume mounting:</strong> New EBS → <span class="ic2">lsblk</span> to find device → <span class="ic2">mkfs.xfs</span> → <span class="ic2">mkdir /data</span> → <span class="ic2">mount</span> → <span class="ic2">blkid</span> for UUID → add to <span class="ic2">/etc/fstab</span> with <span class="ic2">nofail</span>.</li>
+        <li><strong>ML training data on NFS:</strong> Mount NFS/EFS storage with <span class="ic2">_netdev,nofail,noatime</span> for training dataset access from multiple GPU nodes.</li>
+        <li><strong>Docker bind mounts:</strong> <span class="ic2">mount --bind /host/data /container/data</span> is the underlying mechanism for Docker <span class="ic2">-v</span> volume mounts.</li>
+        <li><strong>Kubernetes PersistentVolumes:</strong> The kubelet uses mount/umount to attach/detach CSI volumes to pods — understanding this is essential for K8s storage troubleshooting.</li>
+      </ul>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>What happens if /etc/fstab has an error and why is nofail important?</div>
+        <div class="qa-a"><span class="al">A:</span>A bad fstab entry causes the system to drop into emergency/rescue mode at boot — the boot process halts waiting for the missing or corrupt device. This is catastrophic for production servers and cloud instances where no console access is available. The <span class="ic2">nofail</span> option tells systemd to continue booting even if the specified device is unavailable. Always add <span class="ic2">nofail</span> to data disks, NFS mounts, and optional volumes. Always test with <span class="ic2">sudo mount -a</span> and <span class="ic2">sudo findmnt --verify</span> before rebooting after fstab changes.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q2</span>What does noatime do and why is it a common production optimisation?</div>
+        <div class="qa-a"><span class="al">A:</span>Normally Linux updates the access time (atime) metadata on every file READ — generating a write I/O for every read operation, effectively doubling disk writes. <span class="ic2">noatime</span> disables this update, eliminating these write operations. On systems with many small file accesses (web servers, package managers, ML frameworks reading model weights), <span class="ic2">noatime</span> can reduce disk I/O by 20-50%. It's a standard mount option in high-performance production deployments. Add to fstab: <span class="ic2">defaults,noatime</span>.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — fstab error locks out server</strong> Never reboot after changing fstab without testing first. Run <span class="ic2">sudo mount -a</span> to catch errors immediately. A typo in fstab can render a cloud instance unreachable — requiring console/rescue mode access.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Always use nofail for data disks</strong> Root filesystem: no nofail (you want it to fail loudly). Data disks: always add <span class="ic2">nofail</span>. NFS/network mounts: add both <span class="ic2">nofail</span> and <span class="ic2">_netdev</span>. This single habit prevents most fstab-related boot failures.</div></div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════
+       LVM
+  ═══════════════════════════════ -->
+  <div class="card" id="lvm">
+    <div class="ch h-lvm">
+      <div class="cm cm-lvm">LVM</div>
+      <div class="cmeta">
+        <div class="clabel">Logical Volume Management</div>
+        <div class="cdesc">pvcreate · pvdisplay · vgcreate · vgdisplay · lvcreate · lvdisplay · lvextend · lvreduce · vgremove · lvremove</div>
+      </div>
+    </div>
+    <div class="cb">
+
+      <div class="sl"><span class="sn">1</span><span class="st">Command Overview — LVM Architecture</span></div>
+      <p class="desc">LVM (Logical Volume Manager) is an abstraction layer between physical storage and filesystems that enables flexible, live disk management — grow/shrink volumes without unmounting, add disks to existing volumes, create snapshots, and stripe across multiple disks. It is the standard storage approach for production Linux servers.</p>
+
+      <div class="cw"><div class="ct"><span class="lang">LVM 3-Layer Architecture</span></div>
+      <img src="lvm.png" alt="LVM 3-Layer Architecture" style="max-width: 100%; height: auto; border: 1px solid #ccc; border-radius: 4px; display: block; margin: 10px 0;"></div>
+
+      <div class="sl"><span class="sn">2</span><span class="st">Full LVM Command Reference</span></div>
+      <div class="tw"><table class="ft">
+        <thead><tr><th>Command</th><th>Description</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr class="cat"><td colspan="3">Physical Volume (PV) — Layer 1</td></tr>
+          <tr><td>pvcreate</td><td>Initialize a block device as a PV</td><td>pvcreate /dev/sdb1</td></tr>
+          <tr><td>pvdisplay</td><td>Display detailed PV attributes</td><td>pvdisplay /dev/sdb1</td></tr>
+          <tr><td>pvs</td><td>Brief PV summary (compact, scriptable)</td><td>pvs</td></tr>
+          <tr><td>pvscan</td><td>Scan all block devices for PVs</td><td>pvscan</td></tr>
+          <tr><td>pvremove</td><td>Remove LVM metadata from a device</td><td>pvremove /dev/sdc1</td></tr>
+          <tr><td>pvresize</td><td>Resize PV (after disk expansion)</td><td>pvresize /dev/sdb1</td></tr>
+          <tr><td>pvmove</td><td>Move data off a PV (before removal)</td><td>pvmove /dev/sdb1 /dev/sdc1</td></tr>
+          <tr class="cat"><td colspan="3">Volume Group (VG) — Layer 2</td></tr>
+          <tr><td>vgcreate</td><td>Create a VG from one or more PVs</td><td>vgcreate vg_data /dev/sdb1 /dev/sdc1</td></tr>
+          <tr><td>vgdisplay</td><td>Display detailed VG attributes</td><td>vgdisplay vg_data</td></tr>
+          <tr><td>vgs</td><td>Brief VG summary</td><td>vgs</td></tr>
+          <tr><td>vgextend</td><td>Add a new PV to an existing VG</td><td>vgextend vg_data /dev/sdd1</td></tr>
+          <tr><td>vgreduce</td><td>Remove a PV from a VG</td><td>vgreduce vg_data /dev/sdc1</td></tr>
+          <tr><td>vgrename</td><td>Rename a volume group</td><td>vgrename vg_old vg_new</td></tr>
+          <tr><td>vgremove</td><td>Remove a VG (must be empty)</td><td>vgremove vg_data</td></tr>
+          <tr><td>vgchange</td><td>Activate/deactivate VG</td><td>vgchange -ay vg_data</td></tr>
+          <tr class="cat"><td colspan="3">Logical Volume (LV) — Layer 3</td></tr>
+          <tr><td>lvcreate</td><td>Create a new LV in a VG</td><td>lvcreate -L 20G -n lv_data vg_data</td></tr>
+          <tr><td>lvdisplay</td><td>Display detailed LV attributes</td><td>lvdisplay /dev/vg_data/lv_data</td></tr>
+          <tr><td>lvs</td><td>Brief LV summary</td><td>lvs</td></tr>
+          <tr><td>lvextend</td><td>Extend (grow) an LV</td><td>lvextend -L +20G /dev/vg_data/lv_data</td></tr>
+          <tr><td>lvreduce</td><td>Shrink an LV (DANGEROUS — offline only!)</td><td>lvreduce -L -10G /dev/vg_data/lv_data</td></tr>
+          <tr><td>lvresize</td><td>Resize LV to absolute size or relative change</td><td>lvresize -r -L 50G /dev/vg_data/lv_data</td></tr>
+          <tr><td>lvrename</td><td>Rename a logical volume</td><td>lvrename vg_data lv_old lv_new</td></tr>
+          <tr><td>lvremove</td><td>Remove a logical volume</td><td>lvremove /dev/vg_data/lv_data</td></tr>
+          <tr><td>lvsnapshot</td><td>Create a snapshot of an LV</td><td>lvcreate -s -L 5G -n snap_data /dev/vg/lv</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+      <div class="sub">Complete LVM Setup — New Disk to Mounted Volume</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — Full LVM provisioning workflow</span></div>
+      <pre class="p"><code><span class="c">═══ STEP 1: Prepare the physical disks ═══</span>
+<span class="cm2">sudo fdisk</span> /dev/sdb    <span class="c"># Create partition, set type to 8e (Linux LVM)</span>
+<span class="c"># OR use parted:</span>
+<span class="cm2">sudo parted</span> <span class="fl">-s</span> /dev/sdb mklabel gpt mkpart primary <span class="nu">0% 100%</span>
+<span class="cm2">sudo parted</span> <span class="fl">-s</span> /dev/sdb set <span class="nu">1</span> lvm on
+<span class="cm2">sudo partprobe</span> /dev/sdb
+
+<span class="c">═══ STEP 2: Create Physical Volumes ═══</span>
+<span class="cm2">sudo pvcreate</span> /dev/sdb1 /dev/sdc1
+<span class="cm2">pvs</span>                    <span class="c"># Verify: PV  VG  Fmt  Attr PSize PFree</span>
+
+<span class="c">═══ STEP 3: Create Volume Group ═══</span>
+<span class="cm2">sudo vgcreate</span> vg_data /dev/sdb1 /dev/sdc1
+<span class="cm2">vgs</span>                    <span class="c"># Verify VG with combined size</span>
+<span class="cm2">vgdisplay</span> vg_data     <span class="c"># Detailed view</span>
+
+<span class="c">═══ STEP 4: Create Logical Volumes ═══</span>
+<span class="cm2">sudo lvcreate</span> <span class="fl">-L 50G -n</span> lv_models vg_data    <span class="c"># Fixed 50GB</span>
+<span class="cm2">sudo lvcreate</span> <span class="fl">-l 100%FREE -n</span> lv_datasets vg_data  <span class="c"># Rest of VG</span>
+<span class="cm2">lvs</span>                    <span class="c"># Verify LVs</span>
+
+<span class="c">═══ STEP 5: Create filesystems ═══</span>
+<span class="cm2">sudo mkfs.xfs</span> <span class="fl">-L models</span> /dev/vg_data/lv_models
+<span class="cm2">sudo mkfs.xfs</span> <span class="fl">-L datasets</span> /dev/vg_data/lv_datasets
+
+<span class="c">═══ STEP 6: Mount and persist in fstab ═══</span>
+<span class="cm2">sudo mkdir -p</span> /opt/{models,datasets}
+<span class="cm2">sudo mount</span> /dev/vg_data/lv_models /opt/models
+<span class="cm2">sudo mount</span> /dev/vg_data/lv_datasets /opt/datasets
+
+<span class="c"># Add to /etc/fstab using device mapper path (stable)</span>
+<span class="cm2">echo</span> <span class="st2">"/dev/vg_data/lv_models   /opt/models   xfs  defaults,noatime,nofail 0 2"</span> | <span class="cm2">sudo tee -a</span> /etc/fstab
+<span class="cm2">echo</span> <span class="st2">"/dev/vg_data/lv_datasets /opt/datasets xfs  defaults,noatime,nofail 0 2"</span> | <span class="cm2">sudo tee -a</span> /etc/fstab</code></pre></div>
+
+      <div class="sub">Expanding LVM — Most Important Production Task</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH — Live LV extension (no downtime required)</span></div>
+      <pre class="p"><code><span class="c">═══ SCENARIO: /opt/datasets is 90% full, add 100GB ═══</span>
+
+<span class="c"># Option A: Extend from existing free space in VG</span>
+<span class="cm2">vgs vg_data</span>                    <span class="c"># Check VG free space</span>
+<span class="cm2">sudo lvextend</span> <span class="fl">-L +100G</span> /dev/vg_data/lv_datasets
+<span class="cm2">sudo xfs_growfs</span> /opt/datasets  <span class="c"># Grow XFS filesystem ONLINE</span>
+<span class="c"># For ext4: sudo resize2fs /dev/vg_data/lv_datasets</span>
+<span class="cm2">df -h</span> /opt/datasets            <span class="c"># Verify new size</span>
+
+<span class="c"># Option B: Add new disk to VG first, then extend LV</span>
+<span class="c"># 1. Add new disk as PV</span>
+<span class="cm2">sudo pvcreate</span> /dev/sdd1
+<span class="c"># 2. Extend VG</span>
+<span class="cm2">sudo vgextend</span> vg_data /dev/sdd1
+<span class="c"># 3. Extend LV to use all new space</span>
+<span class="cm2">sudo lvextend</span> <span class="fl">-l +100%FREE</span> /dev/vg_data/lv_datasets
+<span class="c"># 4. Grow filesystem</span>
+<span class="cm2">sudo xfs_growfs</span> /opt/datasets
+
+<span class="c"># One-liner: extend LV AND filesystem together (-r flag)</span>
+<span class="cm2">sudo lvextend</span> <span class="fl">-L +100G -r</span> /dev/vg_data/lv_datasets
+<span class="c"># -r = resize filesystem automatically after LV extension</span></code></pre></div>
+
+      <div class="sub">LVM Snapshots — For Backups &amp; Safe Upgrades</div>
+      <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+      <pre class="p"><code><span class="c"># Create snapshot before risky operation</span>
+<span class="cm2">sudo lvcreate</span> <span class="fl">-s -L 10G -n</span> lv_root_snap /dev/vg_system/lv_root
+<span class="c"># -s = snapshot, -L = snapshot reserve size, -n = snapshot name</span>
+
+<span class="c"># List snapshots</span>
+<span class="cm2">lvs -a</span> | <span class="cm2">grep</span> snap
+
+<span class="c"># Mount snapshot (read-only backup inspection)</span>
+<span class="cm2">sudo mount -o ro</span> /dev/vg_system/lv_root_snap /mnt/snap
+
+<span class="c"># Rollback: merge snapshot back (REVERTS all changes!)</span>
+<span class="cm2">sudo umount</span> /
+<span class="cm2">sudo lvconvert --merge</span> /dev/vg_system/lv_root_snap
+
+<span class="c"># Remove snapshot when no longer needed</span>
+<span class="cm2">sudo lvremove</span> /dev/vg_system/lv_root_snap</code></pre></div>
+
+      <div class="sl"><span class="sn">5</span><span class="st">Real-World Use Cases</span></div>
+      <ul class="bl">
+        <li><strong>Kubernetes worker nodes:</strong> RHEL/Ubuntu K8s nodes use LVM for flexible container runtime storage allocation — docker, containerd, and kubelet data directories on separate LVs.</li>
+        <li><strong>Database servers:</strong> PostgreSQL, MySQL data directories on LVM LVs with snapshots for consistent backups without stopping the database.</li>
+        <li><strong>ML training farms:</strong> Model checkpoints and dataset caches on LVM with easy online expansion as training data grows — add a new disk, <span class="ic2">vgextend</span>, <span class="ic2">lvextend</span>, <span class="ic2">xfs_growfs</span>, done.</li>
+        <li><strong>Zero-downtime volume expansion:</strong> Production databases need more space at 3AM — LVM allows online expansion without unmounting or stopping the service.</li>
+      </ul>
+
+      <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+      <div class="qs">
+        <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the difference between lvextend and lvresize?</div>
+        <div class="qa-a"><span class="al">A:</span><span class="ic2">lvextend</span> only grows an LV — attempting to shrink with lvextend fails. <span class="ic2">lvresize</span> can both grow and shrink. <span class="ic2">lvreduce</span> only shrinks. Best practice: use <span class="ic2">lvextend -r</span> or <span class="ic2">lvresize -r</span> with the <span class="ic2">-r</span> flag which automatically resizes the filesystem after changing the LV size — combining two steps into one. Always grow LV before filesystem; always shrink filesystem before LV.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q2</span>Scenario: A production server running out of disk space at 2AM. The root LV is 95% full. Walk through your resolution.</div>
+        <div class="qa-a"><span class="al">A:</span><strong>1.</strong> <span class="ic2">df -h</span> — confirm it's the LVM root LV. <strong>2.</strong> <span class="ic2">vgs</span> — check if VG has free extents. If yes: <strong>3a.</strong> <span class="ic2">sudo lvextend -r -L +20G /dev/vg_system/lv_root</span> — grow instantly, no downtime. If VG is full: <strong>3b.</strong> <span class="ic2">pvcreate /dev/sdb && vgextend vg_system /dev/sdb && lvextend -r -l +100%FREE /dev/vg_system/lv_root</span>. If no new disk: <strong>3c.</strong> Immediate relief: <span class="ic2">journalctl --vacuum-size=1G</span>, <span class="ic2">apt-get clean</span>, remove old kernels: <span class="ic2">apt-get autoremove</span>. The beauty of LVM is that expansion is online, live, and safe.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q3</span>Why is shrinking an LV more dangerous than growing it?</div>
+        <div class="qa-a"><span class="al">A:</span>Growing is safe — you're adding new empty space. Shrinking truncates the storage, potentially cutting off data. The process must be: (1) OFFLINE — unmount the filesystem first, (2) shrink the filesystem to less than the target size: <span class="ic2">resize2fs /dev/vg/lv NEW_SIZE</span>, (3) THEN shrink the LV: <span class="ic2">lvreduce -L NEW_SIZE /dev/vg/lv</span>. If you shrink the LV BEFORE the filesystem, you truncate the filesystem's data, causing severe corruption. XFS CANNOT be shrunk at all — plan XFS sizes carefully upfront.</div></div>
+
+        <div class="qa"><div class="qq"><span class="qb">Q4</span>What are LVM snapshots and how are they used in production?</div>
+        <div class="qa-a"><span class="al">A:</span>LVM snapshots capture the state of an LV at a point in time using copy-on-write (COW) — only blocks that change after the snapshot are copied. Production uses: (1) consistent database backups without stopping postgres/mysql — snapshot the LV, back up from the snapshot, delete snapshot, (2) safe OS upgrades — snapshot root LV, run <span class="ic2">apt-get upgrade</span>, merge snapshot to rollback if it breaks, (3) testing — snapshot production data, run destructive tests on the snapshot, remove it when done. Snapshots are NOT a substitute for backups — they live on the same disk.</div></div>
+      </div>
+
+      <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — Shrinking XFS</strong> XFS filesystems CANNOT be shrunk. If you need a smaller XFS volume, you must backup, recreate with mkfs.xfs, and restore. Plan XFS volume sizes carefully and allocate conservatively — you can always grow later.</div></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — lvreduce before resize2fs</strong> Always shrink the filesystem first, THEN shrink the LV. Reverse order causes data truncation and filesystem corruption. Order: <span class="ic2">umount → e2fsck -f → resize2fs (smaller) → lvreduce</span>.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Use -r flag for lvextend</strong> <span class="ic2">sudo lvextend -r -L +20G /dev/vg/lv</span> — the <span class="ic2">-r</span> flag automatically runs <span class="ic2">resize2fs</span> or <span class="ic2">xfs_growfs</span> after extending the LV. One command instead of two, reduces human error.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — pvs/vgs/lvs for scripting</strong> Use <span class="ic2">pvs, vgs, lvs</span> instead of <span class="ic2">pvdisplay, vgdisplay, lvdisplay</span> in scripts — compact, parseable output. Add <span class="ic2">--noheadings -o name,size,vgname</span> for clean CSV-like output for automation.</div></div>
+    </div>
+  </div>
+
+
+  <!-- CHEAT SHEET -->
+  <div class="cheat" id="cheatsheet">
+    <div class="cheat-h">
+      <h2>📋 Quick Reference Cheat Sheet — Section 4: Disk Management</h2>
+      <p>Most critical commands across all disk management tools — memorize before your interview</p>
+    </div>
+    <table class="ct2">
+      <tbody>
+        <tr class="cts"><td colspan="2">BLOCK DEVICE INSPECTION</td></tr>
+        <tr><td>lsblk</td><td>Tree view of all block devices (first command after attaching disk)</td></tr>
+        <tr><td>lsblk -f</td><td>Show filesystem type, UUID, and mount points</td></tr>
+        <tr><td>lsblk -o NAME,SIZE,TYPE,MOUNTPOINT,MODEL</td><td>Custom column view</td></tr>
+        <tr><td>sudo fdisk -l</td><td>List all partition tables (safe read-only)</td></tr>
+        <tr><td>sudo blkid</td><td>Show UUID and filesystem type of all block devices</td></tr>
+        <tr><td>sudo blkid -s UUID -o value /dev/sdb1</td><td>Get just the UUID (for fstab scripting)</td></tr>
+        <tr class="cts"><td colspan="2">PARTITIONING</td></tr>
+        <tr><td>sudo fdisk /dev/sdb</td><td>Interactive partition editor (n=new, d=delete, w=write, q=quit)</td></tr>
+        <tr><td>sudo parted -s -a optimal /dev/sdb mklabel gpt mkpart primary ext4 0% 100%</td><td>Non-interactive partition (automation-friendly)</td></tr>
+        <tr><td>sudo partprobe /dev/sdb</td><td>Tell kernel to re-read partition table (no reboot needed)</td></tr>
+        <tr class="cts"><td colspan="2">FILESYSTEM CREATION &amp; REPAIR</td></tr>
+        <tr><td>sudo mkfs.ext4 -L datalabel /dev/sdb1</td><td>Format as ext4 with label</td></tr>
+        <tr><td>sudo mkfs.xfs -L datalabel /dev/sdb1</td><td>Format as XFS (high-performance, use for large files)</td></tr>
+        <tr><td>sudo mkswap /dev/sdb2 && sudo swapon /dev/sdb2</td><td>Create and activate swap partition</td></tr>
+        <tr><td>sudo e2fsck -fp /dev/sdb1</td><td>Check and auto-repair ext4 (UNMOUNTED only!)</td></tr>
+        <tr><td>sudo fsck -n /dev/sdb1</td><td>Check filesystem without making changes (safe)</td></tr>
+        <tr class="cts"><td colspan="2">DISK SPACE REPORTING</td></tr>
+        <tr><td>df -h</td><td>Human-readable filesystem usage overview</td></tr>
+        <tr><td>df -Th</td><td>Include filesystem types</td></tr>
+        <tr><td>df -i</td><td>Inode usage (critical — disk can be "full" from inodes!)</td></tr>
+        <tr><td>df -h /var/log</td><td>Which filesystem contains this directory?</td></tr>
+        <tr><td>du -sh /var/log</td><td>Total size of a directory</td></tr>
+        <tr><td>du -hd1 /var | sort -rh | head</td><td>Find largest directories (disk forensics)</td></tr>
+        <tr><td>sudo du -shc /home/* | sort -rh</td><td>Home directory sizes, largest first</td></tr>
+        <tr class="cts"><td colspan="2">MOUNTING</td></tr>
+        <tr><td>sudo mount /dev/sdb1 /data</td><td>Mount a device</td></tr>
+        <tr><td>sudo mount -o remount,rw /data</td><td>Remount with different options</td></tr>
+        <tr><td>sudo mount -a</td><td>Mount all fstab entries (test fstab changes!)</td></tr>
+        <tr><td>sudo findmnt --verify</td><td>Verify /etc/fstab is correct before rebooting</td></tr>
+        <tr><td>sudo umount -l /data</td><td>Lazy unmount (safe when device is busy)</td></tr>
+        <tr><td>findmnt</td><td>Modern tree view of current mounts</td></tr>
+        <tr class="cts"><td colspan="2">LVM — PHYSICAL VOLUMES</td></tr>
+        <tr><td>sudo pvcreate /dev/sdb1 /dev/sdc1</td><td>Initialize PVs</td></tr>
+        <tr><td>pvs</td><td>Brief PV summary</td></tr>
+        <tr><td>sudo pvmove /dev/sdb1 /dev/sdc1</td><td>Migrate data off a PV before removal</td></tr>
+        <tr class="cts"><td colspan="2">LVM — VOLUME GROUPS</td></tr>
+        <tr><td>sudo vgcreate vg_data /dev/sdb1</td><td>Create Volume Group</td></tr>
+        <tr><td>vgs</td><td>Brief VG summary (check free space)</td></tr>
+        <tr><td>sudo vgextend vg_data /dev/sdd1</td><td>Add disk to existing VG</td></tr>
+        <tr><td>sudo vgremove vg_data</td><td>Remove VG (must remove all LVs first)</td></tr>
+        <tr class="cts"><td colspan="2">LVM — LOGICAL VOLUMES</td></tr>
+        <tr><td>sudo lvcreate -L 50G -n lv_data vg_data</td><td>Create 50GB logical volume</td></tr>
+        <tr><td>sudo lvcreate -l 100%FREE -n lv_data vg_data</td><td>Use all remaining VG space</td></tr>
+        <tr><td>lvs</td><td>Brief LV summary</td></tr>
+        <tr><td>sudo lvextend -r -L +20G /dev/vg_data/lv_data</td><td>Extend LV + filesystem together (-r flag) — ONLINE</td></tr>
+        <tr><td>sudo xfs_growfs /mountpoint</td><td>Grow XFS filesystem after lvextend</td></tr>
+        <tr><td>sudo resize2fs /dev/vg/lv</td><td>Grow ext4 filesystem after lvextend</td></tr>
+        <tr><td>sudo lvcreate -s -L 5G -n lv_snap /dev/vg/lv</td><td>Create LVM snapshot</td></tr>
+        <tr><td>sudo lvremove /dev/vg_data/lv_data</td><td>Remove logical volume</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- FINAL TIP -->
+  <div class="ft2">
+    <span class="ti">🎓</span>
+    <div>
+      <h3>Final Interview Tips — Disk Management</h3>
+      <p>
+        <strong>Most common scenario question:</strong> <em>"A production server's disk is at 100%. Walk me through your response."</em><br>
+        Answer: <span class="ic2">df -h</span> (find which FS) → <span class="ic2">df -i</span> (check inodes) → <span class="ic2">du -hd1 /problem_dir | sort -rh</span> (find what's large) → <span class="ic2">lsof | grep deleted</span> (ghost files) → immediate cleanup (logs, docker, pip cache) → <span class="ic2">lvextend -r</span> if LVM (online, no downtime).<br><br>
+        <strong>LVM is the differentiator:</strong> Knowing that <span class="ic2">lvextend -r -L +20G /dev/vg/lv</span> expands a production disk live with zero downtime — and understanding WHY (LVM abstraction + online filesystem resize) — separates senior candidates from juniors.<br><br>
+        <strong>Always mention nofail in fstab</strong> and <span class="ic2">findmnt --verify</span> before rebooting — these production safety habits signal real experience to interviewers.
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <strong>Linux Commands Interview Guide</strong> &nbsp;|&nbsp; Section 4: Disk Management &nbsp;|&nbsp; DevOps · Data Engineering · AI-ML Engineering
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux Standard Partitions - Comprehensive Notes</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --container-bg: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #f0883e;
+            --accent-purple: #bc8cff;
+            --accent-red: #f85149;
+            --border-color: #30363d;
+            --code-bg: #0d1117;
+           |}+{_:>oi98uj7hy6tr4e3ws2aq` Q1\
+           ?
+        }
+
+        * {
+            box-sizing: border-box;|
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: linear-gradient(135deg, #161b22 0%, #1f2937 100%);
+            border-bottom: 2px solid var(--accent-green);
+            padding: 2rem 1rem;
+            text-align: center;
+            border-radius: 0 0 15px 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        header h1 {
+            color: var(--accent-green);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 10px rgba(63, 185, 80, 0.3);
+        }
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        nav a {
+            background-color: var(--card-bg);
+            color: var(--accent-blue);
+            padding: 8px 15px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        nav a:hover {
+            background-color: var(--accent-blue);
+            color: var(--bg-color);
+            transform: translateY(-2px);
+        }
+
+        /* Sections & Cards */
+        section {
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            color: var(--accent-blue);
+            font-size: 1.8rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        h3 {
+            color: var(--accent-purple);
+            font-size: 1.3rem;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 4px solid var(--accent-purple);
+        }
+
+        h4 {
+            color: var(--accent-orange);
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .step-card, .command-card, .alternative-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .step-card:hover, .command-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border-color: var(--accent-blue);
+        }
+
+        .step-card h3 {
+            color: var(--accent-green);
+            border-left: 4px solid var(--accent-green);
+            margin-top: 0;
+        }
+
+        .rationale {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        .rationale strong {
+            color: var(--accent-orange);
+        }
+
+        /* Code & Commands */
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--accent-orange);
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--accent-green);
+        }
+
+        .syntax { color: var(--accent-purple); }
+        .example { color: var(--text-secondary); }
+
+        /* Accordion for Q&A */
+        details {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        summary {
+            padding: 12px 15px;
+            font-weight: bold;
+            color: var(--accent-blue);
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        summary::after {
+            content: '►';
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            transition: transform 0.2s;
+        }
+
+        details[open] summary::after {
+            transform: rotate(90deg);
+        }
+
+        details[open] summary {
+            background-color: rgba(88, 166, 255, 0.1);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .answer-content {
+            padding: 15px;
+            color: var(--text-primary);
+        }
+
+        .answer-content ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .answer-content li {
+            margin-bottom: 5px;
+        }
+
+        /* Responsive Tables for Alternatives */
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 10px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--code-bg);
+            color: var(--accent-purple);
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        /* Utility Classes */
+        .highlight {
+            color: var(--accent-red);
+            font-weight: bold;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge-important { background-color: var(--accent-red); color: white; }
+        .badge-tip { background-color: var(--accent-green); color: black; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            nav a {
+                font-size: 0.8rem;
+                padding: 6px 10px;
+            }
+
+            section {
+                padding: 15px;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            pre {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🐧 COMPREHENSIVE LINUX NOTES: STANDARD PARTITIONS</h1>
+        <nav>
+            <a href="#part1">Part I: Procedure</a>
+            <a href="#part2">Part II: Commands</a>
+            <a href="#part3">Part III: Alternatives</a>
+            <a href="#part4">Part IV: Assignment</a>
+            <a href="#part5">Part V: Interview</a>
+        </nav>
+    </header>
+
+    <div class="container">
+
+        <!-- PART I -->
+        <section id="part1">
+            <h2>PART I: STEP-BY-STEP PROCEDURE</h2>
+            
+            <div class="step-card">
+                <h3>STEP 1: DISK DETECTION</h3>
+                <p>Identify available disks on the system before partitioning.</p>
+                <p class="rationale"><strong>Rationale:</strong> You must know the correct device name (e.g., /dev/sdb) to avoid modifying the wrong disk, which could cause data loss.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 2: OPENING THE PARTITIONING UTILITY</h3>
+                <p>Launch fdisk (or another partitioning tool) targeting the correct disk.</p>
+                <p class="rationale"><strong>Rationale:</strong> fdisk is the standard interactive utility for MBR partition management on Linux.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 3: CREATING THE PARTITION</h3>
+                <p>Use the 'n' command inside fdisk to create a new partition. Choose partition type (primary/extended), partition number, starting sector, and size.</p>
+                <p class="rationale"><strong>Rationale:</strong> The partition table must have an entry before the disk space can be formatted or used.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 4: WRITING THE PARTITION TABLE</h3>
+                <p>Use the 'w' command to write changes to disk and exit fdisk.</p>
+                <p class="rationale"><strong>Rationale:</strong> Changes are only held in memory until written. 'w' commits them to the actual disk's partition table.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 5: INFORMING THE KERNEL</h3>
+                <p>Run <code>partprobe</code> or <code>partx</code> to inform the OS kernel of the new partition.</p>
+                <p class="rationale"><strong>Rationale:</strong> The kernel may not immediately detect partition table changes. partprobe forces a re-read without requiring a reboot.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 6: FORMATTING (CREATING A FILE SYSTEM)</h3>
+                <p>Use <code>mkfs</code> (e.g., mkfs.ext4 or mkfs.xfs) to create a file system on the new partition.</p>
+                <p class="rationale"><strong>Rationale:</strong> A raw partition without a file system cannot store files. The file system provides the structure for data organization.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 7: CREATING A MOUNT POINT</h3>
+                <p>Create a directory (e.g., /mnt/data) that will serve as the access point.</p>
+                <p class="rationale"><strong>Rationale:</strong> In Linux, file systems are accessed through a directory tree. The mount point is the directory where the partition attaches.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 8: MOUNTING THE PARTITION</h3>
+                <p>Use the <code>mount</code> command to attach the file system to the mount point.</p>
+                <p class="rationale"><strong>Rationale:</strong> Until mounted, the file system exists on the disk but is not accessible through the directory hierarchy.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 9: VERIFYING THE MOUNT</h3>
+                <p>Use <code>df -h</code> or <code>mount | grep</code> to confirm the partition is mounted correctly.</p>
+                <p class="rationale"><strong>Rationale:</strong> Verification ensures the partition is accessible and has the expected size and file system type.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 10: MAKING THE MOUNT PERMANENT</h3>
+                <p>Retrieve the UUID using <code>blkid</code>, add an entry to <code>/etc/fstab</code>, and verify with <code>mount -a</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> Temporary mounts are lost on reboot. /etc/fstab ensures the partition is automatically mounted every time the system boots.</p>
+            </div>
+        </section>
+
+        <!-- PART II -->
+        <section id="part2">
+            <h2>PART II: COMMANDS AND EXPLANATIONS</h2>
+
+            <div class="command-card">
+                <h3><code>lsblk</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>lsblk [options]</code></p>
+                <p><strong>Purpose:</strong> Lists information about all available or specified block devices in a tree-like structure. Shows names, sizes, types (disk/part), and mount points.</p>
+                <p><span class="example">Example:</span> <code>lsblk</code></p>
+            </div>
+
+            <div class="command-card">
+                <h3><code>fdisk -l</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>fdisk -l [device]</code></p>
+                <p><strong>Purpose:</strong> Lists the partition tables for the specified device(s). Shows start/end sectors, sizes, types, and partition IDs.</p>
+                <p><span class="example">Example:</span> <code>fdisk -l /dev/sda</code></p>
+            </div>
+
+            <div class="command-card">
+                <h3><code>fdisk /dev/sdX</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>fdisk /dev/sdX</code></p>
+                <p><strong>Purpose:</strong> Opens the interactive fdisk utility for the specified disk. Used to create, delete, modify, and view partitions on MBR-based disks.</p>
+                <p><span class="example">Example:</span> <code>fdisk /dev/sdb</code></p>
+            </div>
+
+            <div class="command-card">
+                <h3>Interactive fdisk Commands</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Command</th>
+                                <th>Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>n</code></td><td>Creates a new partition. Prompts for type, number, first sector, and last sector/size.</td></tr>
+                            <tr><td><code>p</code></td><td>Prints the current partition table. Used to verify existing partitions and free space.</td></tr>
+                            <tr><td><code>w</code></td><td>Writes the partition table changes to disk and exits. <span class="badge badge-important">Commit Step</span></td></tr>
+                            <tr><td><code>q</code></td><td>Quits fdisk without saving any changes. Used to abort modifications.</td></tr>
+                            <tr><td><code>d</code></td><td>Deletes a partition from the partition table.</td></tr>
+                            <tr><td><code>t</code></td><td>Changes the partition type/system ID (e.g., Linux, swap, LVM).</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="command-card">
+                <h3><code>partprobe</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>partprobe [device]</code></p>
+                <p><strong>Purpose:</strong> Informs the OS kernel of partition table changes on the specified device. Avoids the need for a reboot.</p>
+                <p><span class="example">Example:</span> <code>partprobe /dev/sdb</code></p>
+            </div>
+
+            <div class="command-card">
+                <h3>File System Creation (mkfs)</h3>
+                <p><span class="syntax">Syntax:</span> <code>mkfs.ext4 [options] /dev/sdXN</code> / <code>mkfs.xfs [options] /dev/sdXN</code></p>
+                <p><strong>Purpose:</strong> Creates an ext4 or XFS file system on the specified partition. ext4 is the default; XFS is high-performance for large files.</p>
+                <p><span class="example">Example:</span> <code>mkfs.ext4 /dev/sdb1</code></p>
+            </div>
+
+            <div class="command-card">
+                <h3>Mounting Commands</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Command</th><th>Purpose</th><th>Example</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>mkdir</code></td><td>Creates a directory that will serve as the mount point.</td><td><code>mkdir /mnt/data</code></td></tr>
+                            <tr><td><code>mount</code></td><td>Attaches the file system to the directory hierarchy at the mount point.</td><td><code>mount /dev/sdb1 /mnt/data</code></td></tr>
+                            <tr><td><code>umount</code></td><td>Detaches (unmounts) the file system from the directory hierarchy.</td><td><code>umount /mnt/data</code></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="command-card">
+                <h3>Verification & Persistence Commands</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Command</th><th>Purpose</th><th>Example</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>df -h</code></td><td>Displays disk space usage for all mounted file systems in human-readable format.</td><td><code>df -h</code></td></tr>
+                            <tr><td><code>blkid</code></td><td>Displays block device attributes, most importantly the UUID and file system type.</td><td><code>blkid /dev/sdb1</code></td></tr>
+                            <tr><td><code>mount -a</code></td><td>Mounts all file systems mentioned in /etc/fstab that are not already mounted.</td><td><code>mount -a</code></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART III -->
+        <section id="part3">
+            <h2>PART III: ALTERNATIVE COMMANDS</h2>
+
+            <details>
+                <summary>1. Disk Detection Alternatives</summary>
+                <div class="answer-content">
+                    <ul>
+                        <li><code>lsblk</code> : Tree view, shows mount points (recommended for overview)</li>
+                        <li><code>fdisk -l</code> : Detailed partition table with sector info</li>
+                        <li><code>ls -l /dev/sd*</code> : Raw listing of disk device files</li>
+                        <li><code>cat /proc/partitions</code> : Kernel's view of partitions</li>
+                        <li><code>parted -l</code> : Works with both MBR and GPT, shows free space</li>
+                    </ul>
+                    <p><strong>Differences:</strong> lsblk is the most user-friendly. fdisk -l gives sector-level detail. parted -l is GPT-aware. /proc/partitions is the kernel's direct view.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary>2. Partitioning Tool Alternatives</summary>
+                <div class="answer-content">
+                    <ul>
+                        <li><code>fdisk</code> : MBR only, interactive, most common for standard partitions</li>
+                        <li><code>parted</code> : Supports both MBR and GPT, can be scripted, handles larger disks (>2TB)</li>
+                        <li><code>gdisk</code> : GPT equivalent of fdisk, for UEFI/GPT systems</li>
+                        <li><code>cfdisk</code> : Curses-based (TUI) partitioning tool, more visual/user-friendly</li>
+                        <li><code>sfdisk</code> : Scriptable version of fdisk, useful for automation</li>
+                    </ul>
+                    <p><strong>Differences:</strong> fdisk is limited to MBR (max 2TB, 4 primary partitions). parted and gdisk support GPT (128+ partitions, disks >2TB). cfdisk offers a visual interface. sfdisk is best for automation.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary>3. Kernel Notification Alternatives</summary>
+                <div class="answer-content">
+                    <ul>
+                        <li><code>partprobe /dev/sdX</code> : Most common, requests kernel re-read partition table of specific/all devices</li>
+                        <li><code>partx -a /dev/sdX</code> : Tells kernel about specific partitions; more granular control</li>
+                        <li><code>kpartx /dev/sdX</code> : Creates device mappings for partitionable devices</li>
+                        <li><code>hdparm -z /dev/sdX</code> : Forces kernel to re-read partition table</li>
+                        <li><code>Reboot</code> : The guaranteed but time-consuming method</li>
+                    </ul>
+                    <p><strong>Differences:</strong> partprobe is the standard. partx is more precise and can add individual partitions. Reboot is the last resort.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary>4. File System Creation Alternatives</summary>
+                <div class="answer-content">
+                    <ul>
+                        <li><code>mkfs.ext4</code> : Default Linux FS, journaling, widely supported</li>
+                        <li><code>mkfs.xfs</code> : High performance, great for large files, default in RHEL</li>
+                        <li><code>mkfs.btrfs</code> : Advanced features (snapshots, subvolumes, compression)</li>
+                        <li><code>mkfs.ext3</code> : Older journaling FS, predecessor to ext4</li>
+                        <li><code>mkswap</code> : Creates swap space (not a regular file system)</li>
+                    </ul>
+                    <p><strong>Differences:</strong> ext4 is most compatible. XFS excels with large files and parallel I/O but cannot be shrunk. btrfs offers modern features but is more complex.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary>5. Mount Verification Alternatives</summary>
+                <div class="answer-content">
+                    <ul>
+                        <li><code>df -h</code> : Shows mounted FS with space usage</li>
+                        <li><code>mount | grep /dev/sdXN</code> : Shows raw mount data for specific device</li>
+                        <li><code>findmnt /mnt/point</code> : Tree-formatted mount info (most readable)</li>
+                        <li><code>lsblk /dev/sdXN</code> : Shows mount point in device tree</li>
+                        <li><code>cat /proc/mounts</code> : Kernel's mount table directly</li>
+                    </ul>
+                    <p><strong>Differences:</strong> findmnt is the most readable. df -h includes space info. cat /proc/mounts is the raw kernel data.</p>
+                </div>
+            </details>
+        </section>
+
+        <!-- PART IV -->
+        <section id="part4">
+            <h2>PART IV: ASSIGNMENT SOLUTIONS</h2>
+
+            <h3 style="color: var(--accent-green); border-left: 4px solid var(--accent-green);">Section A & B: Short & Medium Answers</h3>
+
+            <details><summary>1. What is the purpose of disk partitioning?</summary><div class="answer-content"><p>Disk partitioning divides a physical disk into one or more logical sections called partitions. This allows: Separation of OS files from user data, multiple OSes on one disk (dual-boot), different file systems on the same disk, efficient disk space management, improved security through isolation, and simplified backup and recovery.</p></div></details>
+            
+            <details><summary>2. Which command is used to check available disks in Linux?</summary><div class="answer-content"><p>The primary command is: <code>lsblk</code>. Alternative: <code>fdisk -l</code>.</p></div></details>
+            
+            <details><summary>3. What is the use of the lsblk command?</summary><div class="answer-content"><p>lsblk lists information about all available block devices in a tree-like format. It displays device names, major/minor numbers, sizes, types (disk or partition), and mount points, providing a quick overview of storage devices and their partitions.</p></div></details>
+            
+            <details><summary>4. What does fdisk -l display?</summary><div class="answer-content"><p>fdisk -l displays the partition tables of all detected disks (or a specific disk). It shows: disk name, disk size, sector sizes, partition entries with start/end sectors, partition sizes, partition types, and partition IDs.</p></div></details>
+            
+            <details><summary>5. Which command is used to open the fdisk utility?</summary><div class="answer-content"><p><code>fdisk /dev/sdX</code> (replace sdX with the target disk, e.g., fdisk /dev/sdb).</p></div></details>
+            
+            <details><summary>6. What does the n option do in fdisk?</summary><div class="answer-content"><p>The 'n' option creates a new partition. After pressing 'n', fdisk prompts for: partition type (primary p or extended e), partition number (1-4), first sector, and last sector or size (e.g., +5G for 5GB).</p></div></details>
+            
+            <details><summary>7. What is the difference between primary and extended partitions?</summary><div class="answer-content"><p><strong>Primary partitions:</strong> Bootable partitions that can contain an OS or data. MBR allows a maximum of 4 primary partitions.<br><strong>Extended partitions:</strong> A special type that cannot hold data directly but acts as a container for logical partitions. Only one extended partition is allowed per disk. It overcomes the 4-partition MBR limit.</p></div></details>
+            
+            <details><summary>8. How many primary partitions are allowed in MBR?</summary><div class="answer-content"><p>Maximum of 4 primary partitions. If more are needed, one primary partition must be replaced with an extended partition, which can contain multiple logical partitions.</p></div></details>
+            
+            <details><summary>9. What does the p command do inside fdisk?</summary><div class="answer-content"><p>The 'p' command prints the current partition table of the disk, showing all existing partitions with their device names, start/end sectors, sizes, types, and IDs.</p></div></details>
+            
+            <details><summary>10. What is the use of the w command in fdisk?</summary><div class="answer-content"><p>The 'w' command writes the partition table changes to the disk and exits fdisk. Without using 'w', all modifications made in the fdisk session are discarded. This is the commit/save operation.</p></div></details>
+
+            <details><summary>11. Explain the steps to create a new partition using fdisk.</summary><div class="answer-content">
+                <p>Step 1: Open fdisk targeting the disk: <code>fdisk /dev/sdb</code><br>
+                Step 2: Press 'n' to create a new partition.<br>
+                Step 3: Choose partition type: 'p' for primary or 'e' for extended.<br>
+                Step 4: Select partition number (1-4).<br>
+                Step 5: Specify the first sector (press Enter for default/first available).<br>
+                Step 6: Specify the last sector or size (e.g., +5G for 5GB, or Enter for all remaining space).<br>
+                Step 7: Press 'p' to verify the new partition appears in the table.<br>
+                Step 8: Press 'w' to write changes and exit.</p>
+            </div></details>
+
+            <details><summary>12. How do you specify partition size while creating a partition?</summary><div class="answer-content"><p>When fdisk prompts for the "Last sector", you can specify size using the format: <code>+&lt;size&gt;&lt;unit&gt;</code>. Examples: <code>+500M</code> = 500 megabytes, <code>+5G</code> = 5 gigabytes, <code>+2T</code> = 2 terabytes. If you press Enter without specifying, fdisk uses all remaining free space on the disk.</p></div></details>
+
+            <details><summary>13. What is the role of first sector and last sector in partitioning?</summary><div class="answer-content"><p><strong>First sector:</strong> Defines where the partition begins on the disk. It determines the starting point and alignment of the partition. The default is usually the first available free sector.<br><strong>Last sector:</strong> Defines where the partition ends. Combined with the first sector, it determines the total size of the partition.<br>Together, they define the exact range of disk sectors allocated to the partition. The partition size = (last sector - first sector + 1) x sector size.</p></div></details>
+
+            <details><summary>14. How can you verify a partition after creating it?</summary><div class="answer-content">
+                <p>Methods to verify:<br>
+                a) Inside fdisk: Press 'p' to print the partition table and confirm the new entry exists.<br>
+                b) After exiting fdisk: Run <code>lsblk</code> to see the new partition in the device tree.<br>
+                c) Run <code>fdisk -l /dev/sdX</code> to see detailed partition information.<br>
+                d) Check if the device file exists: <code>ls -l /dev/sdXN</code><br>
+                e) After formatting: Use <code>blkid /dev/sdXN</code> to confirm file system type.</p>
+            </div></details>
+
+            <details><summary>15. Why is the partprobe command used?</summary><div class="answer-content"><p>partprobe is used to inform the Linux kernel of changes to the partition table on a disk. After creating or deleting a partition with fdisk, the kernel's in-memory partition table may not be updated immediately. partprobe forces the kernel to re-read the partition table, making the new partition device file (e.g., /dev/sdb1) available without requiring a system reboot. Usage: <code>partprobe /dev/sdb</code></p></div></details>
+
+            <details><summary>16. What is formatting in Linux?</summary><div class="answer-content"><p>Formatting (or creating a file system) is the process of writing a file system structure onto a raw partition. This structure includes: Superblock (Metadata about the FS), Inode tables (Metadata about files), Data blocks (Where actual file contents are stored), and Journal (For journaling file systems like ext4, xfs). Without formatting, a partition is just raw storage with no structure to organize or retrieve files. The mkfs family of commands is used for formatting.</p></div></details>
+
+            <details><summary>17. Explain how to format a partition using ext4 or XFS file system.</summary><div class="answer-content">
+                <p>For ext4: <code>mkfs.ext4 /dev/sdb1</code> (Creates ext4 with default parameters).<br>
+                For XFS: <code>mkfs.xfs /dev/sdb1</code> (Creates XFS with default parameters).<br>
+                Optional parameters: <code>mkfs.ext4 -L mydata /dev/sdb1</code> (sets volume label to "mydata").<br>
+                <span class="highlight">IMPORTANT: Formatting destroys any existing data on the partition.</span></p>
+            </div></details>
+
+            <details><summary>18. What is a mount point?</summary><div class="answer-content"><p>A mount point is a directory in the Linux file system hierarchy where a disk partition or file system is attached (mounted). Once mounted, the contents of the partition become accessible through that directory. For example, if /dev/sdb1 is mounted on /mnt/data, accessing /mnt/data shows the contents of that partition. The mount point directory must exist before mounting.</p></div></details>
+
+            <details><summary>19. How do you mount a partition in Linux?</summary><div class="answer-content">
+                <p>Step 1: Create a mount point directory: <code>mkdir -p /mnt/data</code><br>
+                Step 2: Mount the partition: <code>mount /dev/sdb1 /mnt/data</code><br>
+                Step 3: Verify the mount: <code>df -h | grep /mnt/data</code> or <code>mount | grep /dev/sdb1</code><br>
+                This is a temporary mount that will be lost after reboot. For permanent mounting, add an entry to /etc/fstab.</p>
+            </div></details>
+
+            <details><summary>20. What is the purpose of the df -h command?</summary><div class="answer-content"><p>df -h displays disk space usage for all currently mounted file systems. The -h flag outputs sizes in human-readable format (KB, MB, GB) instead of 1K blocks. It shows: File system device, total size, used space, available space, percentage used, and mount point. Useful for verifying mount status and checking available disk space.</p></div></details>
+
+            <h3 style="color: var(--accent-green); border-left: 4px solid var(--accent-green); margin-top: 30px;">Section C: Long Answer Questions</h3>
+
+            <details><summary>1. Explain the complete step-by-step process of creating a standard partition in Linux.</summary><div class="answer-content">
+                <pre>
+# STEP 1: IDENTIFY THE DISK
+lsblk
+# STEP 2: OPEN fdisk ON THE TARGET DISK
+fdisk /dev/sdb
+# STEP 3: CREATE A NEW PARTITION (Interactive)
+# Press 'n' -> 'p' -> '1' -> Enter -> +5G
+# STEP 4: WRITE CHANGES
+# Press 'p' to verify -> 'w' to write and exit
+# STEP 5: UPDATE KERNEL PARTITION TABLE
+partprobe /dev/sdb
+# STEP 6: FORMAT THE PARTITION
+mkfs.ext4 /dev/sdb1
+# STEP 7: CREATE A MOUNT POINT
+mkdir -p /mnt/data
+# STEP 8: MOUNT THE PARTITION
+mount /dev/sdb1 /mnt/data
+# STEP 9: VERIFY
+df -h
+# STEP 10: MAKE PERMANENT
+blkid /dev/sdb1
+vi /etc/fstab
+# Add: UUID=&lt;retrieved-uuid&gt; /mnt/data ext4 defaults 0 0
+mount -a
+                </pre>
+            </div></details>
+
+            <details><summary>2. Describe the full workflow from disk detection to mounting a partition.</summary><div class="answer-content">
+                <p><strong>PHASE 1: DISK DETECTION</strong> - The kernel detects hardware during boot or hot-plug events. Device files are created in /dev/. Verify with lsblk.<br>
+                <strong>PHASE 2: PARTITION CREATION</strong> - Use fdisk/parted to divide disk into usable partitions. Partition table (MBR/GPT) is written to the disk. Device files for partitions appear. Inform kernel with partprobe.<br>
+                <strong>PHASE 3: FILE SYSTEM CREATION</strong> - Use mkfs commands to create a file system structure. This writes metadata (superblock, inode tables, journal). Verify with blkid.<br>
+                <strong>PHASE 4: MOUNTING</strong> - Create a mount point directory. Attach the file system to the directory tree. The partition contents are now accessible. Verify with df -h.<br>
+                <strong>PHASE 5: PERSISTENT CONFIGURATION</strong> - Retrieve UUID, edit /etc/fstab, test with mount -a. This ensures the partition is mounted automatically on every boot.</p>
+            </div></details>
+
+            <details><summary>3. Explain how to make a partition mount permanent in Linux using /etc/fstab.</summary><div class="answer-content">
+                <p>The /etc/fstab (File System Table) file controls automatic mounting at boot. Each line has six fields:<br>
+                <code>&lt;device&gt;  &lt;mount_point&gt;  &lt;fs_type&gt;  &lt;options&gt;  &lt;dump&gt;  &lt;fsck_order&gt;</code></p>
+                <p><strong>Fields Explained:</strong><br>
+                - device: UUID=xxxx-xxxx (recommended) or /dev/sdXN<br>
+                - mount_point: Directory where the FS is mounted (e.g., /mnt/data)<br>
+                - fs_type: File system type (e.g., ext4, xfs)<br>
+                - options: Mount options (defaults = rw,suid,dev,exec,auto,nouser,async)<br>
+                - dump: Backup utility flag (0 = no dump, 1 = dump)<br>
+                - fsck_order: File system check order at boot (0 = skip, 1 = root, 2+ = others)</p>
+                <p><strong>Steps:</strong> Get UUID via <code>blkid</code>, backup fstab, edit fstab, test via <code>umount /mnt/data</code> then <code>mount -a</code>, verify via <code>df -h</code>.</p>
+            </div></details>
+
+            <details><summary>4. What is UUID and why is it important in mounting partitions?</summary><div class="answer-content">
+                <p>UUID (Universally Unique Identifier) is a 128-bit identifier assigned to a file system when it is created (formatted). It is guaranteed to be unique across all systems.</p>
+                <p><strong>Importance in Mounting:</strong><br>
+                a) <strong>PERSISTENCE:</strong> Device names like /dev/sdb1 are assigned dynamically by the kernel based on detection order. If a new disk is added, /dev/sdb might become /dev/sdc. UUIDs remain constant.<br>
+                b) <strong>RELIABILITY:</strong> Using UUID in /etc/fstab ensures the system always mounts the correct file system, preventing data corruption or boot failures.<br>
+                c) <strong>PORTABILITY:</strong> If a disk is moved to another system, its UUID remains the same.<br>
+                d) <strong>CLONE SAFETY:</strong> When cloning disks, new UUIDs are generated for cloned file systems, preventing conflicts.</p>
+            </div></details>
+
+            <details><summary>5. Explain the role of file system creation and mounting in disk management.</summary><div class="answer-content">
+                <p><strong>FILE SYSTEM CREATION (FORMATTING):</strong> A raw partition is simply a contiguous block of sectors with no organizational structure. File system creation writes the metadata and structural framework needed to store, organize, retrieve, and manage files (Superblock, Inode table, Data blocks, Journal). Without a file system, applications cannot store or retrieve data.</p>
+                <p><strong>MOUNTING:</strong> Linux uses a single unified directory hierarchy starting from /. Mounting is the mechanism that connects a file system to this hierarchy. Without mounting, the file system exists on disk but is inaccessible to users and applications. Proper mount management ensures data is accessible where expected, FS options are enforced, and the system boots correctly.</p>
+                <p><strong>TOGETHER:</strong> File system creation provides the structure; mounting provides the access. The complete workflow (detect -> partition -> format -> mount -> persist) transforms raw hardware into usable storage.</p>
+            </div></details>
+
+            <h3 style="color: var(--accent-green); border-left: 4px solid var(--accent-green); margin-top: 30px;">Section D & E: Practical & Scenario-Based Questions</h3>
+
+            <details><summary>1. Write commands to check available disks in Linux.</summary><div class="answer-content"><pre>lsblk\nfdisk -l\nls -l /dev/sd*\ncat /proc/partitions\nparted -l</pre></div></details>
+            
+            <details><summary>2. Write the command to open fdisk for /dev/sda.</summary><div class="answer-content"><pre>fdisk /dev/sda</pre></div></details>
+            
+            <details><summary>3. List the sequence of commands to create a 5GB partition.</summary><div class="answer-content"><pre>fdisk /dev/sdb
+# Inside fdisk interactive session:
+n           # Create new partition
+p           # Select primary type
+1           # Partition number 1
+(Enter)     # Accept default first sector
++5G         # Specify 5GB size
+w           # Write changes and exit
+partprobe /dev/sdb</pre></div></details>
+            
+            <details><summary>4. Write the command to display partition table.</summary><div class="answer-content"><pre>fdisk -l /dev/sdb\n# or inside fdisk interactive session, press 'p'</pre></div></details>
+            
+            <details><summary>5. Write commands to: Format, Create Mount Point, Mount</summary><div class="answer-content"><pre># Format a partition
+mkfs.ext4 /dev/sdb1
+# Create a mount point
+mkdir -p /mnt/data
+# Mount the partition
+mount /dev/sdb1 /mnt/data</pre></div></details>
+            
+            <details><summary>6. Write the command to check disk space usage.</summary><div class="answer-content"><pre>df -h</pre></div></details>
+            
+            <details><summary>7. How do you retrieve UUID of a partition?</summary><div class="answer-content"><pre>blkid /dev/sdb1\nlsblk -f /dev/sdb1\nls -l /dev/disk/by-uuid/ | grep sdb1</pre></div></details>
+            
+            <details><summary>8. Write steps to make a mount permanent using /etc/fstab.</summary><div class="answer-content"><pre># Step 1: Get the UUID
+blkid /dev/sdb1
+# Step 2: Back up fstab
+cp /etc/fstab /etc/fstab.bak
+# Step 3: Edit fstab
+vi /etc/fstab
+# Step 4: Add this line
+UUID=&lt;uuid-from-step1&gt;  /mnt/data  ext4  defaults  0  2
+# Step 5: Save and exit
+# Step 6: Test the entry
+mount -a
+# Step 7: Verify
+df -h | grep /mnt/data</pre></div></details>
+            
+            <details><summary>9. What command is used to apply changes in /etc/fstab without reboot?</summary><div class="answer-content"><pre>mount -a\n# This command reads /etc/fstab and mounts all file systems that are not already mounted. It validates the fstab entries and applies the changes immediately.</pre></div></details>
+
+            <details><summary>10. Write the complete command summary for partition creation.</summary><div class="answer-content"><pre>lsblk                                    # Check available disks
+fdisk /dev/sdb                           # Open fdisk
+  n                                      # New partition
+  p                                      # Primary type
+  1                                      # Partition number
+  (Enter)                                # Default first sector
+  +5G                                    # Size specification
+  w                                      # Write and exit
+partprobe /dev/sdb                       # Inform kernel
+mkfs.ext4 /dev/sdb1                      # Format partition
+mkdir -p /mnt/data                       # Create mount point
+mount /dev/sdb1 /mnt/data                # Mount partition
+blkid /dev/sdb1                          # Get UUID
+vi /etc/fstab                            # Add permanent entry
+mount -a                                 # Test fstab
+df -h                                    # Verify</pre></div></details>
+
+            <details><summary>Scenario 1: You created a partition but it is not visible. What steps will you take?</summary><div class="answer-content">
+                <p>Step 1: Run partprobe to inform the kernel of partition table changes: <code>partprobe /dev/sdb</code><br>
+                Step 2: Check if the partition device file now exists: <code>ls -l /dev/sdb1</code><br>
+                Step 3: If still not visible, verify the partition was actually written: <code>fdisk -l /dev/sdb</code><br>
+                Step 4: If partprobe fails, try partx: <code>partx -a /dev/sdb</code><br>
+                Step 5: As a last resort, reboot the system: <code>reboot</code><br>
+                <strong>ROOT CAUSE:</strong> The most common reason is that the kernel has not re-read the updated partition table. partprobe resolves this in most cases.</p>
+            </div></details>
+
+            <details><summary>Scenario 2: A partition is created but not mounted. How will you fix it?</summary><div class="answer-content">
+                <p>Step 1: Verify the partition exists and is formatted: <code>lsblk /dev/sdb1</code> and <code>blkid /dev/sdb1</code><br>
+                Step 2: If blkid shows no output, format it: <code>mkfs.ext4 /dev/sdb1</code><br>
+                Step 3: Create a mount point if it does not exist: <code>mkdir -p /mnt/data</code><br>
+                Step 4: Mount the partition: <code>mount /dev/sdb1 /mnt/data</code><br>
+                Step 5: Verify the mount: <code>df -h | grep /mnt/data</code><br>
+                Step 6: To make it persistent across reboots, add to /etc/fstab.</p>
+            </div></details>
+
+            <details><summary>Scenario 3: After reboot, your mounted partition disappears. What is the issue and solution?</summary><div class="answer-content">
+                <p><strong>ISSUE:</strong> The partition was mounted temporarily using the mount command. Temporary mounts are lost when the system reboots because they are not recorded in the persistent mount configuration file (/etc/fstab).</p>
+                <p><strong>SOLUTION:</strong> Step 1: Get the UUID: <code>blkid /dev/sdb1</code><br>
+                Step 2: Edit /etc/fstab: <code>vi /etc/fstab</code> and add <code>UUID=&lt;uuid&gt; /mnt/data ext4 defaults 0 2</code><br>
+                Step 3: Test the configuration without rebooting: <code>mount -a</code><br>
+                <span class="badge badge-tip">Tip</span> A malformed /etc/fstab can cause boot failure; always test with mount -a before rebooting.</p>
+            </div></details>
+
+            <details><summary>Scenario 4: You want to create a 500MB partition. How will you specify it in fdisk?</summary><div class="answer-content">
+                <p>When prompted for the "Last sector", type: <code>+500M</code></p>
+                <p><strong>Size Specification Format in fdisk:</strong><br>
+                +500M = 500 megabytes<br>
+                +500K = 500 kilobytes<br>
+                +500G = 500 gigabytes</p>
+                <p><span class="highlight">NOTE:</span> The '+' sign is essential. Without it, fdisk interprets the value as an absolute sector number rather than a relative size. 'M' for megabytes (MiB in practice for fdisk, which uses 1024-based units).</p>
+            </div></details>
+
+            <details><summary>Scenario 5: Explain how you would verify whether a partition is successfully mounted.</summary><div class="answer-content">
+                <p><strong>Method 1:</strong> <code>df -h</code> (Look for the partition device name or mount point)<br>
+                <strong>Method 2:</strong> <code>findmnt /mnt/data</code> (Most readable, tree-formatted view)<br>
+                <strong>Method 3:</strong> <code>mount | grep /dev/sdb1</code> (Raw mount information)<br>
+                <strong>Method 4:</strong> <code>lsblk /dev/sdb1</code> (Shows mount point in device tree)<br>
+                <strong>Method 5:</strong> <code>touch /mnt/data/testfile && rm /mnt/data/testfile</code> (Tests write access)</p>
+            </div></details>
+
+        </section>
+
+        <!-- PART V -->
+        <section id="part5">
+            <h2>PART V: INTERVIEW QUESTIONS AND ANSWERS</h2>
+
+            <details><summary>Q1: What happens if you use 'q' instead of 'w' in fdisk after creating a partition?</summary><div class="answer-content"><p>If you press 'q' instead of 'w' in fdisk, the utility quits WITHOUT saving any changes. The new partition you created exists only in fdisk's memory and is never written to the disk's partition table. This is actually a safety feature - if you make a mistake, you can quit without saving. Always use 'p' to verify before 'w'.</p></div></details>
+
+            <details><summary>Q2: Why is using UUID preferred over device names in /etc/fstab?</summary><div class="answer-content"><p>UUID is preferred because: Device names (/dev/sdb1) are assigned dynamically based on detection order and can change when disks are added, removed, or if the kernel probes in a different order. UUIDs are generated when the file system is created and remain constant regardless of hardware changes. Using device names in /etc/fstab can cause boot failures or wrong partitions being mounted if device names change.</p></div></details>
+
+            <details><summary>Q3: What is the difference between fdisk and parted? When would you use each?</summary><div class="answer-content"><p><strong>fdisk:</strong> Supports only MBR partition tables (max 2TB disk, 4 primary partitions). Interactive, user-friendly, and the most common tool for standard partitioning on smaller disks.<br><strong>parted:</strong> Supports both MBR and GPT partition tables. Can handle disks larger than 2TB and GPT's 128+ partitions. Can also resize partitions without data loss. Can be scripted for automation.<br>Use fdisk for simple MBR partitioning on disks <= 2TB. Use parted for GPT partitioning, disks > 2TB, or when scripting is needed.</p></div></details>
+
+            <details><summary>Q4: A system fails to boot after modifying /etc/fstab. How do you recover?</summary><div class="answer-content"><p>Step 1: Boot into emergency/rescue mode (add 'single' or 'emergency' to kernel boot parameters in GRUB, or boot from a live USB).<br>Step 2: Remount the root file system as read-write: <code>mount -o remount,rw /</code><br>Step 3: Edit /etc/fstab and fix or comment out the problematic line: <code>vi /etc/fstab</code><br>Step 4: Verify the remaining entries are correct.<br>Step 5: Reboot.<br><span class="badge badge-tip">PREVENTION</span> Always run 'mount -a' after editing /etc/fstab to test entries before rebooting. Keep a backup.</p></div></details>
+
+            <details><summary>Q5: What is the significance of the dump and fsck fields in /etc/fstab?</summary><div class="answer-content"><p><strong>Dump field (5th column):</strong> Used by the dump command to determine which file systems need to be backed up. 0 = ignore (no dump), 1 = include in dump backup. Most modern systems set this to 0 as dump is rarely used.<br><strong>FSCK field (6th column):</strong> Determines the order in which fsck checks file systems at boot. 0 = skip checking, 1 = check first (should only be used for root /), 2 = check after root. File systems on the same disk are checked sequentially; on different disks, they may be checked in parallel for speed.</p></div></details>
+
+            <details><summary>Q6: Can you mount a partition to a directory that already contains files? What happens to those files?</summary><div class="answer-content"><p>Yes, you can mount to a directory with existing files. The existing files are NOT deleted - they are simply hidden (masked) by the mounted file system. When you unmount the partition, the original files become visible again. The original files remain intact on the root (or parent) file system but are inaccessible while another file system is mounted over them.</p></div></details>
+
+            <details><summary>Q7: What is the difference between MBR and GPT partition tables?</summary><div class="answer-content">
+                <div class="table-container">
+                    <table>
+                        <tr><th>Feature</th><th>MBR</th><th>GPT</th></tr>
+                        <tr><td>Max Partitions</td><td>4 primary (or 3 primary + 1 extended)</td><td>128 (default)</td></tr>
+                        <tr><td>Max Disk Size</td><td>2TB</td><td>18 EB (exabytes)</td></tr>
+                        <tr><td>Redundancy</td><td>Stores one copy of the partition table</td><td>Stores multiple copies</td></tr>
+                        <tr><td>Firmware</td><td>BIOS</td><td>UEFI</td></tr>
+                        <tr><td>Integrity</td><td>No checksums</td><td>CRC32 checksums</td></tr>
+                    </table>
+                </div>
+            </div></details>
+
+            <details><summary>Q8: What does 'mount -a' do and what does it NOT do?</summary><div class="answer-content"><p>'mount -a' mounts all file systems listed in /etc/fstab that have the 'auto' mount option (which is included in 'defaults') and are not already mounted. It does NOT: Mount file systems with the 'noauto' option, remount already mounted file systems, mount file systems not listed in /etc/fstab, or process swap entries (swapon -a handles those). It is primarily used to test /etc/fstab changes after editing.</p></div></details>
+
+            <details><summary>Q9: How would you create and configure a swap partition?</summary><div class="answer-content"><pre># Step 1: Create the partition using fdisk (t to change type to 82 Linux swap)
+fdisk /dev/sdb
+# Step 2: Inform the kernel
+partprobe /dev/sdb
+# Step 3: Format as swap
+mkswap /dev/sdb1
+# Step 4: Enable swap
+swapon /dev/sdb1
+# Step 5: Verify
+swapon --show
+# Step 6: Make permanent in /etc/fstab
+UUID=&lt;uuid&gt; none swap sw 0 0</pre></div></details>
+
+            <details><summary>Q10: What is the significance of the 'defaults' mount option in /etc/fstab?</summary><div class="answer-content"><p>'defaults' is a shorthand that includes the following mount options: rw (read-write), suid (allow set-user-identifier bits), dev (interpret character/block special devices), exec (allow execution of binaries), auto (can be mounted with mount -a), nouser (only root can mount), and async (I/O done asynchronously). These are standard options suitable for most file systems. You can override individual options by specifying them explicitly (e.g., defaults,noexec,nosuid).</p></div></details>
+
+            <details><summary>Q11: Explain the concept of journaling in file systems like ext4 and XFS.</summary><div class="answer-content"><p>Journaling is a technique that records pending changes to a log (journal) before committing them to the main file system. This provides crash recovery and faster recovery times (replaying the journal vs full fsck). Three modes exist:<br>1. <strong>journal (data=journal):</strong> Both data and metadata are journaled (safest, slowest).<br>2. <strong>ordered (data=ordered):</strong> Metadata is journaled; data is written before metadata commit (default, good balance).<br>3. <strong>writeback (data=writeback):</strong> Only metadata is journaled; no data ordering guarantee (fastest, least safe).<br>ext4 defaults to ordered mode. XFS uses metadata-only journaling with write barriers for data integrity.</p></div></details>
+
+            <details><summary>Q12: You accidentally deleted a partition with fdisk. Can you recover it?</summary><div class="answer-content"><p>Yes, recovery is often possible if you haven't written new data over the partition's sectors:<br>Step 1: DO NOT create a new partition or write anything to the disk.<br>Step 2: Open fdisk on the same disk: <code>fdisk /dev/sdb</code><br>Step 3: Create a new partition with the EXACT same starting sector as the deleted one.<br>Step 4: Use 'n' to create, specify the same start and end sectors.<br>Step 5: Write with 'w'.<br>Step 6: If the file system was not overwritten, it should still be intact and mountable.<br>Alternative tools: <code>testdisk</code> can scan for lost partitions and recover them automatically.</p></div></details>
+
+        </section>
+
+    </div>
+
+    <footer style="text-align: center; padding: 20px; color: var(--text-secondary); border-top: 1px solid var(--border-color); margin-top: 30px;">
+        Linux System Administration Notes &copy; 2023 | Formatted for Optimal Learning
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux Networking Basic Commands - Comprehensive Notes</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --container-bg: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #f0883e;
+            --accent-purple: #bc8cff;
+            --accent-red: #f85149;
+            --accent-cyan: #39d353;
+            --border-color: #30363d;
+            --code-bg: #0d1117;
+            --card-bg: #21262d;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color); color: var(--text-primary);
+            line-height: 1.6; -webkit-font-smoothing: antialiased;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        header {
+            background: linear-gradient(135deg, #161b22 0%, #1a2332 100%);
+            border-bottom: 3px solid var(--accent-cyan); padding: 2rem 1rem;
+            text-align: center; border-radius: 0 0 15px 15px; margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        header h1 { color: var(--accent-cyan); font-family: 'Courier New', Courier, monospace; font-size: 2.2rem; margin-bottom: 1rem; }
+        nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        nav a {
+            background-color: var(--card-bg); color: var(--accent-blue);
+            padding: 8px 15px; border-radius: 20px; text-decoration: none;
+            font-size: 0.85rem; font-weight: bold; border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        nav a:hover { background-color: var(--accent-blue); color: var(--bg-color); transform: translateY(-2px); }
+        section {
+            background-color: var(--container-bg); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 25px; margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        h2 {
+            color: var(--accent-blue); font-size: 1.8rem;
+            border-bottom: 2px solid var(--border-color); padding-bottom: 10px;
+            margin-bottom: 20px; font-family: 'Courier New', Courier, monospace;
+        }
+        h3 {
+            color: var(--accent-purple); font-size: 1.3rem; margin-top: 25px;
+            margin-bottom: 15px; padding-left: 10px; border-left: 4px solid var(--accent-purple);
+        }
+        .step-card, .command-card {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 15px; margin-bottom: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .step-card:hover, .command-card:hover {
+            transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-color: var(--accent-blue);
+        }
+        .step-card h3 { color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 0; }
+        .rationale { font-size: 0.9rem; color: var(--text-secondary); margin-top: 10px; font-style: italic; }
+        .rationale strong { color: var(--accent-orange); }
+        code {
+            font-family: 'Courier New', Courier, monospace; background-color: var(--code-bg);
+            padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: var(--accent-orange);
+        }
+        pre {
+            background-color: var(--code-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 12px; overflow-x: auto; margin: 10px 0;
+            font-family: 'Courier New', Courier, monospace; color: var(--accent-green); font-size: 0.9em;
+        }
+        details {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; margin-bottom: 8px; overflow: hidden;
+        }
+        summary {
+            padding: 12px 15px; font-weight: bold; color: var(--accent-blue);
+            cursor: pointer; list-style: none; display: flex; justify-content: space-between;
+            align-items: center; transition: background-color 0.2s;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: '►'; color: var(--text-secondary); font-size: 0.8rem; transition: transform 0.2s; }
+        details[open] summary::after { transform: rotate(90deg); }
+        details[open] summary { background-color: rgba(88, 166, 255, 0.1); border-bottom: 1px solid var(--border-color); }
+        .answer-content { padding: 15px; color: var(--text-primary); }
+        .answer-content ul { margin-left: 20px; margin-top: 10px; }
+        .answer-content li { margin-bottom: 5px; }
+        .table-container { overflow-x: auto; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background-color: var(--code-bg); color: var(--accent-purple); font-family: 'Courier New', Courier, monospace; font-weight: bold; }
+        tr:hover { background-color: rgba(255, 255, 255, 0.03); }
+        .highlight { color: var(--accent-red); font-weight: bold; }
+        .badge {
+            display: inline-block; padding: 3px 8px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: bold; text-transform: uppercase;
+        }
+        .badge-danger { background-color: var(--accent-red); color: white; }
+        .badge-tip { background-color: var(--accent-green); color: black; }
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            header h1 { font-size: 1.5rem; }
+            nav a { font-size: 0.75rem; padding: 6px 10px; }
+            section { padding: 15px; }
+            h2 { font-size: 1.4rem; }
+            pre { font-size: 0.8rem; }
+            th, td { padding: 8px 10px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🌐 LINUX NETWORKING BASIC COMMANDS</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Connectivity, Routing, & Sockets Troubleshooting</p>
+        <nav>
+            <a href="#part1">Part I: Procedure</a>
+            <a href="#part2">Part II: Commands</a>
+            <a href="#part3">Part III: Alternatives</a>
+            <a href="#part4">Part IV: Assignment Q&A</a>
+            <a href="#part5">Part V: Interview</a>
+        </nav>
+    </header>
+    <div class="container">
+
+        <!-- PART I -->
+        <section id="part1">
+            <h2>PART I: STEP-BY-STEP PROCEDURE - NETWORK TROUBLESHOOTING</h2>
+            
+            <div class="step-card">
+                <h3>STEP 1: Interface Verification</h3>
+                <p>Check if the network interface is up and has an IP address using <code>ip addr</code> or <code>ifconfig</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> If the interface is DOWN or lacks an IP, no network communication is possible. This is the physical/data link layer check.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 2: Local Stack Verification</h3>
+                <p>Ping the loopback address: <code>ping -c4 127.0.0.1</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> This verifies that the local TCP/IP stack is initialized and functioning correctly. If this fails, the OS networking is broken.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 3: Gateway & Route Verification</h3>
+                <p>Check the routing table with <code>ip route</code> and ping the default gateway.</p>
+                <p class="rationale"><strong>Rationale:</strong> A missing default route means the system doesn't know where to send packets destined for outside the local subnet.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 4: External Connectivity & DNS</h3>
+                <p>Ping an external IP (e.g., <code>ping 8.8.8.8</code>). If successful, test DNS (<code>ping google.com</code>).</p>
+                <p class="rationale"><strong>Rationale:</strong> If the IP ping works but the name ping fails, the issue is DNS, not network routing.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 5: Port & Service Verification</h3>
+                <p>Use <code>ss -tlupn</code> to check if the specific service port is listening.</p>
+                <p class="rationale"><strong>Rationale:</strong> Even if the network is up, a service won't accept connections if its daemon isn't bound to the port.</p>
+            </div>
+        </section>
+
+        <!-- PART II -->
+        <section id="part2">
+            <h2>PART II: COMMANDS AND EXPLANATIONS</h2>
+
+            <div class="command-card">
+                <h3><code>ip addr</code> / <code>ifconfig</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>ip addr show</code> or <code>ifconfig</code></p>
+                <p><strong>Purpose:</strong> Displays or manages IP addresses, MAC addresses, and interface states (UP/DOWN).</p>
+                <pre>ip addr show eth0</pre>
+            </div>
+
+            <div class="command-card">
+                <h3><code>ping</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>ping [options] destination</code></p>
+                <p><strong>Purpose:</strong> Sends ICMP Echo Request messages to test network reachability and measure round-trip time.</p>
+                <pre>ping -c 4 192.168.1.1  # Send 4 packets only</pre>
+            </div>
+
+            <div class="command-card">
+                <h3><code>ip route</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>ip route show</code></p>
+                <p><strong>Purpose:</strong> Displays or manipulates the kernel's routing table, showing how packets are directed to different networks.</p>
+                <pre>ip route</pre>
+            </div>
+
+            <div class="command-card">
+                <h3><code>traceroute</code> / <code>tracepath</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>traceroute host</code> or <code>tracepath host</code></p>
+                <p><strong>Purpose:</strong> Tracks the path packets take across network hops to reach a destination, identifying where delays or blocks occur.</p>
+                <pre>traceroute www.google.com</pre>
+            </div>
+
+            <div class="command-card">
+                <h3><code>ss</code> (Socket Statistics)</h3>
+                <p><span class="syntax">Syntax:</span> <code>ss [options]</code></p>
+                <p><strong>Purpose:</strong> Dumps socket statistics, showing network connections, listening ports, and socket states. Modern replacement for netstat.</p>
+                <pre>ss -tlupn
+# -t: TCP, -l: Listening, -u: UDP, -p: Process, -n: No DNS resolution</pre>
+            </div>
+
+            <div class="command-card">
+                <h3><code>grep</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>command | grep pattern</code></p>
+                <p><strong>Purpose:</strong> Filters text output to show only lines matching a specific pattern. Crucial for parsing verbose network outputs.</p>
+                <pre>ss -tlupn | grep :22</pre>
+            </div>
+        </section>
+
+        <!-- PART III -->
+        <section id="part3">
+            <h2>PART III: ALTERNATIVE COMMANDS & METHODS</h2>
+
+            <details><summary>1. <code>iproute2</code> vs <code>net-tools</code> (The Legacy Shift)</summary><div class="answer-content">
+                <ul>
+                    <li><code>net-tools</code> (<code>ifconfig</code>, <code>netstat</code>, <code>route</code>): Deprecated since 2001. Doesn't support modern Linux networking features like multiple IPs per interface or advanced routing.</li>
+                    <li><code>iproute2</code> (<code>ip</code>, <code>ss</code>, <code>ip route</code>): The modern standard. Communicates directly with the kernel Netlink interface, making it vastly faster and more feature-rich.</li>
+                </ul>
+            </div></details>
+
+            <details><summary>2. <code>traceroute</code> vs <code>tracepath</code></summary><div class="answer-content">
+                <ul>
+                    <li><code>traceroute</code>: Traditionally uses UDP packets or ICMP. Often requires root privileges to send raw packets. Can be blocked by firewalls dropping UDP high ports.</li>
+                    <li><code>tracepath</code>: Uses UDP but does not require root privileges. It also automatically discovers MTU (Maximum Transmission Unit) along the path. Preferred for unprivileged users.</li>
+                </ul>
+            </div></details>
+
+            <details><summary>3. Checking Ports: <code>ss</code> vs <code>lsof</code></summary><div class="answer-content">
+                <p><code>ss</code> is faster for viewing socket states. <code>lsof -i :22</code> is an alternative that lists open files (including network sockets) and provides very detailed process ownership info, but runs slower on servers with many open files.</p>
+            </div></details>
+        </section>
+
+        <!-- PART IV -->
+        <section id="part4">
+            <h2>PART IV: ASSIGNMENT SOLUTIONS</h2>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan);">Section A: Objective Questions</h3>
+            <details><summary>1. Purpose of ifconfig?</summary><div class="answer-content"><p>To display or configure network interface parameters (IP address, netmask, MAC, status).</p></div></details>
+            <details><summary>2. Command for IP info in modern Linux?</summary><div class="answer-content"><p><code>ip addr</code> (or <code>ip a</code>).</p></div></details>
+            <details><summary>3. What does 127.0.0.1 represent?</summary><div class="answer-content"><p>The loopback address. It represents the local machine itself, used for internal testing and inter-process communication.</p></div></details>
+            <details><summary>4. Command to test network connectivity?</summary><div class="answer-content"><p><code>ping</code>.</p></div></details>
+            <details><summary>5. Function of ip route?</summary><div class="answer-content"><p>To display or modify the kernel's IP routing table.</p></div></details>
+            <details><summary>6. Command to trace route to remote host?</summary><div class="answer-content"><p><code>traceroute</code> or <code>tracepath</code>.</p></div></details>
+            <details><summary>7. What does ss display?</summary><div class="answer-content"><p>Socket statistics (network connections, listening ports, socket states).</p></div></details>
+            <details><summary>8. Traditional command for network connections?</summary><div class="answer-content"><p><code>netstat</code>.</p></div></details>
+            <details><summary>9. Default SSH port?</summary><div class="answer-content"><p>Port <strong>22</strong>.</p></div></details>
+            <details><summary>10. Command to filter output using patterns?</summary><div class="answer-content"><p><code>grep</code>.</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section B: Short Answer Questions</h3>
+            <details><summary>1. Difference between ifconfig and ip addr?</summary><div class="answer-content"><p><code>ifconfig</code> is an older, deprecated tool that only shows basic IP info and requires raw socket manipulation. <code>ip addr</code> is part of the modern <code>iproute2</code> suite, uses Netlink to talk to the kernel, and supports advanced features like multiple IPs per interface and CIDR notation.</p></div></details>
+            <details><summary>2. Use of ping -c4 127.0.0.1?</summary><div class="answer-content"><p>It sends exactly 4 ICMP echo requests to the local loopback interface. It verifies that the local TCP/IP network stack is installed, configured correctly, and functioning without relying on physical network hardware.</p></div></details>
+            <details><summary>3. How to display routing info?</summary><div class="answer-content"><p>Use <code>ip route show</code> (modern) or <code>route -n</code> (legacy). The <code>-n</code> flag in route prevents DNS lookups, displaying IPs instead of hostnames for faster output.</p></div></details>
+            <details><summary>4. Difference between tracepath and traceroute?</summary><div class="answer-content"><p><code>traceroute</code> often requires root privileges to send raw ICMP/UDP packets and allows choosing packet types. <code>tracepath</code> does not require root, uses standard UDP, and automatically discovers MTU (Path MTU Discovery) along the route.</p></div></details>
+            <details><summary>5. Explain ss -tlupna?</summary><div class="answer-content"><p>A comprehensive socket dump:<br>- <code>-t</code>: TCP sockets only<br>- <code>-l</code>: Listening sockets only<br>- <code>-u</code>: UDP sockets only<br>- <code>-p</code>: Show process using the socket<br>- <code>-n</code>: Don't resolve service names (show port numbers)<br>- <code>-a</code>: Show all sockets (both listening and non-listening)</p></div></details>
+            <details><summary>6. Check if a specific port is listening using ss?</summary><div class="answer-content"><p>Use <code>ss -tlpn | grep :&lt;port&gt;</code>. For example, <code>ss -tlpn | grep :80</code> checks if HTTP is listening.</p></div></details>
+            <details><summary>7. Purpose of using grep with commands?</summary><div class="answer-content"><p>Network commands like <code>ss</code> or <code>netstat</code> output hundreds of lines. <code>grep</code> filters this output to display only lines containing the specific IP, port, or state you are troubleshooting, drastically reducing noise.</p></div></details>
+            <details><summary>8. Role of netstat in troubleshooting?</summary><div class="answer-content"><p><code>netstat</code> provides a snapshot of network connections, routing tables, interface statistics, and masquerade connections. It helps identify which ports are open, which services are connected to what, and if there are abnormal connection states (e.g., many SYN_RECV indicating a SYN flood attack).</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section C: Command-Based Questions</h3>
+            <details><summary>1. Display all network interfaces.</summary><div class="answer-content"><pre>ip addr show</pre></div></details>
+            <details><summary>2. IP details of specific interface (eth0).</summary><div class="answer-content"><pre>ip addr show eth0</pre></div></details>
+            <details><summary>3. Check routing table.</summary><div class="answer-content"><pre>ip route show</pre></div></details>
+            <details><summary>4. Test connectivity to localhost.</summary><div class="answer-content"><pre>ping -c4 127.0.0.1</pre></div></details>
+            <details><summary>5. Active listening ports using ss.</summary><div class="answer-content"><pre>ss -tlpn</pre></div></details>
+            <details><summary>6. Check if SSH (port 22) is active.</summary><div class="answer-content"><pre>ss -tlpn | grep :22</pre></div></details>
+            <details><summary>7. Network connections using netstat.</summary><div class="answer-content"><pre>netstat -tulpn</pre></div></details>
+            <details><summary>8. Check if HTTP (80) is active via netstat.</summary><div class="answer-content"><pre>netstat -tulpn | grep :80</pre></div></details>
+            <details><summary>9. Trace route to www.google.com.</summary><div class="answer-content"><pre>tracepath www.google.com</pre></div></details>
+            <details><summary>10. Filter output using grep for port numbers.</summary><div class="answer-content"><pre>ss -tlna | grep ":80\|:443"</pre></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section D: Scenario-Based Questions</h3>
+            <details><summary>1. Unable to connect to internet. Step-by-step troubleshooting?</summary><div class="answer-content">
+                <p>1. <strong>Check Interface:</strong> <code>ip addr</code> - Is the interface UP and has an IP?<br>2. <strong>Check Local Stack:</strong> <code>ping 127.0.0.1</code> - Is TCP/IP working?<br>3. <strong>Check Gateway:</strong> <code>ip route</code> to find gateway, then <code>ping &lt;gateway&gt;</code> - Can I leave my network?<br>4. <strong>Check External IP:</strong> <code>ping 8.8.8.8</code> - Is the internet reachable?<br>5. <strong>Check DNS:</strong> <code>ping google.com</code> - Is name resolution working?<br>6. <strong>Trace Path:</strong> <code>tracepath 8.8.8.8</code> - Where exactly do the packets drop?</p>
+            </div></details>
+            <details><summary>2. Server not accepting SSH. Verify if port 22 is active?</summary><div class="answer-content"><pre># Check if sshd is listening
+ss -tlpn | grep :22
+
+# If it doesn't show up, check the service status
+sudo systemctl status sshd
+
+# Verify firewall isn't blocking it
+sudo ufw status | grep 22</pre></div></details>
+            <details><summary>3. Identify all active network connections.</summary><div class="answer-content"><p>Use <code>ss -tunap</code>.<br>- <code>-t</code> (TCP) and <code>-u</code> (UDP) cover the main protocols.<br>- <code>-n</code> prevents slow DNS lookups.<br>- <code>-a</code> shows both listening and established connections.<br>- <code>-p</code> shows the process PID/name, which is critical for knowing *what* is making the connection.</p></div></details>
+            <details><summary>4. Cannot reach external website. How does traceroute help?</summary><div class="answer-content"><p><code>traceroute</code> or <code>tracepath</code> sends packets with incrementing TTLs. Each router along the path decrements the TTL and sends an ICMP Time Exceeded message back when TTL hits 0. This maps the exact hop-by-hop path. If the trace stops at hop 3, you know the failure is between your 3rd router and the 4th. If it reaches the destination but with high latency at a specific hop, that router is the bottleneck.</p></div></details>
+            <details><summary>5. Compare ss and netstat. Which is more efficient?</summary><div class="answer-content"><p><code>ss</code> is vastly more efficient. <code>netstat</code> gathers info by reading <code>/proc/net/tcp</code> and iterates over all <code>/proc/&lt;pid&gt;/fd</code> directories to match processes, making it extremely slow on servers with many processes. <code>ss</code> uses the kernel's Netlink interface, pulling socket and process data directly from kernel memory in a single query. It is orders of magnitude faster.</p></div></details>
+        </section>
+
+        <!-- PART V -->
+        <section id="part5">
+            <h2>PART V: INTERVIEW QUESTIONS AND ANSWERS</h2>
+
+            <details><summary>Q1: Why does <code>ping</code> sometimes fail even if the server is online and serving web traffic?</summary><div class="answer-content"><p>Many servers and cloud providers (like AWS) disable ICMP traffic (which <code>ping</code> uses) at the firewall level to prevent network discovery and DDoS attacks. HTTP/HTTPS traffic works because it uses TCP on ports 80/443, which are explicitly allowed, while ICMP is dropped.</p></div></details>
+
+            <details><summary>Q2: What is the significance of the "State" column in <code>ss</code> output? What does <code>ESTAB</code> vs <code>TIME-WAIT</code> mean?</summary><div class="answer-content"><p>- <code>ESTAB</code>: The TCP 3-way handshake is complete, and data can flow freely.<br>- <code>TIME-WAIT</code>: The side that closed the connection waits for a period (typically 2*MSL) to ensure the remote end received the ACK and that delayed packets are flushed. Too many TIME-WAIT sockets can exhaust ephemeral ports.</p></div></details>
+
+            <details><summary>Q3: What does the <code>0.0.0.0</code> address mean in the <code>ss -tlpn</code> output?</summary><div class="answer-content"><p>When a service listens on <code>0.0.0.0</code>, it means it is accepting connections on <strong>all</strong> available IPv4 network interfaces. If it listens on <code>127.0.0.1</code>, it only accepts local connections. For security, services not needing external access should be bound to <code>127.0.0.1</code>.</p></div></details>
+
+            <details><summary>Q4: How would you find which process is consuming the most network bandwidth?</summary><div class="answer-content"><p><code>ss</code> and <code>netstat</code> only show connections, not bandwidth. To find bandwidth usage per process, use tools like <code>nethogs</code> (shows per-process bandwidth in real-time) or <code>iftop</code> (shows bandwidth per connection).</p></div></details>
+
+            <details><summary>Q5: What is the difference between a routing table and an ARP table?</summary><div class="answer-content"><p>- <strong>Routing Table</strong> (<code>ip route</code>): Maps destination IP networks to the next hop (gateway) or interface. It operates at Layer 3 (Network Layer).<br>- <strong>ARP Table</strong> (<code>ip neigh</code> or <code>arp -a</code>): Maps IP addresses to MAC addresses on the local network. It operates at Layer 2 (Data Link Layer) to ensure frames are sent to the correct physical device on the local subnet.</p></div></details>
+        </section>
+
+    </div>
+    <footer style="text-align: center; padding: 20px; color: var(--text-secondary); border-top: 1px solid var(--border-color); margin-top: 30px;">
+        Linux Networking Commands &copy; 2023 | Advanced Administration Notes
+    </footer>
+</body>
+</html>

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSH (Secure Shell) - Comprehensive Linux Notes</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --container-bg: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #f0883e;
+            --accent-purple: #bc8cff;
+            --accent-red: #f85149;
+            --accent-cyan: #39d353;
+            --border-color: #30363d;
+            --code-bg: #0d1117;
+            --card-bg: #21262d;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color); color: var(--text-primary);
+            line-height: 1.6; -webkit-font-smoothing: antialiased;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        header {
+            background: linear-gradient(135deg, #161b22 0%, #1a2332 100%);
+            border-bottom: 3px solid var(--accent-blue); padding: 2rem 1rem;
+            text-align: center; border-radius: 0 0 15px 15px; margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        header h1 { color: var(--accent-blue); font-family: 'Courier New', Courier, monospace; font-size: 2.2rem; margin-bottom: 1rem; }
+        nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        nav a {
+            background-color: var(--card-bg); color: var(--accent-blue);
+            padding: 8px 15px; border-radius: 20px; text-decoration: none;
+            font-size: 0.85rem; font-weight: bold; border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        nav a:hover { background-color: var(--accent-blue); color: var(--bg-color); transform: translateY(-2px); }
+        section {
+            background-color: var(--container-bg); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 25px; margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        h2 {
+            color: var(--accent-blue); font-size: 1.8rem;
+            border-bottom: 2px solid var(--border-color); padding-bottom: 10px;
+            margin-bottom: 20px; font-family: 'Courier New', Courier, monospace;
+        }
+        h3 {
+            color: var(--accent-purple); font-size: 1.3rem; margin-top: 25px;
+            margin-bottom: 15px; padding-left: 10px; border-left: 4px solid var(--accent-purple);
+        }
+        .step-card, .command-card {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 15px; margin-bottom: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .step-card:hover, .command-card:hover {
+            transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-color: var(--accent-blue);
+        }
+        .step-card h3 { color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 0; }
+        .rationale { font-size: 0.9rem; color: var(--text-secondary); margin-top: 10px; font-style: italic; }
+        .rationale strong { color: var(--accent-orange); }
+        code {
+            font-family: 'Courier New', Courier, monospace; background-color: var(--code-bg);
+            padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: var(--accent-orange);
+        }
+        pre {
+            background-color: var(--code-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 12px; overflow-x: auto; margin: 10px 0;
+            font-family: 'Courier New', Courier, monospace; color: var(--accent-green); font-size: 0.9em;
+        }
+        details {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; margin-bottom: 8px; overflow: hidden;
+        }
+        summary {
+            padding: 12px 15px; font-weight: bold; color: var(--accent-blue);
+            cursor: pointer; list-style: none; display: flex; justify-content: space-between;
+            align-items: center; transition: background-color 0.2s;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: '►'; color: var(--text-secondary); font-size: 0.8rem; transition: transform 0.2s; }
+        details[open] summary::after { transform: rotate(90deg); }
+        details[open] summary { background-color: rgba(88, 166, 255, 0.1); border-bottom: 1px solid var(--border-color); }
+        .answer-content { padding: 15px; color: var(--text-primary); }
+        .answer-content ul { margin-left: 20px; margin-top: 10px; }
+        .answer-content li { margin-bottom: 5px; }
+        .highlight { color: var(--accent-red); font-weight: bold; }
+        .badge {
+            display: inline-block; padding: 3px 8px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: bold; text-transform: uppercase;
+        }
+        .badge-danger { background-color: var(--accent-red); color: white; }
+        .badge-tip { background-color: var(--accent-green); color: black; }
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            header h1 { font-size: 1.5rem; }
+            nav a { font-size: 0.75rem; padding: 6px 10px; }
+            section { padding: 15px; }
+            h2 { font-size: 1.4rem; }
+            pre { font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🔒 SSH (SECURE SHELL)</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Secure Remote Administration & Key Management</p>
+        <nav>
+            <a href="#part1">Part I: Procedure</a>
+            <a href="#part2">Part II: Commands</a>
+            <a href="#part3">Part III: Alternatives</a>
+            <a href="#part4">Part IV: Assignment Q&A</a>
+            <a href="#part5">Part V: Interview</a>
+        </nav>
+    </header>
+    <div class="container">
+
+        <!-- PART I -->
+        <section id="part1">
+            <h2>PART I: STEP-BY-STEP PROCEDURE - SSH LIFECYCLE</h2>
+            
+            <div class="step-card">
+                <h3>STEP 1: Installation & Service Startup</h3>
+                <p>Install the OpenSSH server package and start the <code>sshd</code> daemon. Enable it to start on boot.</p>
+                <p class="rationale"><strong>Rationale:</strong> The SSH server must be running to accept incoming connections. Enabling it via systemd ensures the server remains accessible after a reboot.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 2: Key Pair Generation</h3>
+                <p>On the client machine, generate a public/private key pair using <code>ssh-keygen</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> Key-based authentication is vastly more secure than passwords. The private key never leaves the client, while the public key is placed on the server.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 3: Key Distribution</h3>
+                <p>Copy the public key to the remote server using <code>ssh-copy-id</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> This appends the public key to the server's <code>~/.ssh/authorized_keys</code> file, establishing the trust relationship required for passwordless login.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 4: Security Hardening</h3>
+                <p>Edit <code>/etc/ssh/sshd_config</code> to disable root login, change the default port, and disable password authentication.</p>
+                <p class="rationale"><strong>Rationale:</strong> Default configurations are primary targets for brute-force bots. Disabling root login limits damage if compromised, and changing the port reduces noise in logs.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 5: Service Restart & Validation</h3>
+                <p>Restart <code>sshd</code> to apply changes. Verify syntax before restarting to avoid lockout.</p>
+                <p class="rationale"><strong>Rationale:</strong> Configuration changes are only read at service startup. A syntax error in <code>sshd_config</code> can cause the service to fail to start, locking everyone out.</p>
+            </div>
+        </section>
+
+        <!-- PART II -->
+        <section id="part2">
+            <h2>PART II: COMMANDS AND EXPLANATIONS</h2>
+
+            <div class="command-card">
+                <h3><code>ssh</code> (Client)</h3>
+                <p><span class="syntax">Syntax:</span> <code>ssh user@hostname</code></p>
+                <p><strong>Purpose:</strong> Initiates an encrypted remote login session to a server running the SSH daemon.</p>
+                <pre># Connect using default port (22)
+ssh admin@192.168.1.10
+
+# Connect using a custom port
+ssh -p 2222 admin@192.168.1.10</pre>
+            </div>
+
+            <div class="command-card">
+                <h3><code>ssh-keygen</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>ssh-keygen -t &lt;algorithm&gt; -b &lt;bits&gt;</code></p>
+                <p><strong>Purpose:</strong> Generates authentication key pairs (public and private). The private key stays local; the public key goes to remote hosts.</p>
+                <pre># Generate RSA 4096-bit key
+ssh-keygen -t rsa -b 4096
+
+# Generate Ed25519 key (Modern, Recommended)
+ssh-keygen -t ed25519</pre>
+            </div>
+
+            <div class="command-card">
+                <h3><code>ssh-copy-id</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>ssh-copy-id user@hostname</code></p>
+                <p><strong>Purpose:</strong> Automatically appends the client's public key to the server's <code>~/.ssh/authorized_keys</code> file.</p>
+                <pre>ssh-copy-id admin@192.168.1.10</pre>
+            </div>
+
+            <div class="command-card">
+                <h3><code>systemctl</code> (Service Management)</h3>
+                <p><span class="syntax">Syntax:</span> <code>systemctl [action] sshd</code></p>
+                <p><strong>Purpose:</strong> Manages the SSH daemon service state.</p>
+                <pre>sudo systemctl start sshd
+sudo systemctl enable sshd
+sudo systemctl status sshd
+sudo systemctl restart sshd</pre>
+            </div>
+        </section>
+
+        <!-- PART III -->
+        <section id="part3">
+            <h2>PART III: ALTERNATIVE COMMANDS & METHODS</h2>
+
+            <details><summary>1. <code>ssh-keygen</code> Algorithms: RSA vs Ed25519</summary><div class="answer-content">
+                <ul>
+                    <li><code>RSA</code>: Legacy standard. Requires large key sizes (2048 or 4096-bit) for security. Slower during the handshake.</li>
+                    <li><code>Ed25519</code>: Modern Elliptic Curve algorithm. Much shorter keys, faster authentication, and more secure against side-channel attacks. <strong>Recommended for all new deployments.</strong></li>
+                </ul>
+            </div></details>
+
+            <details><summary>2. Distributing Keys without <code>ssh-copy-id</code></summary><div class="answer-content">
+                <p>If <code>ssh-copy-id</code> is unavailable, you can pipe the key via SSH manually:</p>
+                <pre>cat ~/.ssh/id_ed25519.pub | ssh user@host "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"</pre>
+            </div></details>
+
+            <details><summary>3. Checking Ports: <code>ss</code> vs <code>netstat</code></summary><div class="answer-content">
+                <p><code>netstat</code> is considered deprecated on modern Linux. <code>ss</code> (socket statistics) is faster and pulls data directly from the kernel.</p>
+                <pre># Using ss (Modern)
+ss -tulpn | grep 22
+
+# Using netstat (Legacy)
+netstat -tulpn | grep 22</pre>
+            </div></details>
+        </section>
+
+        <!-- PART IV -->
+        <section id="part4">
+            <h2>PART IV: ASSIGNMENT SOLUTIONS</h2>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan);">Section A: Short Answer Questions</h3>
+            <details><summary>1. What is SSH?</summary><div class="answer-content"><p>SSH (Secure Shell) is a cryptographic network protocol used for secure data communication, remote command-line login, and remote command execution over an unsecured network.</p></div></details>
+            <details><summary>2. Default port number used by SSH?</summary><div class="answer-content"><p>Port <strong>22</strong>.</p></div></details>
+            <details><summary>3. Purpose of the SSH protocol?</summary><div class="answer-content"><p>To provide a secure, encrypted channel over an insecure network, preventing eavesdropping, password sniffing, and data manipulation (Man-in-the-Middle attacks).</p></div></details>
+            <details><summary>4. Difference between Telnet and SSH?</summary><div class="answer-content"><p>Telnet transmits data (including passwords) in plain text, making it highly insecure. SSH encrypts all traffic, ensuring confidentiality and integrity.</p></div></details>
+            <details><summary>5. Which package provides SSH service?</summary><div class="answer-content"><p><code>openssh-server</code> (Server) and <code>openssh-clients</code> (Client).</p></div></details>
+            <details><summary>6. Purpose of the <code>sshd</code> service?</summary><div class="answer-content"><p>It is the SSH daemon that runs on the server, listening for incoming SSH client connections and authenticating users.</p></div></details>
+            <details><summary>7. File containing SSH server config?</summary><div class="answer-content"><p><code>/etc/ssh/sshd_config</code></p></div></details>
+            <details><summary>8. Command to check SSH service status?</summary><div class="answer-content"><pre>sudo systemctl status sshd</pre></div></details>
+            <details><summary>9. Use of SSH key authentication?</summary><div class="answer-content"><p>To provide a more secure and convenient alternative to passwords. It uses asymmetric cryptography, making it nearly immune to brute-force attacks.</p></div></details>
+            <details><summary>10. Purpose of <code>known_hosts</code>?</summary><div class="answer-content"><p>Stores the host keys of remote servers. It verifies the server's identity on subsequent connections, protecting against Man-in-the-Middle (MITM) attacks.</p></div></details>
+            <details><summary>11. Purpose of <code>authorized_keys</code>?</summary><div class="answer-content"><p>Located in <code>~/.ssh/</code>, it stores the public keys of clients allowed to log into the server without a password.</p></div></details>
+            <details><summary>12. What is passwordless SSH login?</summary><div class="answer-content"><p>Authenticating to a remote server using public/private key pairs instead of a password, streamlining automation and increasing security.</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section B: Command-Based Questions</h3>
+            <details><summary>1. Install OpenSSH server.</summary><div class="answer-content"><pre># Debian/Ubuntu
+sudo apt install openssh-server
+
+# RHEL/CentOS
+sudo yum install openssh-server   # or dnf</pre></div></details>
+            <details><summary>2. Start SSH service.</summary><div class="answer-content"><pre>sudo systemctl start sshd</pre></div></details>
+            <details><summary>3. Enable SSH permanently.</summary><div class="answer-content"><pre>sudo systemctl enable sshd</pre></div></details>
+            <details><summary>4. Check status.</summary><div class="answer-content"><pre>sudo systemctl status sshd</pre></div></details>
+            <details><summary>5. Connect to remote server.</summary><div class="answer-content"><pre>ssh user@192.168.1.10</pre></div></details>
+            <details><summary>6. Generate SSH keys.</summary><div class="answer-content"><pre>ssh-keygen -t rsa -b 4096</pre></div></details>
+            <details><summary>7. Copy public key to remote.</summary><div class="answer-content"><pre>ssh-copy-id user@192.168.1.10</pre></div></details>
+            <details><summary>8. Restart SSH service.</summary><div class="answer-content"><pre>sudo systemctl restart sshd</pre></div></details>
+            <details><summary>9. Verify port 22 is listening.</summary><div class="answer-content"><pre>ss -tulpn | grep 22</pre></div></details>
+            <details><summary>10. Edit SSH config file.</summary><div class="answer-content"><pre>sudo vi /etc/ssh/sshd_config</pre></div></details>
+            <details><summary>11. Disable root login.</summary><div class="answer-content"><pre># Edit /etc/ssh/sshd_config
+PermitRootLogin no</pre></div></details>
+            <details><summary>12. Check SSH login history.</summary><div class="answer-content"><pre># Systemd journal
+sudo journalctl _SYSTEMD_UNIT=sshd.service | grep Accepted
+
+# Auth log (Debian/Ubuntu)
+sudo cat /var/log/auth.log | grep sshd</pre></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section C: Practical Tasks</h3>
+            <details><summary>1. Install and configure SSH server.</summary><div class="answer-content"><pre>sudo apt update && sudo apt install openssh-server
+sudo systemctl start sshd
+sudo systemctl enable sshd</pre></div></details>
+            <details><summary>2. Start and enable SSH service.</summary><div class="answer-content"><pre>sudo systemctl enable --now sshd</pre><p><span class="badge badge-tip">Tip:</span> The <code>--now</code> flag starts and enables in one command.</p></div></details>
+            <details><summary>3. Verify SSH connectivity.</summary><div class="answer-content"><pre>ssh user@remote_ip
+# Successful login confirms connectivity</pre></div></details>
+            <details><summary>4. Connect to remote server.</summary><div class="answer-content"><pre>ssh admin@10.0.0.5</pre></div></details>
+            <details><summary>5. Generate SSH keys.</summary><div class="answer-content"><pre>ssh-keygen -t ed25519
+# Press Enter to accept default path and set passphrase (optional)</pre></div></details>
+            <details><summary>6. Configure passwordless login.</summary><div class="answer-content"><pre>ssh-copy-id admin@10.0.0.5
+# Test: ssh admin@10.0.0.5 (Should not ask for password)</pre></div></details>
+            <details><summary>7. Disable root login.</summary><div class="answer-content"><pre>sudo sed -i 's/#PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+sudo systemctl restart sshd</pre></div></details>
+            <details><summary>8. Restart after changes.</summary><div class="answer-content"><pre>sudo systemctl restart sshd</pre></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section D: Scenario-Based Questions</h3>
+            <details><summary>1. Change default SSH port from 22 to 2222.</summary><div class="answer-content"><pre># 1. Edit config
+sudo vi /etc/ssh/sshd_config
+# Find and change: Port 2222
+
+# 2. Allow port in firewall
+sudo ufw allow 2222/tcp
+# OR (firewalld)
+sudo firewall-cmd --add-port=2222/tcp --permanent
+sudo firewall-cmd --reload
+
+# 3. Handle SELinux (RHEL/CentOS)
+sudo semanage port -a -t ssh_port_t -p tcp 2222
+
+# 4. Restart service
+sudo systemctl restart sshd
+
+# 5. Test connection
+ssh -p 2222 user@ip</pre></div></details>
+            <details><summary>2. Steps to configure passwordless authentication.</summary><div class="answer-content"><p>1. Generate a key pair on the client: <code>ssh-keygen</code>.<br>2. Copy the public key to the server: <code>ssh-copy-id user@server</code>.<br>3. Test the connection: <code>ssh user@server</code>. If configured correctly, you will log in without a password prompt (or only prompted for the key's passphrase if set).</p></div></details>
+            <details><summary>3. Importance of SSH key pairs.</summary><div class="answer-content"><p>Keys provide vastly superior security over passwords. They are cryptographically strong, immune to dictionary/brute-force attacks, and enable secure automation (scripts, cron jobs) by eliminating human interaction.</p></div></details>
+            <details><summary>4. What happens if <code>sshd_config</code> contains incorrect syntax?</summary><div class="answer-content"><p>If <code>sshd_config</code> has syntax errors, the <code>sshd</code> service will fail to restart, or it will abort to prevent loading an insecure/broken configuration. This results in a <strong>Denial of Service</strong>—nobody can SSH into the server until the file is fixed. Always validate config with <code>sudo sshd -t</code> before restarting.</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section E: Lab Exercises</h3>
+            <details><summary>Exercise 1: SSH Server Installation</summary><div class="answer-content"><pre>sudo apt update
+sudo apt install openssh-server -y
+sudo systemctl start sshd
+sudo systemctl enable sshd</pre></div></details>
+            <details><summary>Exercise 2: Remote Login</summary><div class="answer-content"><pre>ssh student@192.168.1.50
+# Once logged in:
+hostname
+ip a</pre></div></details>
+            <details><summary>Exercise 3: SSH Key Authentication</summary><div class="answer-content"><pre>ssh-keygen -t ed25519
+ssh-copy-id student@192.168.1.50
+ssh student@192.168.1.50  # Verify no password prompt</pre></div></details>
+            <details><summary>Exercise 4: SSH Security Configuration</summary><div class="answer-content"><pre>sudo vi /etc/ssh/sshd_config
+# Set: PermitRootLogin no
+# Set: Port 2222
+
+# Adjust firewall/SELinux
+sudo ufw allow 2222
+sudo semanage port -a -t ssh_port_t -p tcp 2222
+
+# Validate syntax
+sudo sshd -t
+
+# Restart
+sudo systemctl restart sshd
+
+# Verify
+ssh -p 2222 student@192.168.1.50</pre></div></details>
+        </section>
+
+        <!-- PART V -->
+        <section id="part5">
+            <h2>PART V: INTERVIEW QUESTIONS AND ANSWERS</h2>
+
+            <details><summary>Q1: What happens on the very first SSH connection to a server?</summary><div class="answer-content"><p>The client connects and receives the server's public host key. Since it has never seen this key before, it prompts the user: "The authenticity of host X can't be established... Are you sure you want to continue connecting?". If the user types 'yes', the key is saved to <code>~/.ssh/known_hosts</code>. On future connections, the server's key is compared to the saved key to detect Man-in-the-Middle attacks.</p></div></details>
+
+            <details><summary>Q2: How do you troubleshoot an "SSH Connection Refused" error?</summary><div class="answer-content"><p>1. Check if <code>sshd</code> is running: <code>systemctl status sshd</code>.<br>2. Check if the port is listening: <code>ss -tulpn | grep 22</code>.<br>3. Check firewall rules: <code>ufw status</code> or <code>iptables -L</code>.<br>4. Check if the server IP is reachable: <code>ping &lt;ip&gt;</code>.<br>5. Check for SSH config syntax errors: <code>sshd -t</code>.</p></div></details>
+
+            <details><summary>Q3: What is SSH Agent Forwarding, and what are its security risks?</summary><div class="answer-content"><p>Agent Forwarding (<code>ssh -A</code>) allows you to SSH from Server A to Server B using the SSH key stored on your local laptop. It forwards the authentication request back to your laptop.<br><strong>Risks:</strong> If Server A is compromised, an attacker with root access can hijack the forwarded socket and use your SSH keys to authenticate to other servers as you. Use <code>ProxyJump</code> (<code>-J</code>) instead, which is more secure.</p></div></details>
+
+            <details><summary>Q4: What is the difference between <code>ssh-keygen -t rsa -b 4096</code> and <code>ssh-keygen -t ed25519</code>?</summary><div class="answer-content"><p>- <code>RSA 4096</code>: Widely supported older algorithm. Relies on large key sizes for security. Slower during handshake.<br>- <code>Ed25519</code>: Modern Elliptic Curve algorithm. Much shorter keys (256-bit), faster, and provides better security against side-channel attacks. <strong>Ed25519 is the industry standard recommendation today.</strong></p></div></details>
+
+            <details><summary>Q5: How does <code>sshd</code> prevent brute-force password attacks natively?</summary><div class="answer-content"><p>OpenSSH uses login delays. By default, if a password authentication fails, the server imposes a delay before accepting the next attempt. Additionally, parameters like <code>MaxAuthTries</code> (default 6) limit the number of failed attempts per connection before disconnecting. For robust protection, administrators use tools like <code>fail2ban</code> to ban IPs after repeated failures.</p></div></details>
+        </section>
+
+    </div>
+    <footer style="text-align: center; padding: 20px; color: var(--text-secondary); border-top: 1px solid var(--border-color); margin-top: 30px;">
+        Linux Secure Shell (SSH) &copy; 2023 | Advanced Administration Notes
+    </footer>
+</body>
+</html>

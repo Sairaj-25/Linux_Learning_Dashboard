@@ -1,0 +1,173 @@
+{
+  "sections": [
+    {
+      "label": "Core Notes",
+      "title": "Linux Notes",
+      "items": [
+        {
+          "title": "Linux File System Hierarchy - Revision Notes",
+          "href": "Linux_File_System_Hierarchy/index.html",
+          "tags": ["filesystem", "hierarchy", "revision"]
+        },
+        {
+          "title": "Linux Section 1 - File & Directory Management",
+          "href": "Section1-File and Directory Management/index.html",
+          "tags": ["files", "directories", "linux"]
+        },
+        {
+          "title": "Linux Section 2 - Permissions & Security",
+          "href": "Section2-Filesystem Permissions and Security/index.html",
+          "tags": ["permissions", "security", "users"]
+        },
+        {
+          "title": "Linux Section 3 - User & Group Management",
+          "href": "Section3-User and Group Management/index.html",
+          "tags": ["users", "groups", "linux"]
+        },
+        {
+          "title": "Linux Section 8 - Package Management",
+          "href": "Section8-Package Management/index.html",
+          "tags": ["packages", "yum", "dnf"]
+        },
+        {
+          "title": "Linux Section 5 - Disk Management",
+          "href": "Section5-Disk Management/index.html",
+          "tags": ["disk", "storage", "partitions"]
+        },
+        {
+          "title": "Linux Section 7 - System Services & Daemon Management",
+          "href": "Section7-System Services and Daemon Management/index.html",
+          "tags": ["services", "daemon", "systemd"]
+        },
+        {
+          "title": "Linux Section 6 - Network Management",
+          "href": "Section6-Network Management/index.html",
+          "tags": ["network", "linux"]
+        }
+      ]
+    },
+    {
+      "label": "Assignments",
+      "title": "Hands-on Assignments",
+      "items": [
+        {
+          "title": "User & Group Management - Comprehensive Linux Notes",
+          "href": "Assignment/user&group_management/index.html",
+          "tags": ["users", "groups"]
+        },
+        {
+          "title": "Linux File Permissions - Comprehensive Notes",
+          "href": "Assignment/File_permissions/index.html",
+          "tags": ["permissions", "chmod"]
+        },
+        {
+          "title": "Linux Special Permissions (SUID, SGID, Sticky Bit) - Master Notes",
+          "href": "Assignment/Special_Permissions/index.html",
+          "tags": ["suid", "sgid", "sticky"]
+        },
+        {
+          "title": "Linux Standard Partitions - Comprehensive Notes",
+          "href": "Assignment/standard_partition/index.html",
+          "tags": ["partition", "disk"]
+        },
+        {
+          "title": "Deleting Partitions in Linux - Comprehensive Notes",
+          "href": "Assignment/Delete_partition/index.html",
+          "tags": ["partition", "delete"]
+        },
+        {
+          "title": "Disk Management & OS Concepts - Comprehensive Linux Notes",
+          "href": "Assignment/disk_management/index.html",
+          "tags": ["disk", "os"]
+        },
+        {
+          "title": "Logical Volume Manager (LVM) - Comprehensive Linux Notes",
+          "href": "Assignment/LVM/index.html",
+          "tags": ["lvm", "storage"]
+        },
+        {
+          "title": "LVM Master Flow & Troubleshooting - Linux Notes",
+          "href": "Assignment/LVM/index2.html",
+          "tags": ["lvm", "troubleshooting"]
+        },
+        {
+          "title": "Linux Process Management: ps, kill, killall, pkill",
+          "href": "Assignment/process_management/index.html",
+          "tags": ["process", "kill", "ps"]
+        },
+        {
+          "title": "Linux Process Priority: nice & renice - Master Notes",
+          "href": "Assignment/nice_renice_command/index.html",
+          "tags": ["nice", "renice", "priority"]
+        },
+        {
+          "title": "Managing Services and Daemons (Linux) - Comprehensive Notes",
+          "href": "Assignment/Services_&_Daemon_management/index.html",
+          "tags": ["services", "daemon"]
+        },
+        {
+          "title": "Linux Networking Basic Commands - Comprehensive Notes",
+          "href": "Assignment/Networking_basics/index.html",
+          "tags": ["network", "commands"]
+        },
+        {
+          "title": "SSH (Secure Shell) - Comprehensive Linux Notes",
+          "href": "Assignment/SSH/index.html",
+          "tags": ["ssh", "remote"]
+        },
+        {
+          "title": "Linux Secure File Transfer: SCP, SFTP, RSYNC",
+          "href": "Assignment/File_transfer/index.html",
+          "tags": ["scp", "sftp", "rsync"]
+        },
+        {
+          "title": "Linux Archiving and Backups using tar - Comprehensive Notes",
+          "href": "Assignment/Archive_&_Backup/index.html",
+          "tags": ["archive", "backup", "tar"]
+        },
+        {
+          "title": "Linux Cron Jobs - Comprehensive Notes",
+          "href": "Assignment/Cron_Jobs/index.html",
+          "tags": ["cron", "jobs"]
+        }
+      ]
+    },
+    {
+      "label": "Bash Scripting",
+      "title": "Bash Scripting Topics",
+      "items": [
+        {
+          "title": "Bash Scripting in Linux - Comprehensive Notes",
+          "href": "Assignment/Bash_scripting/basics_bash/index.html",
+          "tags": ["bash", "scripting", "basics"]
+        },
+        {
+          "title": "Bash if Statements - Comprehensive Linux Notes",
+          "href": "Assignment/Bash_scripting/if_else/index.html",
+          "tags": ["bash", "if", "conditions"]
+        },
+        {
+          "title": "Bash for Loop - Comprehensive Linux Notes",
+          "href": "Assignment/Bash_scripting/for_loops/index.html",
+          "tags": ["bash", "loops", "for"]
+        }
+      ]
+    },
+    {
+      "label": "Interview Practice",
+      "title": "Interview Preparation",
+      "items": [
+        {
+          "title": "Linux Interview Preparation Guide - Complete Handbook",
+          "href": "Interview-practise/index.html",
+          "tags": ["interview", "linux", "handbook"]
+        },
+        {
+          "title": "Linux/RHEL & Bash Scripting - Complete Interview Guide",
+          "href": "Interview-practise/interview_guide.html",
+          "tags": ["interview", "rhel", "bash"]
+        }
+      ]
+    }
+  ]
+}

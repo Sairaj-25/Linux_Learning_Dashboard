@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Section 1 — File & Directory Management</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --navy:    #071525;
+    --blue:    #1565C0;
+    --sky:     #0288D1;
+    --teal:    #00695C;
+    --green:   #2E7D32;
+    --orange:  #E65100;
+    --red:     #C62828;
+    --purple:  #6A1B9A;
+    --amber:   #F57F17;
+    --brown:   #4E342E;
+    --bg:      #F0F5FB;
+    --surface: #FFFFFF;
+    --surf2:   #E5EFF9;
+    --border:  #C3D5EC;
+    --text:    #0B1A2C;
+    --text2:   #213448;
+    --text3:   #4A6278;
+    --codebg:  #080F1A;
+    --sh-s:    0 1px 4px rgba(7,21,37,.07);
+    --sh-m:    0 4px 16px rgba(7,21,37,.10);
+    --sh-l:    0 14px 44px rgba(7,21,37,.13);
+    --r:       13px;
+    --rs:      8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; }
+  ::-webkit-scrollbar { width: 6px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ══ HERO ══ */
+  .hero {
+    background: linear-gradient(150deg, #040C17 0%, #071525 25%, #0C2545 55%, #102E5A 80%, #163775 100%);
+    padding: 68px 24px 56px; text-align: center; position: relative; overflow: hidden;
+  }
+  .hero::after {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 20% 60%, rgba(21,101,192,.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(0,105,92,.15) 0%, transparent 48%);
+    pointer-events: none;
+  }
+  .hero-in { position: relative; z-index: 1; }
+  .h-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.18); color: #81D4FA; font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 7px 20px; border-radius: 100px; margin-bottom: 20px; }
+  .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; color: #fff; letter-spacing: -.03em; line-height: 1.15; margin-bottom: 12px; }
+  .hero h1 em { font-style: normal; color: #64B5F6; }
+  .hero-desc { font-size: .97rem; color: #90CAF9; max-width: 680px; margin: 0 auto 26px; line-height: 1.7; }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; }
+  .chip { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.14); color: #B3E5FC; font-size: .73rem; font-weight: 500; padding: 4px 13px; border-radius: 100px; }
+
+  /* ══ NAV ══ */
+  .nav { position: sticky; top: 0; z-index: 200; background: rgba(255,255,255,.94); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); box-shadow: var(--sh-s); }
+  .nav-in { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 2px; height: 50px; padding: 0 16px; overflow-x: auto; white-space: nowrap; }
+  .nav-in a { text-decoration: none; color: var(--text2); font-size: .73rem; font-weight: 600; padding: 4px 10px; border-radius: 100px; transition: all .15s; flex-shrink: 0; }
+  .nav-in a:hover { background: var(--surf2); color: var(--sky); }
+  .ndot { color: var(--border); margin: 0 1px; flex-shrink: 0; font-size: .85rem; }
+
+  /* ══ LAYOUT ══ */
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 40px 20px 90px; }
+
+  /* ══ COMMAND CARD ══ */
+  .cmd-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-m); margin-bottom: 36px; overflow: hidden; }
+
+  /* Header color themes per command */
+  .h-ls    { background: linear-gradient(135deg, #0D2547, #1565C0); }
+  .h-cp    { background: linear-gradient(135deg, #1A2A0A, #2E7D32); }
+  .h-mv    { background: linear-gradient(135deg, #2A1A0A, #E65100); }
+  .h-rm    { background: linear-gradient(135deg, #2A0808, #C62828); }
+  .h-touch { background: linear-gradient(135deg, #0A2020, #00695C); }
+  .h-nano  { background: linear-gradient(135deg, #1A0A2A, #6A1B9A); }
+  .h-vim   { background: linear-gradient(135deg, #0A1A2A, #00838F); }
+  .h-cat   { background: linear-gradient(135deg, #001A2A, #006064); }
+  .h-tac   { background: linear-gradient(135deg, #2A2A0A, #F57F17); }
+  .h-less  { background: linear-gradient(135deg, #1A0A1A, #880E4F); }
+  .h-more  { background: linear-gradient(135deg, #0A1A0A, #1B5E20); }
+  .h-head  { background: linear-gradient(135deg, #0A0A2A, #283593); }
+  .h-tail  { background: linear-gradient(135deg, #1A0A0A, #B71C1C); }
+  .h-diff  { background: linear-gradient(135deg, #002A2A, #00695C); }
+  .h-grep  { background: linear-gradient(135deg, #0D2547, #0277BD); }
+  .h-find  { background: linear-gradient(135deg, #1A1A0A, #558B2F); }
+  .h-file  { background: linear-gradient(135deg, #1A0A2A, #4527A0); }
+  .h-chmod { background: linear-gradient(135deg, #2A0A1A, #AD1457); }
+  .h-chown { background: linear-gradient(135deg, #0A2020, #00796B); }
+  .h-chgrp { background: linear-gradient(135deg, #0A1A20, #0277BD); }
+  .h-ln    { background: linear-gradient(135deg, #2A0A0A, #C62828); }
+  .h-locate{ background: linear-gradient(135deg, #1A0A2A, #7B1FA2); }
+  .h-stat  { background: linear-gradient(135deg, #1A1A0A, #E65100); }
+  .h-sed   { background: linear-gradient(135deg, #0A2A0A, #2E7D32); }
+  .h-awk   { background: linear-gradient(135deg, #0A0A2A, #1565C0); }
+  .h-cut   { background: linear-gradient(135deg, #2A0A0A, #B71C1C); }
+  .h-sort  { background: linear-gradient(135deg, #002020, #00838F); }
+  .h-uniq  { background: linear-gradient(135deg, #1A2A0A, #33691E); }
+  .h-dir   { background: linear-gradient(135deg, #1A1A1A, #37474F); }
+
+  .cmd-head { padding: 18px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .cmd-mono { font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 700; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); border-radius: 8px; padding: 5px 16px; flex-shrink: 0; color: #E0E0E0; }
+  .cmd-meta { flex: 1; min-width: 180px; }
+  .cmd-label { color: rgba(255,255,255,.5); font-size: .69rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .cmd-tagline { color: #fff; font-size: .9rem; font-weight: 600; margin-top: 2px; }
+  .cmd-body { padding: 24px; }
+
+  /* ══ SECTION LABELS ══ */
+  .sl { display: flex; align-items: center; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid var(--border); margin: 24px 0 11px; }
+  .sl:first-of-type { margin-top: 0; }
+  .sn { width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: #fff; font-size: .66rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .st { font-size: .93rem; font-weight: 700; color: var(--text); }
+  .sub { font-size: .71rem; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: .09em; margin: 14px 0 6px; }
+  .desc { font-size: .875rem; color: var(--text2); line-height: 1.82; margin-bottom: 9px; }
+
+  /* ══ INLINE CODE ══ */
+  .ic { font-family: 'JetBrains Mono', monospace; background: #E3F2FD; color: #C62828; padding: 2px 6px; border-radius: 4px; font-size: .79rem; border: 1px solid #BBDEFB; }
+
+  /* ══ CODE BLOCK ══ */
+  .cw { margin-bottom: 12px; border-radius: var(--rs); overflow: hidden; }
+  .ct { background: #0E1E2F; padding: 6px 14px; display: flex; align-items: center; justify-content: space-between; font-size: .67rem; font-weight: 700; color: #3D6080; letter-spacing: .09em; text-transform: uppercase; }
+  .ct .lang { color: #29B6F6; }
+  pre.p { background: var(--codebg); padding: 14px 18px; overflow-x: auto; margin: 0; border-top: 1px solid #152030; }
+  pre.p code { font-family: 'JetBrains Mono', monospace; font-size: .79rem; line-height: 1.88; color: #90CAF9; background: none; padding: 0; }
+  .c  { color: #546E7A; }
+  .k  { color: #FF8A80; font-weight: 600; }
+  .cm { color: #64B5F6; }
+  .fl { color: #FFCC80; }
+  .st2{ color: #A5D6A7; }
+  .sc { color: #CE93D8; font-weight: 600; }
+  .di { color: #FFD54F; }
+  .nu { color: #80CBC4; }
+  .out{ color: #546E7A; }
+  .url{ color: #80DEEA; }
+
+  /* ══ FLAG TABLE ══ */
+  .tw { overflow-x: auto; border-radius: var(--rs); border: 1px solid var(--border); margin-bottom: 12px; }
+  table.ft { width: 100%; border-collapse: collapse; font-size: .81rem; }
+  table.ft thead tr { background: linear-gradient(90deg, #0D2547, #1565C0); }
+  table.ft thead th { padding: 10px 12px; color: #fff; font-size: .7rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; text-align: left; border: none; white-space: nowrap; }
+  table.ft tbody tr:nth-child(odd)  { background: #FAFCFF; }
+  table.ft tbody tr:nth-child(even) { background: #EEF4FB; }
+  table.ft tbody tr:hover { background: #DCE9F8; }
+  table.ft td { padding: 9px 12px; border-bottom: 1px solid #DEEAF8; vertical-align: top; color: var(--text2); line-height: 1.5; font-size: .82rem; }
+  table.ft td:first-child { font-family: 'JetBrains Mono', monospace; font-size: .74rem; font-weight: 600; color: #C62828; white-space: nowrap; border-right: 1px solid var(--border); }
+  table.ft td:last-child  { font-family: 'JetBrains Mono', monospace; font-size: .74rem; color: #37474F; background: rgba(0,0,0,.014); }
+
+  /* ══ CALLOUTS ══ */
+  .box { display: flex; gap: 12px; align-items: flex-start; padding: 13px 16px; border-radius: var(--rs); margin-bottom: 10px; font-size: .855rem; line-height: 1.7; }
+  .box .bi { font-size: 1.05rem; flex-shrink: 0; margin-top: 1px; }
+  .box strong { display: block; margin-bottom: 2px; font-size: .81rem; }
+  .box.info   { background: #E3F2FD; border-left: 4px solid #1E88E5; color: #0D2B4E; }
+  .box.tip    { background: #E8F5E9; border-left: 4px solid #43A047; color: #1B5E20; }
+  .box.warn   { background: #FFF8E1; border-left: 4px solid #F9A825; color: #4E342E; }
+  .box.danger { background: #FEEBEA; border-left: 4px solid #E53935; color: #7F1D1D; }
+  .box.purple { background: #F3E5F5; border-left: 4px solid #8E24AA; color: #3E0D5C; }
+  .box.teal   { background: #E0F2F1; border-left: 4px solid #00897B; color: #004D40; }
+
+  /* ══ Q&A ══ */
+  .qs { display: flex; flex-direction: column; gap: 10px; }
+  .qa { border-radius: var(--rs); overflow: hidden; border: 1px solid var(--border); box-shadow: var(--sh-s); }
+  .qq { background: linear-gradient(90deg, #0D2547, #1A3D6B); padding: 11px 15px; display: flex; gap: 10px; align-items: flex-start; font-size: .84rem; font-weight: 600; color: #E3F2FD; }
+  .qb { background: rgba(255,255,255,.14); color: #64B5F6; font-size: .66rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+  .qa-a { background: #fff; padding: 11px 15px 11px 32px; font-size: .84rem; color: var(--text2); line-height: 1.78; border-top: 1px solid var(--border); }
+  .qa-a .al { color: var(--teal); font-weight: 700; margin-right: 5px; }
+
+  /* ══ BULLETS ══ */
+  ul.bl { list-style: none; padding: 0; margin-bottom: 9px; }
+  ul.bl li { display: flex; gap: 10px; align-items: flex-start; padding: 5px 0; border-bottom: 1px solid #F0F4FB; font-size: .845rem; color: var(--text2); line-height: 1.65; }
+  ul.bl li:last-child { border-bottom: none; }
+  ul.bl li::before { content: '▸'; color: var(--sky); flex-shrink: 0; margin-top: 2px; font-size: .68rem; }
+  ul.bl li strong { color: var(--text); }
+
+  /* ══ CHEAT SHEET ══ */
+  .cheat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-m); overflow: hidden; margin-bottom: 36px; }
+  .cheat-h { padding: 16px 22px; background: linear-gradient(135deg, #003D3D, #00695C); }
+  .cheat-h h2 { color: #fff; font-size: .95rem; font-weight: 700; }
+  .cheat-h p  { color: #B2DFDB; font-size: .8rem; margin-top: 2px; }
+  table.ct2 { width: 100%; border-collapse: collapse; font-size: .79rem; }
+  table.ct2 tr { border-bottom: 1px solid #C8E6E1; }
+  table.ct2 tr:nth-child(odd)  { background: #F5FFFE; }
+  table.ct2 tr:nth-child(even) { background: #E8FAF7; }
+  table.ct2 tr:hover { background: #D0F0E8; }
+  table.ct2 td { padding: 8px 14px; vertical-align: middle; }
+  table.ct2 td:first-child { font-family: 'JetBrains Mono', monospace; color: #00695C; font-size: .74rem; font-weight: 600; border-right: 1px solid #C8E6E1; background: rgba(0,105,92,.04); width: 45%; }
+  table.ct2 td:last-child { color: var(--text2); }
+  .cts td { background: linear-gradient(90deg, #003D3D, #00695C) !important; color: #fff !important; font-weight: 700 !important; font-size: .68rem !important; letter-spacing: .1em; text-transform: uppercase; font-family: 'Inter', sans-serif !important; padding: 6px 14px !important; border-bottom: none !important; }
+
+  /* ══ FINAL TIP ══ */
+  .ft2 { background: linear-gradient(135deg, #0B1C40, #1A237E); border-radius: var(--r); padding: 24px 28px; display: flex; gap: 16px; align-items: flex-start; box-shadow: var(--sh-l); margin-bottom: 36px; }
+  .ft2 .ti { font-size: 2rem; flex-shrink: 0; }
+  .ft2 h3 { color: #BBDEFB; font-size: .73rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 7px; }
+  .ft2 p  { color: #E3F2FD; font-size: .86rem; line-height: 1.82; }
+
+  footer { text-align: center; padding: 22px; border-top: 1px solid var(--border); font-size: .74rem; color: var(--text3); }
+  footer strong { color: var(--blue); }
+
+  @media (max-width: 660px) {
+    .hero { padding: 40px 14px 36px; }
+    .wrap { padding: 18px 12px 60px; }
+    .cmd-body { padding: 14px; }
+    table.ft td:last-child { display: none; }
+    .ft2 { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-in">
+    <div class="h-pill">🐧 Linux Commands — Interview Guide</div>
+    <h1>Section 1:<br><em>File &amp; Directory Management</em></h1>
+    <p class="hero-desc">Complete command reference covering ls, cp, mv, rm, touch, vim, cat, grep, find, sed, awk, chmod, chown, stat and more — with interview Q&A, real-world examples, and pro tips for DevOps, Data Engineering, and AI-ML roles.</p>
+    <div class="chips">
+      <span class="chip">📁 ls · cp · mv · rm</span><span class="chip">✏ touch · nano · vim</span>
+      <span class="chip">📖 cat · less · head · tail</span><span class="chip">🔍 grep · find · diff</span>
+      <span class="chip">🔐 chmod · chown · ln</span><span class="chip">📊 sed · awk · cut · sort</span>
+      <span class="chip">📋 stat · locate · tac · uniq</span>
+    </div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-in">
+    <a href="#ls">ls</a><span class="ndot">·</span>
+    <a href="#cp">cp</a><span class="ndot">·</span>
+    <a href="#mv">mv</a><span class="ndot">·</span>
+    <a href="#rm">rm</a><span class="ndot">·</span>
+    <a href="#touch">touch</a><span class="ndot">·</span>
+    <a href="#nano">nano</a><span class="ndot">·</span>
+    <a href="#vim">vim</a><span class="ndot">·</span>
+    <a href="#cat">cat</a><span class="ndot">·</span>
+    <a href="#tac">tac</a><span class="ndot">·</span>
+    <a href="#less">less</a><span class="ndot">·</span>
+    <a href="#more">more</a><span class="ndot">·</span>
+    <a href="#head">head</a><span class="ndot">·</span>
+    <a href="#tail">tail</a><span class="ndot">·</span>
+    <a href="#diff">diff</a><span class="ndot">·</span>
+    <a href="#grep">grep</a><span class="ndot">·</span>
+    <a href="#find">find</a><span class="ndot">·</span>
+    <a href="#file">file</a><span class="ndot">·</span>
+    <a href="#chmod">chmod</a><span class="ndot">·</span>
+    <a href="#chown">chown</a><span class="ndot">·</span>
+    <a href="#ln">ln</a><span class="ndot">·</span>
+    <a href="#stat">stat</a><span class="ndot">·</span>
+    <a href="#sed">sed</a><span class="ndot">·</span>
+    <a href="#awk">awk</a><span class="ndot">·</span>
+    <a href="#cut">cut</a><span class="ndot">·</span>
+    <a href="#sort">sort</a><span class="ndot">·</span>
+    <a href="#uniq">uniq</a><span class="ndot">·</span>
+    <a href="#dir">dirs</a><span class="ndot">·</span>
+    <a href="#cheatsheet">📋 Cheat</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ════════════════ ls ════════════════ -->
+<div class="cmd-card" id="ls">
+  <div class="cmd-head h-ls">
+    <div class="cmd-mono">ls</div>
+    <div class="cmd-meta"><div class="cmd-label">List</div><div class="cmd-tagline">List directory contents — the most used Linux command</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">ls</span> lists the contents of a directory. It is the most frequently typed Linux command. In production it's used to verify deployments, inspect file timestamps, check permissions, and audit directory structures. Mastering its flags is essential for every role.</p>
+
+    <div class="sl"><span class="sn">2</span><span class="st">Syntax</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="cm">ls</span> <span class="fl">[OPTIONS]</span> <span class="st2">[FILE/DIRECTORY...]</span>
+<span class="c"># Default: lists current directory in alphabetical order</span></code></pre></div>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Commonly Used Options</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-l</td><td>Long listing: permissions, owner, size, date</td><td>ls -l</td></tr>
+        <tr><td>-a</td><td>Show all files including hidden (. files)</td><td>ls -a</td></tr>
+        <tr><td>-h</td><td>Human-readable sizes (KB, MB, GB)</td><td>ls -lh</td></tr>
+        <tr><td>-t</td><td>Sort by modification time (newest first)</td><td>ls -lt</td></tr>
+        <tr><td>-r</td><td>Reverse sort order</td><td>ls -ltr</td></tr>
+        <tr><td>-S</td><td>Sort by file size (largest first)</td><td>ls -lSh</td></tr>
+        <tr><td>-R</td><td>Recursive — list subdirectories</td><td>ls -R /etc</td></tr>
+        <tr><td>-i</td><td>Show inode numbers</td><td>ls -li</td></tr>
+        <tr><td>-d</td><td>List directory itself (not contents)</td><td>ls -ld /etc</td></tr>
+        <tr><td>-1</td><td>One file per line (for scripting)</td><td>ls -1 /var/log</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Show most recently modified files first (invaluable after deployments)</span>
+<span class="cm">ls</span> <span class="fl">-ltr</span>
+
+<span class="c"># Show largest files at bottom (quick disk audit)</span>
+<span class="cm">ls</span> <span class="fl">-lShr</span> /var/log/
+
+<span class="c"># Show hidden config files</span>
+<span class="cm">ls</span> <span class="fl">-la</span> ~
+
+<span class="c"># Count files in a directory</span>
+<span class="cm">ls</span> <span class="fl">-1</span> /opt/app/ | <span class="cm">wc</span> <span class="fl">-l</span>
+
+<span class="c"># List files matching a pattern</span>
+<span class="cm">ls</span> <span class="fl">-lh</span> /var/log/*.log
+
+<span class="c"># Show inode numbers (detect hard links)</span>
+<span class="cm">ls</span> <span class="fl">-lai</span> /etc/hosts</code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What does <span class="ic">ls -ltr</span> do and when is it useful?</div>
+      <div class="qa-a"><span class="al">A:</span>Long listing, sorted by Time, Reversed — newest files appear at the bottom. Extremely useful after a deployment to confirm the latest files were updated, or when tailing a directory to see what changed most recently. Combine with <span class="ic">tail</span> to see the last 10 newest files.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>How do you list ONLY directories in a directory?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">ls -ld */</span> — the trailing slash matches only directories. Alternatively: <span class="ic">ls -l | grep "^d"</span> or <span class="ic">find . -maxdepth 1 -type d</span></div></div>
+    </div>
+
+    <div class="sl"><span class="sn">7</span><span class="st">Common Mistakes &amp; Tips</span></div>
+    <div class="box danger"><span class="bi">❌</span><div><strong>Never use ls in scripts to iterate files</strong> Use <span class="ic">for f in /dir/*; do</span> instead — ls breaks on filenames with spaces.</div></div>
+    <div class="box tip"><span class="bi">✅</span><div><span class="ic">ls -ltr</span> is the production engineer's reflex command — always check newest files first after any change.</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ cp ════════════════ -->
+<div class="cmd-card" id="cp">
+  <div class="cmd-head h-cp">
+    <div class="cmd-mono">cp</div>
+    <div class="cmd-meta"><div class="cmd-label">Copy</div><div class="cmd-tagline">Copy files and directories — with preservation of metadata</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">cp</span> copies files or directories. In production, it's used for backups before editing config files, staging deployments, and creating file archives. The key skill is knowing when to use <span class="ic">-p</span> (preserve metadata) vs <span class="ic">-a</span> (archive mode) vs plain copy.</p>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Commonly Used Options</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-r / -R</td><td>Recursive — copy directories</td><td>cp -r /src/ /dst/</td></tr>
+        <tr><td>-p</td><td>Preserve timestamps, ownership, permissions</td><td>cp -p app.conf backup/</td></tr>
+        <tr><td>-a</td><td>Archive: -dR + --preserve=all (best for backups)</td><td>cp -a /data/ /backup/</td></tr>
+        <tr><td>-v</td><td>Verbose — show files being copied</td><td>cp -rv /src/ /dst/</td></tr>
+        <tr><td>-i</td><td>Interactive — prompt before overwrite</td><td>cp -i file.txt /dest/</td></tr>
+        <tr><td>-n</td><td>No-clobber — never overwrite</td><td>cp -n src.txt dst.txt</td></tr>
+        <tr><td>-u</td><td>Update — copy only if source is newer</td><td>cp -u *.py /deploy/</td></tr>
+        <tr><td>--backup</td><td>Make numbered backups of destination</td><td>cp --backup=numbered f /etc/</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Safe backup before editing config (ALWAYS do this!)</span>
+<span class="cm">cp</span> <span class="fl">-p</span> /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
+
+<span class="c"># Archive copy — preserves everything (permissions, symlinks, timestamps)</span>
+<span class="cm">cp</span> <span class="fl">-a</span> /var/www/html/ /var/www/html_backup_$(date +%Y%m%d)/
+
+<span class="c"># Copy only newer Python files to deployment dir</span>
+<span class="cm">cp</span> <span class="fl">-uv</span> *.py /opt/app/
+
+<span class="c"># Copy directory structure without files (--attributes-only)</span>
+<span class="cm">cp</span> <span class="fl">-r --attributes-only</span> /src/ /dst/</code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the difference between <span class="ic">cp -r</span> and <span class="ic">cp -a</span>?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">cp -r</span> copies recursively but does NOT preserve metadata (timestamps, permissions, symlinks). <span class="ic">cp -a</span> is "archive" mode = <span class="ic">-dR --preserve=all</span> — it preserves all metadata, ownership, symlinks, and hard links. Always use <span class="ic">-a</span> for backups.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>Trailing slash matters: <span class="ic">cp -r /src /dst</span> vs <span class="ic">cp -r /src/ /dst</span>?</div>
+      <div class="qa-a"><span class="al">A:</span>Without trailing slash: copies the <em>directory itself</em> creating <span class="ic">/dst/src/</span>. With trailing slash: copies the <em>contents</em> of src into dst. This is the #1 cp gotcha in interviews.</div></div>
+    </div>
+
+    <div class="box warn"><span class="bi">⚠️</span><div><strong>Trailing slash is critical</strong> — <span class="ic">cp -r /src /dst</span> creates <span class="ic">/dst/src/</span>. <span class="ic">cp -r /src/ /dst</span> copies contents into dst. Always verify your intent.</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ mv ════════════════ -->
+<div class="cmd-card" id="mv">
+  <div class="cmd-head h-mv">
+    <div class="cmd-mono">mv</div>
+    <div class="cmd-meta"><div class="cmd-label">Move</div><div class="cmd-tagline">Move or rename files — atomic operation on same filesystem</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">mv</span> moves or renames files/directories. The key production insight: on the same filesystem, <span class="ic">mv</span> is <strong>atomic</strong> — it's just a directory entry change (no data copied). This is exploited for zero-downtime config updates. Across filesystems, mv copies then deletes.</p>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Key Flags</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-i</td><td>Interactive — prompt before overwrite</td><td>mv -i file.txt /dest/</td></tr>
+        <tr><td>-n</td><td>No-clobber — never overwrite existing</td><td>mv -n src.txt dst.txt</td></tr>
+        <tr><td>-v</td><td>Verbose output</td><td>mv -v *.log /archive/</td></tr>
+        <tr><td>-u</td><td>Move only if source is newer</td><td>mv -u app.py /opt/app/</td></tr>
+        <tr><td>--backup</td><td>Backup destination file before overwriting</td><td>mv --backup=numbered f /etc/</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Simple rename</span>
+<span class="cm">mv</span> old_name.py new_name.py
+
+<span class="c"># Atomic config deployment (zero downtime — same filesystem!)</span>
+<span class="cm">cp</span> new_nginx.conf /etc/nginx/nginx.conf.new
+<span class="cm">mv</span> /etc/nginx/nginx.conf.new /etc/nginx/nginx.conf
+
+<span class="c"># Archive logs with timestamp</span>
+<span class="cm">mv</span> app.log app.log.$(date +%Y%m%d_%H%M%S)
+
+<span class="c"># Move all .csv files to archive directory</span>
+<span class="cm">mv</span> *.csv /data/archive/</code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>Why is <span class="ic">mv</span> used for zero-downtime config updates?</div>
+      <div class="qa-a"><span class="al">A:</span>On the same filesystem, <span class="ic">mv</span> is atomic — it's a single rename(2) syscall that either succeeds completely or not at all. No process can see a partial state. The pattern: write new config to a temp file → validate it → mv to final location. Any process reading the config gets either the old or new version, never a corrupted partial write.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ rm ════════════════ -->
+<div class="cmd-card" id="rm">
+  <div class="cmd-head h-rm">
+    <div class="cmd-mono">rm</div>
+    <div class="cmd-meta"><div class="cmd-label">Remove</div><div class="cmd-tagline">Delete files and directories — irreversible, no recycle bin</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">rm</span> permanently deletes files. There is <strong>no recycle bin</strong> on Linux CLI. In production, <span class="ic">rm</span> must be used with extreme caution. The most dangerous command a sysadmin can type. The data does NOT immediately disappear from disk — inodes are marked free and blocks are reused over time.</p>
+    <div class="box danger"><span class="bi">🚨</span><div><strong>Irreversible!</strong> <span class="ic">rm -rf /</span> on a running system deletes everything. Always double-check paths. Never run as root with wildcards without testing first.</div></div>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Key Flags</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-r / -R</td><td>Recursive — remove directories and contents</td><td>rm -r /tmp/old_data/</td></tr>
+        <tr><td>-f</td><td>Force — no error if file doesn't exist, no prompt</td><td>rm -f *.tmp</td></tr>
+        <tr><td>-i</td><td>Interactive — prompt for each file</td><td>rm -ri /data/</td></tr>
+        <tr><td>-v</td><td>Verbose — show each file removed</td><td>rm -rv logs/</td></tr>
+        <tr><td>--</td><td>End of options (for files starting with -)</td><td>rm -- -weirdfile</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Safe delete with confirmation</span>
+<span class="cm">rm</span> <span class="fl">-i</span> important_file.txt
+
+<span class="c"># Remove old temp files (safe pattern with find)</span>
+<span class="cm">find</span> /tmp <span class="fl">-name "*.tmp" -mtime +7 -delete</span>
+
+<span class="c"># Safe recursive delete — always test with ls first!</span>
+<span class="cm">ls</span> /tmp/old_cache/   <span class="c"># Verify what will be deleted</span>
+<span class="cm">rm</span> <span class="fl">-rf</span> /tmp/old_cache/
+
+<span class="c"># SAFE pattern in scripts — protect against unset variable</span>
+<span class="c"># BAD: rm -rf $DIR/* (if $DIR is empty, becomes rm -rf /*)</span>
+<span class="c"># GOOD:</span>
+<span class="fl">${DIR:?</span><span class="st2">"DIR is unset"</span><span class="fl">}</span>   <span class="c"># Will abort script if DIR is empty</span>
+<span class="cm">rm</span> <span class="fl">-rf</span> <span class="st2">"${DIR}/"</span></code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>You deleted a large log file but <span class="ic">df -h</span> still shows disk full. Why?</div>
+      <div class="qa-a"><span class="al">A:</span>The file is still open by a running process (like a logging daemon). rm only removes the directory entry (unlinks the inode). The disk blocks are NOT freed until all file descriptors are closed. Check with <span class="ic">lsof | grep deleted</span> to find the process holding it open. Fix: restart the process or truncate the file with <span class="ic">> /path/to/file</span> while it's open.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>How do you delete a file named <span class="ic">-rf</span>?</div>
+      <div class="qa-a"><span class="al">A:</span>Use <span class="ic">rm -- -rf</span> (double dash ends option parsing) or <span class="ic">rm ./-rf</span> (specify with path prefix).</div></div>
+    </div>
+
+    <div class="box tip"><span class="bi">✅</span><div><strong>Pro safety tips:</strong> Use <span class="ic">find -delete</span> instead of <span class="ic">rm -rf</span> for pattern-based deletion. In scripts, always quote variables and use <span class="ic">${VAR:?}</span> guard against empty variables.</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ touch ════════════════ -->
+<div class="cmd-card" id="touch">
+  <div class="cmd-head h-touch">
+    <div class="cmd-mono">touch</div>
+    <div class="cmd-meta"><div class="cmd-label">Touch</div><div class="cmd-tagline">Create empty files or update timestamps — signals and locks in pipelines</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">touch</span> creates an empty file if it doesn't exist, or updates the access/modification time of an existing file. Beyond its simple use, it is used as a <strong>signaling mechanism</strong> in automation — creating "flag files" that trigger other processes, and with Makefile-based build systems that check timestamps.</p>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Key Flags</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-a</td><td>Change access time only</td><td>touch -a file.txt</td></tr>
+        <tr><td>-m</td><td>Change modification time only</td><td>touch -m file.txt</td></tr>
+        <tr><td>-t STAMP</td><td>Use specific timestamp [[CC]YY]MMDDhhmm[.ss]</td><td>touch -t 202401151200 file</td></tr>
+        <tr><td>-r REF</td><td>Use timestamp from reference file</td><td>touch -r ref.txt target.txt</td></tr>
+        <tr><td>-d STRING</td><td>Parse string for timestamp</td><td>touch -d "2024-01-15 12:00" f</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Create multiple empty files</span>
+<span class="cm">touch</span> file1.txt file2.txt file3.txt
+
+<span class="c"># Create lock/flag file to prevent parallel execution</span>
+<span class="cm">touch</span> /var/run/etl_pipeline.lock
+<span class="c"># Check at start of script:</span>
+<span class="fl">[[ -f /var/run/etl_pipeline.lock ]] && echo "Already running!" && exit 1</span>
+
+<span class="c"># Signal Makefile to rebuild everything</span>
+<span class="cm">touch</span> Makefile
+
+<span class="c"># Create files with specific timestamp (for testing)</span>
+<span class="cm">touch</span> <span class="fl">-t</span> 202301011200 old_log.txt
+
+<span class="c"># Create directory structure with placeholder files</span>
+<span class="cm">mkdir</span> <span class="fl">-p</span> data/{raw,processed,output}
+<span class="cm">touch</span> data/{raw,processed,output}/.gitkeep</code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What happens when you <span class="ic">touch</span> a file that already exists?</div>
+      <div class="qa-a"><span class="al">A:</span>The file's access time (atime) and modification time (mtime) are updated to the current time. The contents are NOT modified. This is used to signal build systems that a file has changed, even if it hasn't.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ nano ════════════════ -->
+<div class="cmd-card" id="nano">
+  <div class="cmd-head h-nano">
+    <div class="cmd-mono">nano</div>
+    <div class="cmd-meta"><div class="cmd-label">Text Editor</div><div class="cmd-tagline">Simple terminal text editor — beginner-friendly with on-screen shortcuts</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">nano</span> is a user-friendly terminal text editor. Unlike vim, all shortcuts are displayed at the bottom of the screen. Used for quick config edits in scripts, CI environments, and when vim is unavailable. Key shortcuts: <span class="ic">Ctrl+O</span> save, <span class="ic">Ctrl+X</span> exit, <span class="ic">Ctrl+W</span> search, <span class="ic">Ctrl+G</span> help.</p>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Key Usage</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Open or create a file</span>
+<span class="cm">nano</span> /etc/hosts
+
+<span class="c"># Open at specific line number</span>
+<span class="cm">nano</span> <span class="fl">+50</span> /var/log/syslog
+
+<span class="c"># Read-only mode</span>
+<span class="cm">nano</span> <span class="fl">-v</span> /etc/passwd
+
+<span class="c"># Open with line numbers</span>
+<span class="cm">nano</span> <span class="fl">-l</span> config.yaml
+
+<span class="c"># Key shortcuts inside nano:
+# Ctrl+O  = Save (Write Out)
+# Ctrl+X  = Exit
+# Ctrl+W  = Search (Where is)
+# Ctrl+K  = Cut line
+# Ctrl+U  = Paste (Uncut)
+# Ctrl+\  = Find and Replace
+# Alt+U   = Undo</span></code></pre></div>
+
+    <div class="box tip"><span class="bi">✅</span><div>In interview scenarios, prefer vim/vi for advanced editing — but mention nano as the safer choice when working on unfamiliar systems or shared access where vim might not be configured.</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ vim ════════════════ -->
+<div class="cmd-card" id="vim">
+  <div class="cmd-head h-vim">
+    <div class="cmd-mono">vim / vi</div>
+    <div class="cmd-meta"><div class="cmd-label">Advanced Editor</div><div class="cmd-tagline">Modal text editor — the professional Linux editor for production environments</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">vim</span> is a modal editor: Normal mode (navigate), Insert mode (type), Visual mode (select), Command mode (save/quit). It is available on virtually every Linux system — even minimal containers. Knowing vim is non-negotiable for production work. <span class="ic">vi</span> is the older, minimal version.</p>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Essential Vim Commands</span></div>
+    <div class="cw"><div class="ct"><span class="lang">VIM</span></div>
+    <pre class="p"><code><span class="c"># Starting vim</span>
+<span class="cm">vim</span> filename.txt
+<span class="cm">vim</span> <span class="fl">+50</span> filename.txt      <span class="c"># Open at line 50</span>
+<span class="cm">vim</span> <span class="fl">+/pattern</span> filename.txt  <span class="c"># Open at first match</span>
+
+<span class="c">## MODES:</span>
+<span class="c"># Normal mode (default) — navigate and command</span>
+<span class="c"># i = Insert before cursor</span>
+<span class="c"># A = Append at end of line</span>
+<span class="c"># o = Open new line below</span>
+<span class="c"># Esc = Return to Normal mode</span>
+
+<span class="c">## SAVE &amp; QUIT (Normal mode):</span>
+<span class="c"># :w   = Save</span>
+<span class="c"># :q   = Quit (fails if unsaved)</span>
+<span class="c"># :wq  = Save and quit</span>
+<span class="c"># :q!  = Force quit (discard changes)</span>
+<span class="c"># :x   = Save if changed, then quit</span>
+
+<span class="c">## NAVIGATION:</span>
+<span class="c"># gg = go to top    G = go to bottom</span>
+<span class="c"># :50 = go to line 50</span>
+<span class="c"># / = search forward   ? = search backward</span>
+<span class="c"># n = next match    N = previous match</span>
+
+<span class="c">## EDITING:</span>
+<span class="c"># dd = delete line    yy = copy line    p = paste</span>
+<span class="c"># u = undo    Ctrl+r = redo</span>
+
+<span class="c">## FIND AND REPLACE:</span>
+<span class="c"># :%s/old/new/g   = replace all in file</span>
+<span class="c"># :5,10s/old/new/g = replace in lines 5-10</span></code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>How do you exit vim without saving?</div>
+      <div class="qa-a"><span class="al">A:</span>Press <span class="ic">Esc</span> to ensure Normal mode, then type <span class="ic">:q!</span> and Enter. The <span class="ic">!</span> forces quit discarding all unsaved changes.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>How do you replace all occurrences of "localhost" with "prod-db.internal" in a file?</div>
+      <div class="qa-a"><span class="al">A:</span>In Normal mode: <span class="ic">:%s/localhost/prod-db.internal/g</span>. The <span class="ic">%</span> means entire file, <span class="ic">g</span> means all occurrences per line. Add <span class="ic">c</span> for confirmation: <span class="ic">:%s/old/new/gc</span></div></div>
+    </div>
+
+    <div class="box info"><span class="bi">💡</span><div><strong>Vim survival kit for interviews:</strong> Know how to: open a file, enter insert mode, save, quit, and do a global find-replace. These 5 operations cover 90% of production use.</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ cat ════════════════ -->
+<div class="cmd-card" id="cat">
+  <div class="cmd-head h-cat">
+    <div class="cmd-mono">cat</div>
+    <div class="cmd-meta"><div class="cmd-label">Concatenate</div><div class="cmd-tagline">Display, concatenate, and create files — the pipeline workhorse</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">cat</span> (concatenate) reads files and writes to stdout. Used for viewing small files, combining files, creating files with here-doc, and as the start of pipelines. For large files, use <span class="ic">less</span> instead. Despite being "simple," <span class="ic">cat</span> is involved in countless production scripts.</p>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Key Flags &amp; Usage</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-n</td><td>Number all output lines</td><td>cat -n script.sh</td></tr>
+        <tr><td>-A</td><td>Show all — tabs as ^I, end of line as $</td><td>cat -A config.txt</td></tr>
+        <tr><td>-s</td><td>Squeeze multiple blank lines into one</td><td>cat -s file.txt</td></tr>
+        <tr><td>-b</td><td>Number non-empty lines only</td><td>cat -b code.py</td></tr>
+        <tr><td>-v</td><td>Show non-printing characters</td><td>cat -v file.txt</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># View file</span>
+<span class="cm">cat</span> /etc/hosts
+
+<span class="c"># Concatenate multiple files</span>
+<span class="cm">cat</span> header.txt body.txt footer.txt > complete.html
+
+<span class="c"># Create file with heredoc (common in scripts)</span>
+<span class="cm">cat</span> > /etc/app/config.ini << <span class="st2">EOF</span>
+[database]
+host=prod-db.internal
+port=5432
+<span class="st2">EOF</span>
+
+<span class="c"># Append to existing file</span>
+<span class="cm">cat</span> >> /etc/hosts << <span class="st2">EOF</span>
+10.0.1.50  app-server.internal
+<span class="st2">EOF</span>
+
+<span class="c"># Debug Windows line endings (CR shown as ^M)</span>
+<span class="cm">cat</span> <span class="fl">-A</span> script.sh | <span class="cm">head</span> <span class="fl">-3</span>
+<span class="out"># #!/bin/bash^M$    ← ^M = Windows carriage return!
+# fix with: sed -i 's/\r//' script.sh</span>
+
+<span class="c"># Pipeline: cat + grep + awk</span>
+<span class="cm">cat</span> /var/log/app.log | <span class="cm">grep</span> ERROR | <span class="cm">awk</span> <span class="st2">'{print $1, $2, $NF}'</span></code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What is "Useless Use of Cat" (UUOC) and why does it matter?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">cat file | grep pattern</span> is UUOC — grep can read files directly: <span class="ic">grep pattern file</span>. UUOC creates an extra process unnecessarily. Interviewers use this to test pipeline knowledge. However, <span class="ic">cat</span> is valid when concatenating multiple files or creating a pipeline from stdin.</div></div>
+    </div>
+
+    <div class="box tip"><span class="bi">✅</span><div><span class="ic">cat -A</span> is the fastest way to detect Windows line endings (^M$) that cause "Command not found" or "syntax error" in shell scripts — a very common production bug.</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ tac ════════════════ -->
+<div class="cmd-card" id="tac">
+  <div class="cmd-head h-tac">
+    <div class="cmd-mono">tac</div>
+    <div class="cmd-meta"><div class="cmd-label">Reverse Cat</div><div class="cmd-tagline">Print file in reverse line order — cat spelled backwards</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">tac</span> is <span class="ic">cat</span> written backwards — it prints a file's lines in reverse order (last line first). Useful for reading logs in reverse without loading the entire file into memory (unlike <span class="ic">sort -r</span>), and for reversing CSV data for processing.</p>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Show last entries of a log first</span>
+<span class="cm">tac</span> /var/log/auth.log | <span class="cm">head</span> <span class="fl">-20</span>
+
+<span class="c"># Reverse a CSV and process from last row first</span>
+<span class="cm">tac</span> data.csv | <span class="cm">awk</span> <span class="fl">-F,</span> <span class="st2">'{print $1, $3}'</span>
+
+<span class="c"># Useful in pipelines where you need reverse order without sorting</span>
+<span class="cm">tac</span> /etc/hosts | <span class="cm">grep</span> <span class="fl">-m1</span> <span class="st2">"server"</span>  <span class="c"># Find last server entry</span></code></pre></div>
+
+    <div class="sl"><span class="sn">8</span><span class="st">Advanced Insights</span></div>
+    <div class="box info"><span class="bi">💡</span><div><strong>tac vs tail -r vs sort -r:</strong> <span class="ic">tac</span> reverses lines, <span class="ic">tail -r</span> is macOS only (not in GNU coreutils), <span class="ic">sort -r</span> sorts in reverse alphabetically (different!). For reverse line display on Linux, <span class="ic">tac</span> or <span class="ic">tail -n +1 file | tac</span> is the correct approach.</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ less / more ════════════════ -->
+<div class="cmd-card" id="less">
+  <div class="cmd-head h-less">
+    <div class="cmd-mono">less &amp; more</div>
+    <div class="cmd-meta"><div class="cmd-label">Pagers</div><div class="cmd-tagline">Page through large files — less is more than more</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">less</span> is a terminal pager — displays file content one screen at a time with bidirectional scrolling, search, and no need to load the entire file into memory. <span class="ic">more</span> is the older, limited version that only scrolls forward. <strong>Always use less over more</strong> — it's faster, more capable, and the industry standard.</p>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Key Controls (inside less)</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Key</th><th>Action</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Space / f</td><td>Page forward</td><td>Forward one screen</td></tr>
+        <tr><td>b</td><td>Page backward</td><td>Back one screen</td></tr>
+        <tr><td>g / G</td><td>Go to top / bottom</td><td>G = last line</td></tr>
+        <tr><td>/pattern</td><td>Search forward</td><td>n = next match</td></tr>
+        <tr><td>?pattern</td><td>Search backward</td><td>N = prev match</td></tr>
+        <tr><td>q</td><td>Quit</td><td>Return to shell</td></tr>
+        <tr><td>F</td><td>Follow (like tail -f)</td><td>Live monitoring</td></tr>
+        <tr><td>-N</td><td>Toggle line numbers</td><td>Inside less</td></tr>
+        <tr><td>v</td><td>Open in default editor</td><td>Opens vim/nano</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># View large log file</span>
+<span class="cm">less</span> /var/log/syslog
+
+<span class="c"># View with line numbers</span>
+<span class="cm">less</span> <span class="fl">-N</span> /etc/nginx/nginx.conf
+
+<span class="c"># Follow a log file (like tail -f but interactive)</span>
+<span class="cm">less</span> <span class="fl">+F</span> /var/log/app.log
+
+<span class="c"># Start at specific pattern</span>
+<span class="cm">less</span> <span class="fl">+/ERROR</span> /var/log/app.log
+
+<span class="c"># Pipe output through less</span>
+<span class="cm">git log</span> | <span class="cm">less</span>
+<span class="cm">ps aux</span> | <span class="cm">less</span>
+
+<span class="c"># View multiple files</span>
+<span class="cm">less</span> /var/log/nginx/access.log /var/log/nginx/error.log
+<span class="c"># :n = next file, :p = previous file inside less</span></code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>Why is <span class="ic">less</span> preferred over <span class="ic">more</span> and even <span class="ic">cat</span> for large files?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">less</span> does NOT load the entire file into memory — it reads on demand. For a 10GB log file, <span class="ic">cat</span> would flood the terminal and <span class="ic">more</span> can only scroll forward. <span class="ic">less</span> loads instantly regardless of file size, supports bidirectional scrolling, search, and live follow mode (<span class="ic">+F</span>). The mantra: "less is more" — it does more than more.</div></div>
+    </div>
+
+    <div class="box info" id="more"><span class="bi">ℹ️</span><div><strong>more command:</strong> <span class="ic">more file.txt</span> — Only scrolls forward, no search, limited features. Use only if less is unavailable (very rare). On modern systems, <span class="ic">more</span> is actually a wrapper around <span class="ic">less</span> on some distros.</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ head ════════════════ -->
+<div class="cmd-card" id="head">
+  <div class="cmd-head h-head">
+    <div class="cmd-mono">head</div>
+    <div class="cmd-meta"><div class="cmd-label">First Lines</div><div class="cmd-tagline">Display the beginning of a file — default first 10 lines</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">head</span> prints the first N lines (default 10) of a file. In production, used to preview large CSV/log files without loading them fully, check file headers, and in pipelines to limit output.</p>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># First 10 lines (default)</span>
+<span class="cm">head</span> /var/log/syslog
+
+<span class="c"># First 20 lines</span>
+<span class="cm">head</span> <span class="fl">-20</span> /var/log/syslog
+
+<span class="c"># All but last 5 lines (useful for removing footers)</span>
+<span class="cm">head</span> <span class="fl">-n -5</span> data.csv
+
+<span class="c"># Preview CSV header + first few rows</span>
+<span class="cm">head</span> <span class="fl">-5</span> /data/large_dataset.csv
+
+<span class="c"># Show first 100 bytes</span>
+<span class="cm">head</span> <span class="fl">-c 100</span> binary_file
+
+<span class="c"># Show headers of multiple files</span>
+<span class="cm">head</span> <span class="fl">-1</span> /data/*.csv   <span class="c"># Shows first line of each CSV</span></code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>How do you display all lines EXCEPT the last 3?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">head -n -3 file.txt</span> — negative number with -n means "all lines minus N from the end." Useful for removing footer lines from reports or truncating CSV trailers.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ tail ════════════════ -->
+<div class="cmd-card" id="tail">
+  <div class="cmd-head h-tail">
+    <div class="cmd-mono">tail</div>
+    <div class="cmd-meta"><div class="cmd-label">Last Lines</div><div class="cmd-tagline">Display end of file and follow live updates — the log monitoring tool</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">tail</span> displays the last N lines of a file. The <span class="ic">-f</span> (follow) flag is one of the most-used commands in production — it live-streams new lines written to a log file. Combined with <span class="ic">grep</span>, it becomes a powerful real-time log monitor.</p>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Key Flags</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-n N</td><td>Show last N lines (default 10)</td><td>tail -n 50 app.log</td></tr>
+        <tr><td>-f</td><td>Follow — stream new lines in real time</td><td>tail -f /var/log/nginx/error.log</td></tr>
+        <tr><td>-F</td><td>Follow by filename (survives log rotation)</td><td>tail -F /var/log/app.log</td></tr>
+        <tr><td>-c N</td><td>Show last N bytes</td><td>tail -c 1024 file</td></tr>
+        <tr><td>-n +N</td><td>Output from line N to end (skip first N-1)</td><td>tail -n +2 data.csv</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Live monitoring of application errors</span>
+<span class="cm">tail</span> <span class="fl">-f</span> /var/log/app/app.log | <span class="cm">grep</span> <span class="fl">--line-buffered</span> <span class="st2">"ERROR\|CRITICAL"</span>
+
+<span class="c"># Monitor multiple log files simultaneously</span>
+<span class="cm">tail</span> <span class="fl">-f</span> /var/log/nginx/access.log /var/log/nginx/error.log
+
+<span class="c"># Skip CSV header (first line) — process from line 2</span>
+<span class="cm">tail</span> <span class="fl">-n +2</span> data.csv | <span class="cm">awk</span> <span class="fl">-F,</span> <span class="st2">'{sum += $3} END {print sum}'</span>
+
+<span class="c"># Follow with timestamp</span>
+<span class="cm">tail</span> <span class="fl">-f</span> /var/log/app.log | <span class="cm">while</span> <span class="cm">read</span> line; <span class="k">do</span>
+    <span class="cm">echo</span> <span class="st2">"$(date '+%H:%M:%S') $line"</span>
+<span class="k">done</span>
+
+<span class="c"># Use -F (capital F) for log-rotated files</span>
+<span class="cm">tail</span> <span class="fl">-F</span> /var/log/nginx/access.log  <span class="c"># Reconnects after rotation</span></code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the difference between <span class="ic">tail -f</span> and <span class="ic">tail -F</span>?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">-f</span> follows by file descriptor — if the file is rotated (renamed/replaced), tail stops showing new content. <span class="ic">-F</span> follows by filename — it retries opening the file after rotation, making it perfect for production log files that rotate daily. Always prefer <span class="ic">-F</span> in production.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>How do you skip the header row of a CSV file in a pipeline?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">tail -n +2 data.csv | awk...</span> — <span class="ic">+2</span> means "start from line 2" (skip line 1). This is a very common pattern in data engineering pipelines when processing CSV files with awk/python.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ diff ════════════════ -->
+<div class="cmd-card" id="diff">
+  <div class="cmd-head h-diff">
+    <div class="cmd-mono">diff</div>
+    <div class="cmd-meta"><div class="cmd-label">Compare Files</div><div class="cmd-tagline">Compare files line by line — the configuration auditing tool</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">diff</span> compares two files line by line and shows the differences. Essential for: auditing config changes, code review in terminals, verifying deployments, and comparing backups. In DevOps, <span class="ic">diff</span> combined with <span class="ic">patch</span> is used for applying changes across servers.</p>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Key Flags</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-u</td><td>Unified format (most readable, used by git)</td><td>diff -u old.conf new.conf</td></tr>
+        <tr><td>-i</td><td>Ignore case differences</td><td>diff -i file1 file2</td></tr>
+        <tr><td>-w</td><td>Ignore all whitespace</td><td>diff -w script1.sh script2.sh</td></tr>
+        <tr><td>-r</td><td>Recursive — compare directories</td><td>diff -r /dir1/ /dir2/</td></tr>
+        <tr><td>-q</td><td>Quiet — only report if files differ</td><td>diff -q file1 file2</td></tr>
+        <tr><td>--color</td><td>Colorized output</td><td>diff --color -u f1 f2</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Compare config before and after change</span>
+<span class="cm">diff</span> <span class="fl">-u</span> /etc/nginx/nginx.conf.bak /etc/nginx/nginx.conf
+<span class="out"># --- nginx.conf.bak    2024-01-15 10:00:00
+# +++ nginx.conf        2024-01-15 11:00:00
+# @@ -45,7 +45,7 @@
+# -    worker_processes 2;
+# +    worker_processes 4;</span>
+
+<span class="c"># Compare two directories (useful for deployment verification)</span>
+<span class="cm">diff</span> <span class="fl">-rq</span> /opt/app/v1/ /opt/app/v2/
+<span class="out"># Files /opt/app/v1/config.py and /opt/app/v2/config.py differ</span>
+
+<span class="c"># Check if two files are identical (exit code 0 = same)</span>
+<span class="cm">diff</span> <span class="fl">-q</span> file1.txt file2.txt && <span class="cm">echo</span> <span class="st2">"Identical"</span> || <span class="cm">echo</span> <span class="st2">"Different"</span>
+
+<span class="c"># Ignore whitespace differences (comparing scripts)</span>
+<span class="cm">diff</span> <span class="fl">-uw</span> script_v1.sh script_v2.sh</code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>How do you compare two directories to find files that differ?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">diff -rq /dir1/ /dir2/</span> — recursive with quiet flag shows only which files differ, not the actual differences. Add <span class="ic">-u</span> to see the actual line differences. For finding files only in one directory: <span class="ic">diff -rq dir1 dir2 | grep "Only in"</span></div></div>
+    </div>
+
+    <div class="box info"><span class="bi">💡</span><div><strong>Alternative: vimdiff</strong> — <span class="ic">vimdiff file1 file2</span> opens both files side by side in vim with color highlighting. Much more readable for interactive comparison.</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ grep ════════════════ -->
+<div class="cmd-card" id="grep">
+  <div class="cmd-head h-grep">
+    <div class="cmd-mono">grep</div>
+    <div class="cmd-meta"><div class="cmd-label">Global Regex Print</div><div class="cmd-tagline">Search for patterns in files — the most powerful text filtering command</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">grep</span> (Global Regular Expression Print) searches for patterns in files and prints matching lines. It is the cornerstone of log analysis, error detection, and data filtering. Mastering grep — especially its regex and output-formatting flags — is one of the most valuable skills for any engineer.</p>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Commonly Used Flags</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-i</td><td>Case-insensitive matching</td><td>grep -i "error" app.log</td></tr>
+        <tr><td>-r / -R</td><td>Recursive search in directories</td><td>grep -r "DB_HOST" /etc/</td></tr>
+        <tr><td>-l</td><td>Print only filenames with matches</td><td>grep -rl "password" /opt/</td></tr>
+        <tr><td>-n</td><td>Show line numbers</td><td>grep -n "ERROR" app.log</td></tr>
+        <tr><td>-c</td><td>Count matching lines</td><td>grep -c "ERROR" app.log</td></tr>
+        <tr><td>-v</td><td>Invert — show non-matching lines</td><td>grep -v "^#" config.conf</td></tr>
+        <tr><td>-A N</td><td>Show N lines after match (context)</td><td>grep -A 5 "Exception" log</td></tr>
+        <tr><td>-B N</td><td>Show N lines before match</td><td>grep -B 3 "ERROR" log</td></tr>
+        <tr><td>-C N</td><td>Show N lines before AND after</td><td>grep -C 2 "FATAL" log</td></tr>
+        <tr><td>-E</td><td>Extended regex (egrep)</td><td>grep -E "error|warn" log</td></tr>
+        <tr><td>-P</td><td>Perl-compatible regex</td><td>grep -P "\d{3}-\d{4}" file</td></tr>
+        <tr><td>-o</td><td>Print only matched part</td><td>grep -oP "\d+\.\d+\.\d+\.\d+" log</td></tr>
+        <tr><td>-w</td><td>Match whole word only</td><td>grep -w "error" log</td></tr>
+        <tr><td>-q</td><td>Quiet — exit code only (for scripts)</td><td>grep -q "error" log && alert</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Real-time error monitoring</span>
+<span class="cm">tail</span> <span class="fl">-f</span> /var/log/app.log | <span class="cm">grep</span> <span class="fl">--line-buffered -E</span> <span class="st2">"ERROR|CRITICAL|FATAL"</span>
+
+<span class="c"># Count errors per hour (log analysis)</span>
+<span class="cm">grep</span> <span class="st2">"ERROR"</span> app.log | <span class="cm">awk</span> <span class="st2">'{print substr($1,1,13)}'</span> | <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span>
+
+<span class="c"># Find all .py files containing "api_key" (security audit)</span>
+<span class="cm">grep</span> <span class="fl">-rn</span> <span class="st2">"api_key\|password\|secret"</span> /opt/app/ <span class="fl">--include="*.py"</span>
+
+<span class="c"># Extract all IP addresses from a log</span>
+<span class="cm">grep</span> <span class="fl">-oP</span> <span class="st2">'\b\d{1,3}(\.\d{1,3}){3}\b'</span> access.log | <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span> | <span class="cm">sort</span> <span class="fl">-rn</span>
+
+<span class="c"># Remove comment lines and empty lines from config</span>
+<span class="cm">grep</span> <span class="fl">-Ev</span> <span class="st2">"^(#|$)"</span> /etc/app/config.conf
+
+<span class="c"># Find the "ps aux" output without showing grep itself</span>
+<span class="cm">ps aux</span> | <span class="cm">grep</span> <span class="st2">"[n]ginx"</span>   <span class="c"># Square bracket trick avoids self-match</span>
+
+<span class="c"># Script: check if service is running</span>
+<span class="cm">ps aux</span> | <span class="cm">grep</span> <span class="fl">-q</span> <span class="st2">"nginx"</span> && <span class="cm">echo</span> <span class="st2">"Running"</span> || <span class="cm">echo</span> <span class="st2">"Not running"</span></code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the difference between <span class="ic">grep</span>, <span class="ic">egrep</span>, and <span class="ic">fgrep</span>?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">grep</span> uses Basic Regular Expressions (BRE) — special chars need escaping. <span class="ic">egrep</span> (<span class="ic">grep -E</span>) uses Extended RE — no escaping needed for <span class="ic">+?|(){}</span>. <span class="ic">fgrep</span> (<span class="ic">grep -F</span>) treats pattern as literal string, no regex — fastest for fixed strings. Always prefer <span class="ic">grep -E</span> and <span class="ic">grep -F</span> over aliases.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>How do you search for a pattern in all Python files across a project recursively?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">grep -rn "pattern" /project/ --include="*.py"</span> — recursive, show line numbers, only in .py files. Add <span class="ic">-l</span> to just get filenames.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q3</span>How do you extract only the matching part (not the whole line)?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">grep -oP "pattern" file</span> — <span class="ic">-o</span> prints only matched text, <span class="ic">-P</span> enables Perl regex for complex patterns like <span class="ic">grep -oP "\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" access.log</span> to extract IP addresses.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ find ════════════════ -->
+<div class="cmd-card" id="find">
+  <div class="cmd-head h-find">
+    <div class="cmd-mono">find</div>
+    <div class="cmd-meta"><div class="cmd-label">Search</div><div class="cmd-tagline">Search for files by any attribute — the Swiss Army knife of file location</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">find</span> searches a directory hierarchy for files matching criteria: name, type, size, timestamps, permissions, owner. Unlike <span class="ic">locate</span> (uses a database), <span class="ic">find</span> searches in real time. Combined with <span class="ic">-exec</span> or <span class="ic">xargs</span>, it can operate on found files directly — making it the most powerful file management tool available.</p>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Key Flags</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-name</td><td>Match by filename (case-sensitive)</td><td>find . -name "*.py"</td></tr>
+        <tr><td>-iname</td><td>Match by filename (case-insensitive)</td><td>find . -iname "README*"</td></tr>
+        <tr><td>-type f/d/l</td><td>File, directory, or symlink</td><td>find /var -type d</td></tr>
+        <tr><td>-size +/-N</td><td>Larger/smaller than N (k/M/G)</td><td>find / -size +1G</td></tr>
+        <tr><td>-mtime +/-N</td><td>Modified N+ or N- days ago</td><td>find . -mtime +30</td></tr>
+        <tr><td>-mmin +/-N</td><td>Modified N+ or N- minutes ago</td><td>find /tmp -mmin -60</td></tr>
+        <tr><td>-perm MODE</td><td>Match permissions</td><td>find / -perm -4000</td></tr>
+        <tr><td>-user NAME</td><td>Owned by user</td><td>find /home -user alice</td></tr>
+        <tr><td>-exec CMD {} \;</td><td>Execute command on each result</td><td>find . -name "*.log" -exec gzip {} \;</td></tr>
+        <tr><td>-exec CMD {} +</td><td>Execute with all results batched</td><td>find . -name "*.py" -exec wc -l {} +</td></tr>
+        <tr><td>-delete</td><td>Delete matching files</td><td>find /tmp -name "*.tmp" -delete</td></tr>
+        <tr><td>-maxdepth N</td><td>Limit search depth</td><td>find . -maxdepth 2 -name "*.conf"</td></tr>
+        <tr><td>-print0</td><td>Null-separated output (safe for spaces)</td><td>find . -name "*.txt" -print0</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Find and delete temp files older than 7 days</span>
+<span class="cm">find</span> /tmp <span class="fl">-type f -mtime +7 -delete</span>
+
+<span class="c"># Find SUID binaries (security audit)</span>
+<span class="cm">sudo find</span> / <span class="fl">-perm -4000 -type f</span> 2>/dev/null
+
+<span class="c"># Find files larger than 500MB</span>
+<span class="cm">find</span> / <span class="fl">-size +500M -type f</span> 2>/dev/null | <span class="cm">xargs</span> <span class="cm">ls</span> <span class="fl">-lh</span>
+
+<span class="c"># Find and compress log files older than 30 days</span>
+<span class="cm">find</span> /var/log <span class="fl">-name "*.log" -mtime +30 -exec gzip</span> {} \;
+
+<span class="c"># Find Python files modified in last 24h and count lines</span>
+<span class="cm">find</span> . <span class="fl">-name "*.py" -mtime -1 -exec wc -l</span> {} +
+
+<span class="c"># Fix permissions: dirs=755, files=644</span>
+<span class="cm">find</span> /var/www/html <span class="fl">-type d -exec chmod 755</span> {} \;
+<span class="cm">find</span> /var/www/html <span class="fl">-type f -exec chmod 644</span> {} \;
+
+<span class="c"># Safe delete with spaces in filenames (null-separated)</span>
+<span class="cm">find</span> . <span class="fl">-name "*.tmp" -print0</span> | <span class="cm">xargs</span> <span class="fl">-0 rm</span></code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What is the difference between <span class="ic">-exec CMD {} \;</span> and <span class="ic">-exec CMD {} +</span>?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">-exec CMD {} \;</span> runs CMD once per file. <span class="ic">-exec CMD {} +</span> passes all files as arguments at once (like xargs). The <span class="ic">+</span> variant is much more efficient — instead of running <span class="ic">rm file1; rm file2; rm file3</span>, it runs <span class="ic">rm file1 file2 file3</span>. Use <span class="ic">+</span> whenever the command accepts multiple arguments.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>How do you find files modified in the last 2 hours?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">find /dir -mmin -120 -type f</span> — <span class="ic">mmin</span> uses minutes while <span class="ic">mtime</span> uses days. <span class="ic">-120</span> means "modified less than 120 minutes ago."</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q3</span>How do you handle filenames with spaces in find + xargs pipeline?</div>
+      <div class="qa-a"><span class="al">A:</span>Use <span class="ic">find -print0 | xargs -0</span>. The null byte separator handles spaces, newlines, and special characters safely. Alternative: use <span class="ic">find -exec</span> directly which doesn't have this issue.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ file ════════════════ -->
+<div class="cmd-card" id="file">
+  <div class="cmd-head h-file">
+    <div class="cmd-mono">file</div>
+    <div class="cmd-meta"><div class="cmd-label">File Type</div><div class="cmd-tagline">Determine file type by content — not by extension</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">file</span> examines the file's content (magic bytes, not extension) to determine its actual type. A file named <span class="ic">.jpg</span> might actually be a ZIP. Critical for security analysis, debugging corrupted uploads, and handling files in automation pipelines where type cannot be assumed.</p>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="cm">file</span> /bin/bash
+<span class="out"># /bin/bash: ELF 64-bit LSB pie executable, x86-64</span>
+
+<span class="cm">file</span> /etc/hosts
+<span class="out"># /etc/hosts: ASCII text</span>
+
+<span class="cm">file</span> archive.tar.gz
+<span class="out"># archive.tar.gz: gzip compressed data, from Unix</span>
+
+<span class="c"># Check files uploaded via web form (security)</span>
+<span class="cm">file</span> uploaded_image.jpg
+<span class="out"># uploaded_image.jpg: PHP script, ASCII text  ← DANGER! Disguised as image</span>
+
+<span class="c"># Check all files in a directory</span>
+<span class="cm">file</span> /var/uploads/*
+
+<span class="c"># MIME type output</span>
+<span class="cm">file</span> <span class="fl">--mime-type</span> report.pdf
+<span class="out"># report.pdf: application/pdf</span></code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>Why is the <span class="ic">file</span> command important for security?</div>
+      <div class="qa-a"><span class="al">A:</span>Attackers disguise malicious files with innocent extensions — a PHP webshell named <span class="ic">image.jpg</span>. <span class="ic">file</span> reads the actual content (magic bytes/signatures) — it can't be fooled by the extension. This is essential for validating uploaded files in web applications and during security incident analysis.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ chmod & chown ════════════════ -->
+<div class="cmd-card" id="chmod">
+  <div class="cmd-head h-chmod">
+    <div class="cmd-mono">chmod &amp; chown</div>
+    <div class="cmd-meta"><div class="cmd-label">Permissions</div><div class="cmd-tagline">Change file permissions and ownership — security fundamentals</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">chmod</span> changes file permission bits. <span class="ic">chown</span> changes the owner and/or group. Together they control access to every file on the system. Understanding the octal notation, symbolic notation, and special bits (SUID/SGID/sticky) is mandatory for every Linux role.</p>
+
+    <div class="sub">Permission Notation</div>
+    <div class="cw"><div class="ct"><span class="lang">TEXT — Permission Model</span></div>
+    <pre class="p"><code><span class="c"># Format: rwxrwxrwx  (owner | group | others)</span>
+<span class="c"># r=read(4)  w=write(2)  x=execute(1)</span>
+<span class="c">#</span>
+<span class="c"># Common octal values:</span>
+<span class="c"># 777 = rwxrwxrwx (everyone full — NEVER in production)</span>
+<span class="c"># 755 = rwxr-xr-x (standard for directories/scripts)</span>
+<span class="c"># 644 = rw-r--r-- (standard for files)</span>
+<span class="c"># 600 = rw------- (private: SSH keys, .env files)</span>
+<span class="c"># 700 = rwx------ (private directory)</span>
+<span class="c"># 400 = r-------- (read-only: config/certs)</span></code></pre></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Make script executable</span>
+<span class="cm">chmod</span> +x deploy.sh
+<span class="cm">chmod</span> <span class="fl">755</span> deploy.sh
+
+<span class="c"># Secure SSH private key</span>
+<span class="cm">chmod</span> <span class="fl">600</span> ~/.ssh/id_rsa
+<span class="cm">chmod</span> <span class="fl">700</span> ~/.ssh/
+
+<span class="c"># Set correct web permissions recursively</span>
+<span class="cm">find</span> /var/www/html <span class="fl">-type d -exec chmod 755</span> {} \;
+<span class="cm">find</span> /var/www/html <span class="fl">-type f -exec chmod 644</span> {} \;
+
+<span class="c"># Symbolic notation examples</span>
+<span class="cm">chmod</span> u+x script.sh        <span class="c"># add execute for owner</span>
+<span class="cm">chmod</span> o-w shared.txt       <span class="c"># remove write for others</span>
+<span class="cm">chmod</span> a+r public.txt       <span class="c"># read for all (a=all)</span>
+<span class="cm">chmod</span> g=rx dir/            <span class="c"># set group to r-x exactly</span>
+
+<span class="c"># CHOWN: change owner</span>
+<span class="cm">sudo chown</span> www-data:www-data /var/www/html/  <span class="c"># owner:group</span>
+<span class="cm">sudo chown</span> <span class="fl">-R</span> alice /home/alice/             <span class="c"># recursive</span>
+<span class="cm">sudo chown</span> :developers /shared/project/       <span class="c"># group only</span>
+
+<span class="c"># CHGRP: change group</span>
+<span class="cm">sudo chgrp</span> docker /var/run/docker.sock</code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What does <span class="ic">chmod 755</span> mean?</div>
+      <div class="qa-a"><span class="al">A:</span>7=rwx (owner can read, write, execute), 5=r-x (group can read+execute), 5=r-x (others can read+execute). This is the standard permission for executable scripts and directories — owner has full control, everyone else can read and execute but not modify.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>Why should SSH private keys have permission 600?</div>
+      <div class="qa-a"><span class="al">A:</span>SSH refuses to use a private key that is accessible by anyone other than the owner. 600 = owner read+write only, no group/other access. If you try to use an SSH key with 644 or 777 permissions, SSH will reject it with "WARNING: UNPROTECTED PRIVATE KEY FILE!"</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ ln ════════════════ -->
+<div class="cmd-card" id="ln">
+  <div class="cmd-head h-ln">
+    <div class="cmd-mono">ln</div>
+    <div class="cmd-meta"><div class="cmd-label">Link</div><div class="cmd-tagline">Create hard and symbolic links — shared files without copying</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">ln</span> creates links between files. <strong>Hard links</strong> share the same inode (same physical data, different names). <strong>Symbolic (soft) links</strong> are pointers to another file path. Symlinks are used for: version management, configuration sharing, Python/Node version management (pyenv, nvm), and Nginx site-enable patterns.</p>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Symbolic link (most common)</span>
+<span class="cm">ln</span> <span class="fl">-s</span> /opt/app/v2.1/ /opt/app/current    <span class="c"># Point 'current' to version</span>
+<span class="cm">ln</span> <span class="fl">-s</span> /etc/nginx/sites-available/app.conf /etc/nginx/sites-enabled/
+
+<span class="c"># Force overwrite existing symlink</span>
+<span class="cm">ln</span> <span class="fl">-sf</span> /opt/app/v2.2/ /opt/app/current   <span class="c"># Atomic deployment!</span>
+
+<span class="c"># Hard link</span>
+<span class="cm">ln</span> /path/to/original.txt /path/to/hardlink.txt
+
+<span class="c"># Verify links</span>
+<span class="cm">ls</span> <span class="fl">-la</span> /opt/app/current    <span class="c"># Shows: current -> /opt/app/v2.2/</span>
+<span class="cm">readlink</span> <span class="fl">-f</span> /opt/app/current  <span class="c"># Resolve symlink to real path</span>
+
+<span class="c"># Find all symlinks in /etc</span>
+<span class="cm">find</span> /etc <span class="fl">-type l</span>
+
+<span class="c"># Find broken symlinks</span>
+<span class="cm">find</span> /opt <span class="fl">-type l !</span> <span class="fl">-e</span></code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>Hard link vs Symbolic link — key differences?</div>
+      <div class="qa-a"><span class="al">A:</span>Hard links: same inode, same filesystem only, deleting original leaves hard link intact, cannot link to directories. Soft links: different inode, can cross filesystems/partitions, breaks if original deleted (dangling), can link to directories. Use soft links for configuration management and version aliasing; hard links for backup deduplication.</div></div>
+    </div>
+
+    <div class="box teal"><span class="bi">💡</span><div><strong>Blue-green deployment pattern:</strong> <span class="ic">ln -sf /opt/app/v2.0 /opt/app/current</span> is an atomic switch — nginx/app sees the new version instantly when it reads the symlink. This is how zero-downtime deployments work without load balancers.</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ stat ════════════════ -->
+<div class="cmd-card" id="stat">
+  <div class="cmd-head h-stat">
+    <div class="cmd-mono">stat</div>
+    <div class="cmd-meta"><div class="cmd-label">Status</div><div class="cmd-tagline">Display detailed file metadata — inode, timestamps, permissions, and more</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">stat</span> displays comprehensive file metadata: exact permissions (octal and symbolic), size, inode number, all three timestamps (access, modify, change), hard link count, owner, and device. More detailed than <span class="ic">ls -l</span>.</p>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="cm">stat</span> /etc/nginx/nginx.conf
+<span class="out"># File: /etc/nginx/nginx.conf
+# Size: 2345      Blocks: 8     IO Block: 4096  regular file
+# Device: 802h    Inode: 131073 Links: 1
+# Access: (0644/-rw-r--r--)  Uid: (0/root)  Gid: (0/root)
+# Access: 2024-01-15 10:30:00 ← atime (last read)
+# Modify: 2024-01-15 09:00:00 ← mtime (content changed)
+# Change: 2024-01-15 09:00:00 ← ctime (inode changed)</span>
+
+<span class="c"># Get specific field (for scripting)</span>
+<span class="cm">stat</span> <span class="fl">-c "%y"</span> file.txt    <span class="c"># Last modified time</span>
+<span class="cm">stat</span> <span class="fl">-c "%s"</span> file.txt    <span class="c"># Size in bytes</span>
+<span class="cm">stat</span> <span class="fl">-c "%a"</span> file.txt    <span class="c"># Permissions in octal (644)</span>
+<span class="cm">stat</span> <span class="fl">-c "%U"</span> file.txt    <span class="c"># Owner username</span>
+
+<span class="c"># Compare timestamps between two files</span>
+<span class="cm">stat</span> <span class="fl">-c "%y %n"</span> /etc/*.conf | <span class="cm">sort</span></code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What are the three timestamps in <span class="ic">stat</span> output?</div>
+      <div class="qa-a"><span class="al">A:</span><strong>atime</strong> (access time) = last time file was read. <strong>mtime</strong> (modification time) = last time file content was changed. <strong>ctime</strong> (change time) = last time inode was changed (permissions, ownership, or content). Note: there is no "creation time" in traditional Linux ext4/xfs filesystems.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ sed ════════════════ -->
+<div class="cmd-card" id="sed">
+  <div class="cmd-head h-sed">
+    <div class="cmd-mono">sed</div>
+    <div class="cmd-meta"><div class="cmd-label">Stream Editor</div><div class="cmd-tagline">Stream editor for filtering and transforming text — in-place edits and substitutions</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">sed</span> (Stream EDitor) processes text line by line applying transformations. It's the standard tool for automated text editing in shell scripts, config file modification, log processing, and data transformation pipelines. The <span class="ic">s/old/new/</span> substitution is used in virtually every DevOps script.</p>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Key Flags &amp; Commands</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Usage</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-i</td><td>Edit in-place (modifies file)</td><td>sed -i 's/old/new/' file</td></tr>
+        <tr><td>-i.bak</td><td>In-place with backup</td><td>sed -i.bak 's/old/new/' file</td></tr>
+        <tr><td>-n</td><td>Suppress auto-print</td><td>sed -n '5,10p' file</td></tr>
+        <tr><td>-e</td><td>Multiple expressions</td><td>sed -e 's/a/A/' -e 's/b/B/'</td></tr>
+        <tr><td>s/pat/rep/g</td><td>Global substitution</td><td>sed 's/http/https/g' file</td></tr>
+        <tr><td>d</td><td>Delete matching lines</td><td>sed '/^#/d' config.conf</td></tr>
+        <tr><td>p</td><td>Print matching lines</td><td>sed -n '/error/p' app.log</td></tr>
+        <tr><td>N,Mp</td><td>Print lines N through M</td><td>sed -n '10,20p' file</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Replace DB host in config (with backup!)</span>
+<span class="cm">sed</span> <span class="fl">-i.bak</span> <span class="st2">'s/localhost/prod-db.internal/g'</span> /etc/app/config.ini
+
+<span class="c"># Remove comment lines and blank lines from config</span>
+<span class="cm">sed</span> <span class="fl">-E</span> <span class="st2">'/^[[:space:]]*(#|$)/d'</span> config.conf
+
+<span class="c"># Update version number in deployment script</span>
+<span class="cm">sed</span> <span class="fl">-i</span> <span class="st2">"s/VERSION=.*/VERSION=2.1.0/"</span> deploy.sh
+
+<span class="c"># Extract lines 100-200 from large log file</span>
+<span class="cm">sed</span> <span class="fl">-n</span> <span class="st2">'100,200p'</span> /var/log/app.log
+
+<span class="c"># Remove Windows carriage returns (^M) from script</span>
+<span class="cm">sed</span> <span class="fl">-i</span> <span class="st2">'s/\r//'</span> script.sh
+
+<span class="c"># Template substitution in CI/CD</span>
+<span class="cm">sed</span> <span class="st2">"s/\${ENV}/${ENVIRONMENT}/g"</span> app.template.conf > app.conf
+
+<span class="c"># Add a line after matching pattern</span>
+<span class="cm">sed</span> <span class="fl">-i</span> <span class="st2">'/\[database\]/a host=prod-db.internal'</span> config.ini
+
+<span class="c"># Delete lines 5-10</span>
+<span class="cm">sed</span> <span class="st2">'5,10d'</span> file.txt</code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>How do you do an in-place substitution safely?</div>
+      <div class="qa-a"><span class="al">A:</span>Always use <span class="ic">sed -i.bak 's/old/new/' file</span> — the <span class="ic">.bak</span> extension creates a backup automatically. Test without <span class="ic">-i</span> first: <span class="ic">sed 's/old/new/' file | head -20</span> to preview before modifying.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>How do you substitute only on lines matching a pattern?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">sed '/pattern/s/old/new/'</span> — only applies substitution on lines matching "pattern." Example: <span class="ic">sed '/database/s/host=.*/host=new-db/' config.ini</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ awk ════════════════ -->
+<div class="cmd-card" id="awk">
+  <div class="cmd-head h-awk">
+    <div class="cmd-mono">awk</div>
+    <div class="cmd-meta"><div class="cmd-label">Pattern Processing</div><div class="cmd-tagline">Powerful text processing language — perfect for structured data</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">awk</span> is a full programming language for text processing, especially columnar data. Fields are split by separator (default: whitespace). <span class="ic">$1</span>, <span class="ic">$2</span>... access columns, <span class="ic">$0</span> is the whole line, <span class="ic">$NF</span> is the last column. Used for log parsing, report generation, and data extraction that would require a Python script in awk just 1-2 commands.</p>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Print specific columns from /etc/passwd</span>
+<span class="cm">awk</span> <span class="fl">-F:</span> <span class="st2">'{print $1, $6}'</span> /etc/passwd   <span class="c"># username, home dir</span>
+
+<span class="c"># Sum a column (e.g., total disk usage)</span>
+<span class="cm">df</span> <span class="fl">-k</span> | <span class="cm">awk</span> <span class="st2">'NR>1 {sum += $3} END {print "Total used:", sum, "KB"}'</span>
+
+<span class="c"># Filter rows by condition</span>
+<span class="cm">awk</span> <span class="st2">'{if ($3 > 90) print $0}'</span> cpu_usage.txt
+
+<span class="c"># Count occurrences (like a report)</span>
+<span class="cm">awk</span> <span class="st2">'{count[$9]++} END {for(code in count) print code, count[code]}'</span> access.log
+
+<span class="c"># Extract IPs with failed SSH attempts</span>
+<span class="cm">grep</span> <span class="st2">"Failed password"</span> /var/log/auth.log | <span class="cm">awk</span> <span class="st2">'{print $(NF-3)}'</span> | \
+    <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span> | <span class="cm">sort</span> <span class="fl">-rn</span> | <span class="cm">head</span> <span class="fl">-10</span>
+
+<span class="c"># Process CSV data</span>
+<span class="cm">awk</span> <span class="fl">-F,</span> <span class="st2">'NR>1 {sum += $3; count++} END {print "Avg:", sum/count}'</span> sales.csv
+
+<span class="c"># Print lines between two patterns</span>
+<span class="cm">awk</span> <span class="st2">'/START/,/END/ {print}'</span> logfile.txt
+
+<span class="c"># Format output as table</span>
+<span class="cm">ps aux</span> | <span class="cm">awk</span> <span class="st2">'NR>1 {printf "%-15s %5s %5s\n", $11, $2, $3}'</span></code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>What does <span class="ic">NR</span> and <span class="ic">NF</span> mean in awk?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">NR</span> = Number of Records (current line number). <span class="ic">NF</span> = Number of Fields (column count in current line). So <span class="ic">$NF</span> = last field. <span class="ic">NR>1</span> skips the header line. <span class="ic">$(NF-1)</span> = second to last field.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>How would you use awk to find the top 10 IPs in an Nginx access log?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -10</span> — extract first field (IP), sort, count occurrences, re-sort numerically descending, take top 10.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ cut ════════════════ -->
+<div class="cmd-card" id="cut">
+  <div class="cmd-head h-cut">
+    <div class="cmd-mono">cut</div>
+    <div class="cmd-meta"><div class="cmd-label">Cut Fields</div><div class="cmd-tagline">Extract sections from each line — delimiter-based column extraction</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">cut</span> extracts specific columns/characters from each line. Simpler than awk for straightforward column extraction. The most common use: extracting fields from CSV/TSV files, /etc/passwd, and log files by delimiter.</p>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Extract usernames from /etc/passwd</span>
+<span class="cm">cut</span> <span class="fl">-d:</span> <span class="fl">-f1</span> /etc/passwd
+
+<span class="c"># Extract first and third columns from CSV</span>
+<span class="cm">cut</span> <span class="fl">-d,</span> <span class="fl">-f1,3</span> data.csv
+
+<span class="c"># Extract characters 1-10 from each line</span>
+<span class="cm">cut</span> <span class="fl">-c1-10</span> /var/log/syslog    <span class="c"># Useful for timestamp extraction</span>
+
+<span class="c"># Extract from field 3 to end</span>
+<span class="cm">cut</span> <span class="fl">-d:</span> <span class="fl">-f3-</span> /etc/passwd
+
+<span class="c"># Get just the domain from email addresses</span>
+<span class="cm">echo</span> <span class="st2">"user@example.com"</span> | <span class="cm">cut</span> <span class="fl">-d@</span> <span class="fl">-f2</span>
+<span class="out"># example.com</span></code></pre></div>
+
+    <div class="box info"><span class="bi">💡</span><div><strong>cut vs awk:</strong> Use <span class="ic">cut</span> for simple fixed-delimiter extraction (faster, simpler). Use <span class="ic">awk</span> when you need: multiple complex conditions, arithmetic, custom output formatting, or handling multiple delimiters.</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ sort ════════════════ -->
+<div class="cmd-card" id="sort">
+  <div class="cmd-head h-sort">
+    <div class="cmd-mono">sort</div>
+    <div class="cmd-meta"><div class="cmd-label">Sort</div><div class="cmd-tagline">Sort text lines — alphabetically, numerically, by field</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">sort</span> sorts lines of text. Combined with <span class="ic">uniq</span>, it powers frequency analysis, deduplication, and ranking pipelines. Essential for log analysis, data processing, and generating sorted reports.</p>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Key Flags</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-n</td><td>Numeric sort (not lexicographic)</td><td>sort -n numbers.txt</td></tr>
+        <tr><td>-r</td><td>Reverse order</td><td>sort -rn sizes.txt</td></tr>
+        <tr><td>-k N</td><td>Sort by Nth field</td><td>sort -k3 -n data.txt</td></tr>
+        <tr><td>-t DELIM</td><td>Field delimiter</td><td>sort -t, -k2 data.csv</td></tr>
+        <tr><td>-u</td><td>Unique (remove duplicates)</td><td>sort -u list.txt</td></tr>
+        <tr><td>-h</td><td>Human-readable sizes (1K, 5M, 2G)</td><td>du -sh * | sort -h</td></tr>
+        <tr><td>-R</td><td>Random shuffle</td><td>sort -R list.txt</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Find largest directories (sort by human-readable size)</span>
+<span class="cm">du</span> <span class="fl">-sh</span> /var/log/* | <span class="cm">sort</span> <span class="fl">-rh</span> | <span class="cm">head</span> <span class="fl">-10</span>
+
+<span class="c"># Top IPs in access log</span>
+<span class="cm">awk</span> <span class="st2">'{print $1}'</span> access.log | <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span> | <span class="cm">sort</span> <span class="fl">-rn</span> | <span class="cm">head</span> <span class="fl">-10</span>
+
+<span class="c"># Sort CSV by 3rd column (numeric)</span>
+<span class="cm">sort</span> <span class="fl">-t,</span> <span class="fl">-k3</span> <span class="fl">-rn</span> sales.csv
+
+<span class="c"># Sort IP addresses correctly (by octets)</span>
+<span class="cm">sort</span> <span class="fl">-t. -k1,1n -k2,2n -k3,3n -k4,4n</span> ips.txt</code></pre></div>
+  </div>
+</div>
+
+<!-- ════════════════ uniq ════════════════ -->
+<div class="cmd-card" id="uniq">
+  <div class="cmd-head h-uniq">
+    <div class="cmd-mono">uniq</div>
+    <div class="cmd-meta"><div class="cmd-label">Unique</div><div class="cmd-tagline">Report or omit repeated lines — must be used after sort</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">1</span><span class="st">Command Overview</span></div>
+    <p class="desc"><span class="ic">uniq</span> removes or counts repeated <em>adjacent</em> lines. <strong>Critical: input must be sorted first</strong> since uniq only compares consecutive lines. The <span class="ic">-c</span> flag (count) combined with <span class="ic">sort | uniq -c | sort -rn</span> is the standard frequency analysis pipeline in log analysis.</p>
+
+    <div class="sl"><span class="sn">3</span><span class="st">Key Flags</span></div>
+    <div class="tw"><table class="ft">
+      <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>-c</td><td>Count occurrences (prefix count)</td><td>sort file | uniq -c</td></tr>
+        <tr><td>-d</td><td>Only show duplicate lines</td><td>sort file | uniq -d</td></tr>
+        <tr><td>-u</td><td>Only show unique lines (appear once)</td><td>sort file | uniq -u</td></tr>
+        <tr><td>-i</td><td>Case-insensitive comparison</td><td>sort file | uniq -i</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sl"><span class="sn">4</span><span class="st">Practical Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+    <pre class="p"><code><span class="c"># Most common error types in log (frequency analysis)</span>
+<span class="cm">grep</span> <span class="st2">"ERROR"</span> app.log | <span class="cm">awk</span> <span class="st2">'{print $5}'</span> | <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span> | <span class="cm">sort</span> <span class="fl">-rn</span>
+
+<span class="c"># Find duplicate lines in a config</span>
+<span class="cm">sort</span> /etc/hosts | <span class="cm">uniq</span> <span class="fl">-d</span>
+
+<span class="c"># Count unique IP addresses in access log</span>
+<span class="cm">awk</span> <span class="st2">'{print $1}'</span> access.log | <span class="cm">sort</span> | <span class="cm">uniq</span> | <span class="cm">wc</span> <span class="fl">-l</span>
+
+<span class="c"># HTTP status code distribution</span>
+<span class="cm">awk</span> <span class="st2">'{print $9}'</span> access.log | <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span> | <span class="cm">sort</span> <span class="fl">-rn</span>
+<span class="out"># 45231 200
+# 1234  404
+# 89    500</span></code></pre></div>
+  </div>
+</div>
+
+<!-- ════════════════ DIRECTORY COMMANDS ════════════════ -->
+<div class="cmd-card" id="dir">
+  <div class="cmd-head h-dir">
+    <div class="cmd-mono">pwd · cd · mkdir · rmdir · tree</div>
+    <div class="cmd-meta"><div class="cmd-label">Directory Commands</div><div class="cmd-tagline">Navigate and manage directory structure — foundational commands</div></div>
+  </div>
+  <div class="cmd-body">
+    <div class="sl"><span class="sn">4</span><span class="st">Complete Reference with Examples</span></div>
+    <div class="cw"><div class="ct"><span class="lang">BASH — All Directory Commands</span></div>
+    <pre class="p"><code><span class="c">═══ PWD — Print Working Directory ═══</span>
+<span class="cm">pwd</span>                     <span class="c"># /home/alice/projects</span>
+<span class="cm">pwd</span> <span class="fl">-P</span>                  <span class="c"># Physical path (resolves symlinks)</span>
+
+<span class="c">═══ CD — Change Directory ═══</span>
+<span class="cm">cd</span> /var/log             <span class="c"># Absolute path</span>
+<span class="cm">cd</span> ../..                <span class="c"># Up two levels</span>
+<span class="cm">cd</span> ~                    <span class="c"># Home directory</span>
+<span class="cm">cd</span> -                    <span class="c"># Previous directory (toggle!)</span>
+<span class="cm">cd</span> ~alice               <span class="c"># Another user's home</span>
+
+<span class="c">═══ MKDIR — Make Directory ═══</span>
+<span class="cm">mkdir</span> newdir
+<span class="cm">mkdir</span> <span class="fl">-p</span> /opt/app/{conf,logs,tmp}  <span class="c"># Create with parents + multiple subdirs</span>
+<span class="cm">mkdir</span> <span class="fl">-m 750</span> secure_dir  <span class="c"># Create with specific permissions</span>
+<span class="cm">mkdir</span> <span class="fl">-pv</span> /opt/project   <span class="c"># Verbose — show created dirs</span>
+
+<span class="c">═══ RMDIR — Remove Empty Directory ═══</span>
+<span class="cm">rmdir</span> empty_dir          <span class="c"># Fails if dir has content</span>
+<span class="cm">rmdir</span> <span class="fl">-p</span> a/b/c/          <span class="c"># Remove dir and empty parents</span>
+
+<span class="c">═══ TREE — Visual Directory Tree ═══</span>
+<span class="cm">tree</span>                     <span class="c"># Current directory tree</span>
+<span class="cm">tree</span> <span class="fl">-L 2</span> /opt/app/      <span class="c"># 2 levels deep</span>
+<span class="cm">tree</span> <span class="fl">-d</span>                  <span class="c"># Directories only</span>
+<span class="cm">tree</span> <span class="fl">-a</span>                  <span class="c"># Include hidden files</span>
+<span class="cm">tree</span> <span class="fl">-h</span>                  <span class="c"># Human-readable sizes</span>
+<span class="cm">tree</span> <span class="fl">-p</span>                  <span class="c"># Show permissions</span>
+<span class="cm">tree</span> <span class="fl">-I</span> <span class="st2">"*.pyc|__pycache__"</span>  <span class="c"># Exclude patterns</span>
+<span class="cm">tree</span> <span class="fl">-L 3 -o</span> structure.txt  <span class="c"># Save to file (documentation!)</span></code></pre></div>
+
+    <div class="sl"><span class="sn">6</span><span class="st">Interview Questions &amp; Answers</span></div>
+    <div class="qs">
+      <div class="qa"><div class="qq"><span class="qb">Q1</span>How do you create nested directories in one command?</div>
+      <div class="qa-a"><span class="al">A:</span><span class="ic">mkdir -p /opt/app/config/prod</span> — the <span class="ic">-p</span> flag creates all missing parent directories. Without <span class="ic">-p</span>, the command fails if any parent doesn't exist. Also: <span class="ic">mkdir -p /data/{raw,processed,archive}</span> creates multiple subdirectories at once using brace expansion.</div></div>
+      <div class="qa"><div class="qq"><span class="qb">Q2</span>What does <span class="ic">cd -</span> do?</div>
+      <div class="qa-a"><span class="al">A:">Switches to the previous directory (stored in $OLDPWD). Running <span class="ic">cd -</span> again switches back. It's the "toggle" between two directories — invaluable when alternating between two paths like <span class="ic">/var/log</span> and <span class="ic">/opt/app/config</span>.</div></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- CHEAT SHEET -->
+<div class="cheat" id="cheatsheet">
+  <div class="cheat-h">
+    <h2>📋 Quick Reference Cheat Sheet — Section 1: File &amp; Directory Management</h2>
+    <p>Most essential commands — memorize these patterns before your interview</p>
+  </div>
+  <table class="ct2">
+    <tbody>
+      <tr class="cts"><td colspan="2">LISTING &amp; VIEWING</td></tr>
+      <tr><td>ls -ltr</td><td>Long list sorted newest last (post-deploy check)</td></tr>
+      <tr><td>ls -lSh</td><td>Sorted by size, human-readable (largest first)</td></tr>
+      <tr><td>ls -la</td><td>All files including hidden, long format</td></tr>
+      <tr><td>cat -A file</td><td>Show hidden chars — detect Windows line endings (^M$)</td></tr>
+      <tr><td>less +F /var/log/app.log</td><td>Live-follow log (like tail -f but interactive)</td></tr>
+      <tr><td>tail -n +2 data.csv</td><td>Skip header row in CSV for pipeline processing</td></tr>
+      <tr><td>tail -F /var/log/app.log | grep ERROR</td><td>Live error monitoring (survives log rotation)</td></tr>
+      <tr><td>head -n -5 file.txt</td><td>All lines except last 5</td></tr>
+      <tr class="cts"><td colspan="2">FILE OPERATIONS</td></tr>
+      <tr><td>cp -p file.conf file.conf.bak</td><td>Safe backup preserving timestamps before editing</td></tr>
+      <tr><td>cp -a /src/ /dst/</td><td>Archive copy — preserves all metadata (best for backups)</td></tr>
+      <tr><td>mv file.conf.new file.conf</td><td>Atomic config update (same filesystem = zero downtime)</td></tr>
+      <tr><td>rm -rf "${DIR:?}/"</td><td>Safe delete — aborts if DIR is empty/unset</td></tr>
+      <tr><td>find /tmp -mtime +7 -delete</td><td>Delete files older than 7 days</td></tr>
+      <tr><td>touch /var/run/app.lock</td><td>Create lock/flag file for process signaling</td></tr>
+      <tr class="cts"><td colspan="2">SEARCH &amp; ANALYSIS</td></tr>
+      <tr><td>grep -rn "pattern" /dir --include="*.py"</td><td>Search in Python files recursively with line numbers</td></tr>
+      <tr><td>grep -oP '\b\d+\.\d+\.\d+\.\d+\b' log</td><td>Extract IP addresses from log</td></tr>
+      <tr><td>grep -Ev "^(#|$)" config.conf</td><td>Remove comment and blank lines</td></tr>
+      <tr><td>find / -perm -4000 -type f 2>/dev/null</td><td>Find all SUID files (security audit)</td></tr>
+      <tr><td>find . -name "*.py" -mtime -1 -exec wc -l {} +</td><td>Count lines in recently changed Python files</td></tr>
+      <tr><td>find . -name "*.tmp" -print0 | xargs -0 rm</td><td>Safe delete with spaces in filenames</td></tr>
+      <tr class="cts"><td colspan="2">TEXT PROCESSING PIPELINES</td></tr>
+      <tr><td>awk '{print $1}' log | sort | uniq -c | sort -rn</td><td>Frequency analysis — top items in any log</td></tr>
+      <tr><td>awk -F: '{print $1, $6}' /etc/passwd</td><td>Username and home dir from passwd file</td></tr>
+      <tr><td>awk 'NR>1 {sum+=$3} END {print sum}' data.csv</td><td>Sum column 3, skip header</td></tr>
+      <tr><td>sed -i.bak 's/old/new/g' config.ini</td><td>In-place substitution with backup</td></tr>
+      <tr><td>cut -d: -f1 /etc/passwd</td><td>Extract first field (username) from passwd</td></tr>
+      <tr><td>du -sh /var/log/* | sort -rh | head -10</td><td>Top 10 largest directories/files</td></tr>
+      <tr class="cts"><td colspan="2">PERMISSIONS &amp; LINKS</td></tr>
+      <tr><td>find /var/www -type d -exec chmod 755 {} \;</td><td>Set correct directory permissions</td></tr>
+      <tr><td>find /var/www -type f -exec chmod 644 {} \;</td><td>Set correct file permissions</td></tr>
+      <tr><td>chmod 600 ~/.ssh/id_rsa</td><td>Secure SSH key permissions</td></tr>
+      <tr><td>ln -sf /opt/app/v2.0 /opt/app/current</td><td>Atomic version switch via symlink</td></tr>
+      <tr><td>stat -c "%a %n" file</td><td>Get permissions in octal for a file</td></tr>
+      <tr><td>diff -u file.bak file.conf</td><td>Compare files in unified format (git-style)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- FINAL TIP -->
+<div class="ft2">
+  <span class="ti">🎓</span>
+  <div>
+    <h3>Final Interview Tips — File &amp; Directory Management</h3>
+    <p>
+      <strong>The pipeline is king:</strong> Interviewers love combo questions — "Find all Python files modified in last 24h, count lines, sort by size." Practice: <span class="ic">find . -name "*.py" -mtime -1 -exec wc -l {} + | sort -rn | head -10</span><br><br>
+      <strong>Never forget safety:</strong> For any rm question, mention checking with ls first, using -i flag interactively, and guarding variables with <span class="ic">${VAR:?}</span> in scripts.<br><br>
+      <strong>cat -A saves the day:</strong> The single most underrated command — instantly diagnoses Windows CRLF issues (\r\n) that cause mysterious "command not found" errors in shell scripts. Mention this and impress any interviewer.<br><br>
+      <strong>The golden trio for log analysis:</strong> <span class="ic">tail -f | grep | awk</span> — know this pipeline cold. <span class="ic">tail -F /var/log/app.log | grep --line-buffered ERROR | awk '{print $1, $2, $NF}'</span>
+    </p>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <strong>Linux Commands Interview Guide</strong> &nbsp;|&nbsp; Section 1: File &amp; Directory Management &nbsp;|&nbsp; DevOps · Data Engineering · AI-ML Engineering
+</footer>
+
+</body>
+</html>

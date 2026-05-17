@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logical Volume Manager (LVM) - Comprehensive Linux Notes</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --container-bg: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #f0883e;
+            --accent-purple: #bc8cff;
+            --accent-red: #f85149;
+            --accent-cyan: #39d353;
+            --border-color: #30363d;
+            --code-bg: #0d1117;
+            --card-bg: #21262d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #161b22 0%, #1a2332 100%);
+            border-bottom: 3px solid var(--accent-cyan);
+            padding: 2rem 1rem;
+            text-align: center;
+            border-radius: 0 0 15px 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        header h1 {
+            color: var(--accent-cyan);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 10px rgba(57, 211, 83, 0.3);
+        }
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        nav a {
+            background-color: var(--card-bg);
+            color: var(--accent-blue);
+            padding: 8px 15px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        nav a:hover {
+            background-color: var(--accent-blue);
+            color: var(--bg-color);
+            transform: translateY(-2px);
+        }
+
+        section {
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            color: var(--accent-blue);
+            font-size: 1.8rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        h3 {
+            color: var(--accent-purple);
+            font-size: 1.3rem;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 4px solid var(--accent-purple);
+        }
+
+        h4 {
+            color: var(--accent-orange);
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .step-card, .command-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .step-card:hover, .command-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border-color: var(--accent-blue);
+        }
+
+        .step-card h3 {
+            color: var(--accent-cyan);
+            border-left: 4px solid var(--accent-cyan);
+            margin-top: 0;
+        }
+
+        .rationale {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        .rationale strong {
+            color: var(--accent-orange);
+        }
+
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--accent-orange);
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--accent-green);
+        }
+
+        details {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        summary {
+            padding: 12px 15px;
+            font-weight: bold;
+            color: var(--accent-blue);
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        summary::-webkit-details-marker { display: none; }
+
+        summary::after {
+            content: '►';
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            transition: transform 0.2s;
+        }
+
+        details[open] summary::after { transform: rotate(90deg); }
+
+        details[open] summary {
+            background-color: rgba(88, 166, 255, 0.1);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .answer-content {
+            padding: 15px;
+            color: var(--text-primary);
+        }
+
+        .answer-content ul { margin-left: 20px; margin-top: 10px; }
+        .answer-content li { margin-bottom: 5px; }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--code-bg);
+            color: var(--accent-purple);
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+        }
+
+        tr:hover { background-color: rgba(255, 255, 255, 0.03); }
+
+        .highlight {
+            color: var(--accent-red);
+            font-weight: bold;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge-important { background-color: var(--accent-red); color: white; }
+        .badge-tip { background-color: var(--accent-green); color: black; }
+        .badge-warning { background-color: var(--accent-orange); color: black; }
+
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            header h1 { font-size: 1.5rem; }
+            nav a { font-size: 0.8rem; padding: 6px 10px; }
+            section { padding: 15px; }
+            h2 { font-size: 1.4rem; }
+            pre { font-size: 0.85rem; }
+            th, td { padding: 8px 10px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>💾 LOGICAL VOLUME MANAGER (LVM)</h1>
+        <nav>
+            <a href="#part1">Part I: Procedure</a>
+            <a href="#part2">Part II: Commands</a>
+            <a href="#part3">Part III: Alternatives</a>
+            <a href="#part4">Part IV: Assignment</a>
+            <a href="#part5">Part V: Interview</a>
+        </nav>
+    </header>
+
+    <div class="container">
+
+        <!-- PART I -->
+        <section id="part1">
+            <h2>PART I: STEP-BY-STEP PROCEDURE - LVM LIFECYCLE</h2>
+            
+            <div class="step-card">
+                <h3>STEP 1: INITIALIZE PHYSICAL VOLUMES (PV)</h3>
+                <p>Identify available storage devices (e.g., /dev/sdb, /dev/sdc) and initialize them using <code>pvcreate</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> Raw disks or partitions cannot be directly used by LVM. <code>pvcreate</code> writes LVM metadata to the disk, marking it as ready to be added to a storage pool.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 2: CREATE VOLUME GROUPS (VG)</h3>
+                <p>Combine one or more PVs into a single storage pool using <code>vgcreate</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> A Volume Group abstracts the physical boundaries of disks. It combines the storage capacity of multiple PVs into one unified bucket of disk space, which can then be subdivided logically.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 3: CREATE LOGICAL VOLUMES (LV)</h3>
+                <p>Carve out usable space from the VG to create Logical Volumes using <code>lvcreate</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> LVs act as logical partitions. Unlike traditional partitions, they do not have to be contiguous on the physical disk, and they can span multiple disks. This is the layer the OS formats and mounts.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 4: FILESYSTEM CREATION & MOUNTING</h3>
+                <p>Format the LV with a filesystem (e.g., ext4, xfs) using <code>mkfs</code> and mount it.</p>
+                <p class="rationale"><strong>Rationale:</strong> Just like a standard partition, an LV is raw storage until a filesystem is written to it. Once formatted, it can be mounted to the directory hierarchy and made persistent via <code>/etc/fstab</code>.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 5: DYNAMIC RESIZING</h3>
+                <p>As storage needs grow, add new disks as PVs, extend the VG, extend the LV, and finally resize the filesystem.</p>
+                <p class="rationale"><strong>Rationale:</strong> This is the core power of LVM. You can expand storage on the fly without unmounting the filesystem or rebooting the server, ensuring zero downtime.</p>
+            </div>
+        </section>
+
+        <!-- PART II -->
+        <section id="part2">
+            <h2>PART II: COMMANDS AND EXPLANATIONS</h2>
+
+            <div class="command-card">
+                <h3>Physical Volume Commands</h3>
+                <p><span class="syntax">Syntax:</span> <code>pvcreate /dev/sdX</code></p>
+                <p><strong>Purpose:</strong> Initializes a disk or partition as a Physical Volume for LVM.</p>
+                <p><span class="example">Example:</span> <code>pvcreate /dev/sdb /dev/sdc</code></p>
+                <p><span class="syntax">Syntax:</span> <code>pvdisplay</code> or <code>pvs</code></p>
+                <p><strong>Purpose:</strong> Displays attributes of PVs. <code>pvs</code> gives a concise summary; <code>pvdisplay</code> gives detailed info.</p>
+            </div>
+
+            <div class="command-card">
+                <h3>Volume Group Commands</h3>
+                <p><span class="syntax">Syntax:</span> <code>vgcreate <vg_name> /dev/sdX</code></p>
+                <p><strong>Purpose:</strong> Creates a Volume Group combining specified PVs.</p>
+                <p><span class="example">Example:</span> <code>vgcreate vg_data /dev/sdb /dev/sdc</code></p>
+                <p><span class="syntax">Syntax:</span> <code>vgextend <vg_name> /dev/sdX</code></p>
+                <p><strong>Purpose:</strong> Adds a new PV to an existing VG to increase its capacity.</p>
+                <p><span class="syntax">Syntax:</span> <code>vgs</code> or <code>vgdisplay</code></p>
+                <p><strong>Purpose:</strong> Displays VG attributes, including free space (VFree) and used space (VSize).</p>
+            </div>
+
+            <div class="command-card">
+                <h3>Logical Volume Commands</h3>
+                <p><span class="syntax">Syntax:</span> <code>lvcreate -L <size> -n <lv_name> <vg_name></code></p>
+                <p><strong>Purpose:</strong> Creates a Logical Volume of a specific size from a VG.</p>
+                <p><span class="example">Example:</span> <code>lvcreate -L 50G -n lv_home vg_data</code></p>
+                <p><span class="syntax">Syntax:</span> <code>lvextend -L +<size> /dev/<vg_name>/<lv_name></code></p>
+                <p><strong>Purpose:</strong> Increases the size of an LV. The '+' sign indicates addition to current size.</p>
+                <p><span class="syntax">Syntax:</span> <code>lvreduce -L -<size> /dev/<vg_name>/<lv_name></code></p>
+                <p><strong>Purpose:</strong> Decreases the size of an LV. <span class="badge badge-important">Dangerous</span> Requires filesystem shrinking first.</p>
+            </div>
+
+            <div class="command-card">
+                <h3>Filesystem Resizing Commands</h3>
+                <p><span class="syntax">Syntax:</span> <code>resize2fs /dev/<vg_name>/<lv_name></code></p>
+                <p><strong>Purpose:</strong> Expands an ext2/ext3/ext4 filesystem to use all available LV space. Can be done while mounted.</p>
+                <p><span class="syntax">Syntax:</span> <code>xfs_growfs /mount/point</code></p>
+                <p><strong>Purpose:</strong> Expands an XFS filesystem. XFS <em>cannot</em> be shrunk. Must be mounted to grow.</p>
+            </div>
+        </section>
+
+        <!-- PART III -->
+        <section id="part3">
+            <h2>PART III: ALTERNATIVE COMMANDS & METHODS</h2>
+
+            <details>
+                <summary>1. Displaying LVM Information Alternatives</summary>
+                <div class="answer-content">
+                    <ul>
+                        <li><code>pvs / vgs / lvs</code> : Highly recommended. Provides a clean, customizable, one-line-per-item summary. Great for quick checks and scripting.</li>
+                        <li><code>pvdisplay / vgdisplay / lvdisplay</code> : Provides exhaustive detail (metadata, PE size, UUID). Good for deep troubleshooting.</li>
+                        <li><code>lsblk</code> : Not LVM-specific, but excellent for seeing the visual tree of how disks, VGs, and LVs relate to mount points.</li>
+                    </ul>
+                </div>
+            </details>
+
+            <details>
+                <summary>2. Extending an LV and Filesystem (Combined vs. Separate)</summary>
+                <div class="answer-content">
+                    <ul>
+                        <li><strong>Two-Step (Traditional):</strong> <code>lvextend -L +10G /dev/vg/lv</code> then <code>resize2fs /dev/vg/lv</code>. Necessary on older systems.</li>
+                        <li><strong>One-Step (Modern):</strong> <code>lvextend -r -L +10G /dev/vg/lv</code>. The <code>-r</code> flag automatically resizes the underlying filesystem after extending the LV. Highly recommended for ext4 and XFS.</li>
+                    </ul>
+                </div>
+            </details>
+
+            <details>
+                <summary>3. Specifying Size: Absolute vs. Relative vs. Percentage</summary>
+                <div class="answer-content">
+                    <ul>
+                        <li><code>-L 50G</code> : Absolute size. Sets the LV to exactly 50GB.</li>
+                        <li><code>-L +50G</code> : Relative size. Adds 50GB to the current size.</li>
+                        <li><code>-l 100%FREE</code> : Percentage. Extends the LV to use 100% of the remaining free space in the VG. Very common in practice to avoid leaving orphaned space.</li>
+                    </ul>
+                </div>
+            </details>
+        </section>
+
+        <!-- PART IV -->
+        <section id="part4">
+            <h2>PART IV: ASSIGNMENT SOLUTIONS</h2>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan);">Section A: Objective Questions</h3>
+
+            <details><summary>1. What does LVM stand for?</summary><div class="answer-content"><p><strong>Logical Volume Manager</strong></p></div></details>
+            <details><summary>2. LVM is used for: a) Network management b) Storage management c) Process management d) User management</summary><div class="answer-content"><p><strong>b) Storage management</strong></p></div></details>
+            <details><summary>3. Which of the following is NOT a feature of LVM? a) Fixed partition size b) Resize storage c) Snapshot creation d) Combine disks</summary><div class="answer-content"><p><strong>a) Fixed partition size</strong> (LVM is specifically designed to *avoid* fixed partition sizes by allowing dynamic resizing).</p></div></details>
+            <details><summary>4. Which command is used to extend a logical volume?</summary><div class="answer-content"><p><code>lvextend</code></p></div></details>
+            <details><summary>5. Which command is used to resize the filesystem after extending a volume?</summary><div class="answer-content"><p>For ext4: <code>resize2fs</code> | For XFS: <code>xfs_growfs</code></p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section B: Short Answer Questions</h3>
+
+            <details><summary>1. What is LVM?</summary><div class="answer-content"><p>LVM (Logical Volume Manager) is a storage management system in Linux that abstracts the physical storage hardware, allowing administrators to pool disk space from multiple physical drives into a single logical group, and then flexibly carve out logical volumes from that pool.</p></div></details>
+            <details><summary>2. Why is LVM used?</summary><div class="answer-content"><p>LVM is used to overcome the limitations of traditional partitioning. It allows for dynamic resizing (growing/shrinking) of partitions without downtime, spanning a single partition across multiple physical disks, and creating point-in-time snapshots for backups.</p></div></details>
+            <details><summary>3. What are the main components of LVM?</summary><div class="answer-content"><p>1. <strong>PV (Physical Volume):</strong> The actual disk or partition (e.g., /dev/sdb).<br>2. <strong>VG (Volume Group):</strong> The storage pool combining multiple PVs.<br>3. <strong>LV (Logical Volume):</strong> The logical partition carved out of a VG, which the OS formats and uses.</p></div></details>
+            <details><summary>4. What is a snapshot in LVM?</summary><div class="answer-content"><p>A snapshot is a read-only (or read-write) point-in-time copy of a logical volume. It uses Copy-on-Write (CoW) technology: initially, it takes zero space, but as the original LV changes, the old data blocks are copied to the snapshot. It is primarily used for consistent backups.</p></div></details>
+            <details><summary>5. What is the advantage of LVM over traditional partitions?</summary><div class="answer-content"><p>Traditional partitions are rigidly bound to physical disk boundaries and are difficult to resize. LVM abstracts the physical layer, allowing volumes to span multiple disks, be resized dynamically while the system is running, and be easily migrated between physical disks without downtime.</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section C: Practical / Command-Based Questions</h3>
+
+            <details><summary>1. Write commands to extend a logical volume.</summary><div class="answer-content"><pre># Assuming ext4 filesystem
+lvextend -L +5G /dev/vg_data/lv_home
+resize2fs /dev/vg_data/lv_home
+
+# OR Combined method (works for both ext4 and XFS)
+lvextend -r -L +5G /dev/vg_data/lv_home</pre></div></details>
+
+            <details><summary>2. How do you check LVM details in Linux?</summary><div class="answer-content"><pre># Quick overview
+pvs
+vgs
+lvs
+
+# Detailed overview
+pvdisplay
+vgdisplay
+lvdisplay
+
+# Tree structure view
+lsblk</pre></div></details>
+
+            <details><summary>3. Write steps to increase the size of /home partition using LVM.</summary><div class="answer-content">
+                <p>Assuming /home is mounted on <code>/dev/vg_os/lv_home</code>:</p>
+                <pre># Step 1: Check current space and VG free space
+df -h /home
+vgs
+
+# Step 2: If VG has free space, extend the LV and filesystem
+lvextend -r -L +10G /dev/vg_os/lv_home
+
+# Step 3: If VG has NO free space, add a new disk to the VG first
+pvcreate /dev/sdc
+vgextend vg_os /dev/sdc
+lvextend -r -l +100%FREE /dev/vg_os/lv_home
+
+# Step 4: Verify
+df -h /home</pre>
+            </div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section D: Scenario-Based Questions</h3>
+
+            <details><summary>1. Your /home partition is full. How will you solve this using LVM?</summary><div class="answer-content"><p>Step 1: Check if the Volume Group (VG) has unallocated space using <code>vgs</code>.<br>Step 2: If space is available, extend the Logical Volume (LV) and its filesystem simultaneously: <code>lvextend -r -l +100%FREE /dev/vg_name/lv_home</code>.<br>Step 3: If the VG has no free space, attach a new physical disk to the server, initialize it (<code>pvcreate /dev/sdb</code>), add it to the VG (<code>vgextend vg_name /dev/sdb</code>), and then perform Step 2.</p></div></details>
+
+            <details><summary>2. You want to combine multiple disks into a single storage. Which LVM component will you use?</summary><div class="answer-content"><p>A <strong>Volume Group (VG)</strong>. By creating a VG and adding multiple Physical Volumes (PVs) to it, the disks are pooled together into a single unified storage space that Logical Volumes can then be created from.</p></div></details>
+
+            <details><summary>3. You need a backup before making changes. Which LVM feature will you use?</summary><div class="answer-content"><p>A <strong>Snapshot</strong>. I would use <code>lvcreate -L 5G -s -n lv_home_snap /dev/vg_name/lv_home</code> to create a point-in-time snapshot. Then, I would back up the snapshot volume instead of the live volume to ensure data consistency without locking out users.</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section E: Long Answer Question</h3>
+
+            <details><summary>1. Explain LVM and its advantages in detail.</summary><div class="answer-content"><p>LVM is a device mapper framework that provides logical volume management for the Linux kernel. It decouples the filesystem from the physical hardware.<br><strong>Advantages:</strong><br>1. <strong>Dynamic Resizing:</strong> Volumes can be grown or shrunk on the fly without unmounting or rebooting.<br>2. <strong>Storage Pooling:</strong> Combines multiple disparate physical disks into a single logical pool, eliminating the constraint of a partition being limited to one disk.<br>3. <strong>Snapshots:</strong> Allows point-in-time copies for zero-downtime backups.<br>4. <strong>Flexibility:</strong> Stripping (RAID 0 equivalent) and mirroring (RAID 1) can be configured at the LVM level.<br>5. <strong>Hot-swapping:</strong> Old physical disks can be removed from a volume group and replaced with new ones without service interruption.</p></div></details>
+
+            <details><summary>2. Describe the process of managing storage using LVM... (Create, Extend, Reduce)</summary><div class="answer-content">
+                <h4>(a) Create an LVM setup (PV → VG → LV)</h4>
+                <pre># 1. Initialize disks as Physical Volumes
+pvcreate /dev/sdb /dev/sdc
+
+# 2. Create a Volume Group named 'vg_pool' combining the PVs
+vgcreate vg_pool /dev/sdb /dev/sdc
+
+# 3. Create a Logical Volume named 'lv_data' of 50GB from 'vg_pool'
+lvcreate -L 50G -n lv_data vg_pool
+
+# 4. Format and Mount
+mkfs.ext4 /dev/vg_pool/lv_data
+mkdir /mnt/data
+mount /dev/vg_pool/lv_data /mnt/data</pre>
+
+                <h4>(b) Extend a logical volume</h4>
+                <pre># 1. Check free space in VG
+vgs
+
+# 2. Extend the LV by 20GB AND resize the filesystem simultaneously
+# The -r flag handles the resize2fs/xfs_growfs automatically
+lvextend -r -L +20G /dev/vg_pool/lv_data
+
+# OR: Extend to use ALL remaining free space in the VG
+lvextend -r -l +100%FREE /dev/vg_pool/lv_data</pre>
+
+                <h4>(c) Reduce a logical volume</h4>
+                <p><span class="badge badge-important">Warning</span> Reducing an LV is dangerous and can result in catastrophic data loss if the filesystem is not shrunk properly before the LV. XFS filesystems CANNOT be reduced.</p>
+                <pre># 1. Unmount the filesystem
+umount /mnt/data
+
+# 2. Run a filesystem check (Mandatory)
+e2fsck -f /dev/vg_pool/lv_data
+
+# 3. Shrink the filesystem FIRST to a specific size (e.g., 30GB)
+resize2fs /dev/vg_pool/lv_data 30G
+
+# 4. Reduce the Logical Volume SECOND to match that size
+lvreduce -L 30G /dev/vg_pool/lv_data
+
+# 5. Remount
+mount /dev/vg_pool/lv_data /mnt/data</pre>
+            </div></details>
+
+        </section>
+
+        <!-- PART V -->
+        <section id="part5">
+            <h2>PART V: INTERVIEW QUESTIONS AND ANSWERS</h2>
+
+            <details><summary>Q1: What is the difference between PE (Physical Extent) and LE (Logical Extent)?</summary><div class="answer-content"><p>When a PV is initialized, its disk space is divided into small, fixed-size chunks called <strong>Physical Extents (PEs)</strong>. Similarly, when an LV is created, it is composed of <strong>Logical Extents (LEs)</strong>. In LVM, there is a 1:1 mapping between LEs and PEs. When you create an LV, LVM simply maps a set of LEs to available PEs across the VG. The default PE size is usually 4MB.</p></div></details>
+
+            <details><summary>Q2: Can you reduce an XFS filesystem using LVM?</summary><div class="answer-content"><p><strong>No.</strong> XFS filesystems do not support shrinking. You can only grow an XFS filesystem. If you absolutely must reduce the space, you must back up the data, destroy the LV, recreate a smaller LV, format it with XFS again, and restore the data.</p></div></details>
+
+            <details><summary>Q3: What happens to a snapshot if it runs out of space?</summary><div class="answer-content"><p>When a snapshot is created, it has a designated size. As the original volume changes (CoW), the old data blocks are written to the snapshot. If the snapshot fills up to 100% capacity, it becomes <strong>invalid and is automatically dropped/deactivated</strong> by LVM. You will lose that point-in-time backup state. Always size snapshots appropriately based on the rate of change expected during the backup window.</p></div></details>
+
+            <details><summary>Q4: How do you remove a physical disk from a live Volume Group?</summary><div class="answer-content"><p>Use the <code>pvmove</code> command to migrate the data from the disk you want to remove to other disks in the VG. Then, remove it from the VG using <code>vgreduce</code>.<br><pre># Move data off /dev/sdb to other PVs in vg_pool
+pvmove /dev/sdb
+
+# Remove /dev/sdb from the Volume Group
+vgreduce vg_pool /dev/sdb</pre></p></div></details>
+
+            <details><summary>Q5: What is the difference between thick and thin provisioning in LVM?</summary><div class="answer-content"><p><strong>Thick Provisioning (Default):</strong> When you create an LV, the entire requested space is allocated from the VG immediately, even if the filesystem is empty.<br><strong>Thin Provisioning:</strong> Space is allocated dynamically as data is actually written. You can over-provision—creating an LV larger than the physical space available in the VG—as long as the actual used data doesn't exceed the physical capacity. This is highly efficient for environments where future growth is anticipated but current usage is low.</p></div></details>
+
+            <details><summary>Q6: What is the device mapper path for an LV, and why is it used?</summary><div class="answer-content"><p>While traditional paths like <code>/dev/vg_name/lv_name</code> are symlinks, the actual block device created by LVM resides in <code>/dev/mapper/vg_name-lv_name</code>. The device mapper is the kernel framework LVM uses to map logical blocks to physical blocks. Scripts and systems (like dracut/initramfs during boot) often use the <code>/dev/mapper/</code> paths because they are guaranteed to exist and are more persistent.</p></div></details>
+
+            <details><summary>Q7: How would you clone an LV?</summary><div class="answer-content"><p>The best way to clone an LV is to create a <strong>read-write snapshot</strong> of the original LV and mount it. This uses CoW to share unmodified data blocks, saving massive amounts of space while providing an independent clone.<br><code>lvcreate -L 10G -s -n lv_clone /dev/vg_name/lv_original</code></p></div></details>
+
+        </section>
+
+    </div>
+
+    <footer style="text-align: center; padding: 20px; color: var(--text-secondary); border-top: 1px solid var(--border-color); margin-top: 30px;">
+        Linux Logical Volume Manager (LVM) &copy; 2023 | Designed for Advanced Learning
+    </footer>
+
+</body>
+</html>

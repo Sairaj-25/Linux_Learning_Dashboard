@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Interview Preparation Guide — Complete Handbook</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --navy:    #071525;
+    --blue:    #1565C0;
+    --sky:     #0288D1;
+    --teal:    #00695C;
+    --green:   #2E7D32;
+    --orange:  #E65100;
+    --red:     #B71C1C;
+    --purple:  #6A1B9A;
+    --amber:   #F57F17;
+    --bg:      #EEF4FB;
+    --surface: #FFFFFF;
+    --surf2:   #E3EDF8;
+    --border:  #C2D4EC;
+    --text:    #0A1929;
+    --text2:   #1E3550;
+    --text3:   #4A637A;
+    --codebg:  #080F1A;
+    --sh-s:    0 1px 4px rgba(7,21,37,.07);
+    --sh-m:    0 4px 16px rgba(7,21,37,.10);
+    --sh-l:    0 14px 44px rgba(7,21,37,.14);
+    --r:       14px;
+    --rs:      9px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.75; }
+  ::-webkit-scrollbar { width: 6px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ══ HERO ══ */
+  .hero {
+    background: linear-gradient(145deg, #030A13 0%, #071525 25%, #0A2040 55%, #0E2D5E 80%, #132F6A 100%);
+    padding: 70px 24px 58px; text-align: center; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 15% 55%, rgba(21,101,192,.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 85% 20%, rgba(0,105,92,.15) 0%, transparent 48%),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23FFFFFF' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .hero-in { position: relative; z-index: 1; }
+  .h-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.18); color: #81D4FA; font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 7px 20px; border-radius: 100px; margin-bottom: 20px; }
+  .hero h1 { font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 800; color: #fff; letter-spacing: -.03em; line-height: 1.15; margin-bottom: 13px; }
+  .hero h1 em { font-style: normal; color: #4FC3F7; }
+  .hero-sub { font-size: .97rem; color: #81D4FA; max-width: 680px; margin: 0 auto 26px; line-height: 1.7; }
+  .ch-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 800px; margin: 0 auto; }
+  .ch-tag { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.15); color: #B3E5FC; font-size: .74rem; font-weight: 500; padding: 5px 13px; border-radius: 100px; }
+
+  /* ══ NAV ══ */
+  .nav { position: sticky; top: 0; z-index: 200; background: rgba(255,255,255,.93); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); box-shadow: var(--sh-s); }
+  .nav-in { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; height: 50px; padding: 0 20px; overflow-x: auto; white-space: nowrap; gap: 2px; }
+  .nav-in a { text-decoration: none; color: var(--text2); font-size: .76rem; font-weight: 600; padding: 5px 11px; border-radius: 100px; transition: all .15s; flex-shrink: 0; }
+  .nav-in a:hover { background: var(--surf2); color: var(--sky); }
+
+  /* ══ LAYOUT ══ */
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 44px 22px 100px; }
+
+  /* ══ CHAPTER HEADER ══ */
+  .chap-head {
+    border-radius: var(--r); padding: 24px 28px; margin-bottom: 28px;
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  }
+  .ch1 { background: linear-gradient(135deg, #0D2547, #1565C0); }
+  .ch2 { background: linear-gradient(135deg, #1A0A2A, #6A1B9A); }
+  .ch3 { background: linear-gradient(135deg, #1A2A0A, #2E7D32); }
+  .ch4 { background: linear-gradient(135deg, #2A1A0A, #E65100); }
+  .ch5 { background: linear-gradient(135deg, #0A2020, #00695C); }
+  .ch6 { background: linear-gradient(135deg, #0A0A2A, #283593); }
+  .ch7 { background: linear-gradient(135deg, #2A0A1A, #880E4F); }
+  .ch8 { background: linear-gradient(135deg, #0A1A0A, #1B5E20); }
+  .ch9 { background: linear-gradient(135deg, #2A0A0A, #B71C1C); }
+  .ch10{ background: linear-gradient(135deg, #001A2A, #006064); }
+
+  .chap-num { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25); color: rgba(255,255,255,.7); font-size: .7rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; padding: 4px 14px; border-radius: 100px; flex-shrink: 0; }
+  .chap-title { font-size: clamp(1.1rem, 2.5vw, 1.5rem); font-weight: 800; color: #fff; }
+  .chap-sub { color: rgba(255,255,255,.65); font-size: .85rem; margin-top: 2px; }
+  .q-count { margin-left: auto; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); color: #fff; font-size: .75rem; font-weight: 700; padding: 4px 14px; border-radius: 100px; flex-shrink: 0; }
+
+  /* ══ QUESTION CARD ══ */
+  .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-m); margin-bottom: 32px; overflow: hidden; }
+
+  .q-header { padding: 16px 22px; display: flex; align-items: flex-start; gap: 14px; border-bottom: 1px solid var(--surf2); }
+  .q-num { background: var(--blue); color: #fff; font-size: .7rem; font-weight: 800; padding: 3px 10px; border-radius: 6px; flex-shrink: 0; margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+  .q-level { font-size: .68rem; font-weight: 700; padding: 3px 10px; border-radius: 100px; flex-shrink: 0; margin-top: 2px; }
+  .lv-b { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
+  .lv-i { background: #FFF8E1; color: #F57F17; border: 1px solid #FFE082; }
+  .lv-a { background: #FEEBEA; color: #B71C1C; border: 1px solid #EF9A9A; }
+  .q-title { font-size: .95rem; font-weight: 700; color: var(--text); line-height: 1.5; }
+  .q-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .tag { background: var(--surf2); color: var(--text3); font-size: .68rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; }
+
+  .q-body { padding: 22px; }
+
+  /* ══ SCENARIO BOX ══ */
+  .scenario { background: linear-gradient(135deg, #E3F2FD, #EEF7FF); border: 1px solid #90CAF9; border-left: 5px solid #1565C0; border-radius: var(--rs); padding: 16px 18px; margin-bottom: 16px; }
+  .scenario .slabel { font-size: .7rem; font-weight: 800; color: #1565C0; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .scenario p { font-size: .875rem; color: var(--text2); line-height: 1.75; }
+
+  /* ══ PROBLEM BOX ══ */
+  .problem { background: #FFF8E1; border: 1px solid #FFB74D; border-left: 5px solid #F57F17; border-radius: var(--rs); padding: 14px 18px; margin-bottom: 16px; }
+  .problem .plabel { font-size: .7rem; font-weight: 800; color: #E65100; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+  .problem p { font-size: .875rem; color: #4E342E; line-height: 1.7; }
+
+  /* ══ SOLUTION STEPS ══ */
+  .solution { margin-bottom: 14px; }
+  .sol-label { font-size: .7rem; font-weight: 800; color: var(--green); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .step { display: flex; gap: 12px; margin-bottom: 10px; align-items: flex-start; }
+  .step-num { background: var(--blue); color: #fff; width: 24px; height: 24px; border-radius: 50%; font-size: .68rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .step-body { flex: 1; }
+  .step-desc { font-size: .85rem; color: var(--text2); margin-bottom: 6px; line-height: 1.65; }
+  .step-desc strong { color: var(--text); }
+
+  /* ══ CODE BLOCK ══ */
+  .cw { margin-bottom: 10px; border-radius: var(--rs); overflow: hidden; }
+  .ct { background: #0D1E30; padding: 6px 14px; display: flex; align-items: center; justify-content: space-between; font-size: .67rem; font-weight: 700; color: #3D6080; letter-spacing: .09em; text-transform: uppercase; }
+  .ct .lang { color: #29B6F6; }
+  pre.p { background: var(--codebg); padding: 14px 18px; overflow-x: auto; margin: 0; }
+  pre.p code { font-family: 'JetBrains Mono', monospace; font-size: .79rem; line-height: 1.88; color: #90CAF9; background: none; padding: 0; }
+  .cm { color: #64B5F6; }
+  .fl { color: #FFCC80; }
+  .st { color: #A5D6A7; }
+  .co { color: #546E7A; }
+  .kw { color: #FF8A80; font-weight: 600; }
+  .out{ color: #607D8B; }
+  .nu { color: #80CBC4; }
+  .va { color: #FFD54F; }
+  .ic2 { font-family: 'JetBrains Mono', monospace; background: #E3F2FD; color: #B71C1C; padding: 2px 6px; border-radius: 4px; font-size: .8rem; border: 1px solid #BBDEFB; }
+
+  /* ══ ALTERNATIVES ══ */
+  .alt { background: #F3E5F5; border: 1px solid #CE93D8; border-left: 5px solid #8E24AA; border-radius: var(--rs); padding: 14px 18px; margin-bottom: 14px; }
+  .alt-label { font-size: .7rem; font-weight: 800; color: #6A1B9A; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .alt p, .alt li { font-size: .85rem; color: #3E0D5C; line-height: 1.7; }
+  .alt ul { padding-left: 0; list-style: none; }
+  .alt ul li::before { content: '→ '; color: #8E24AA; font-weight: 700; }
+
+  /* ══ MISTAKES ══ */
+  .mistakes { background: #FEEBEA; border: 1px solid #EF9A9A; border-left: 5px solid #E53935; border-radius: var(--rs); padding: 14px 18px; margin-bottom: 14px; }
+  .mis-label { font-size: .7rem; font-weight: 800; color: #B71C1C; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .mistakes ul { list-style: none; padding: 0; }
+  .mistakes ul li { font-size: .85rem; color: #7F1D1D; line-height: 1.7; padding: 3px 0; }
+  .mistakes ul li::before { content: '✗ '; color: #E53935; font-weight: 700; }
+
+  /* ══ TIPS ══ */
+  .tips { background: #E8F5E9; border: 1px solid #A5D6A7; border-left: 5px solid #43A047; border-radius: var(--rs); padding: 14px 18px; margin-bottom: 0; }
+  .tip-label { font-size: .7rem; font-weight: 800; color: #2E7D32; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .tips ul { list-style: none; padding: 0; }
+  .tips ul li { font-size: .85rem; color: #1B5E20; line-height: 1.7; padding: 3px 0; }
+  .tips ul li::before { content: '💡 '; }
+
+  /* ══ INFO BOX ══ */
+  .info-box { background: #E0F2F1; border: 1px solid #80CBC4; border-left: 4px solid #00897B; border-radius: var(--rs); padding: 12px 16px; margin-bottom: 12px; font-size: .84rem; color: #004D40; line-height: 1.7; }
+
+  /* ══ SECTION DIVIDER ══ */
+  .sec-div { border: none; border-top: 2px dashed var(--border); margin: 12px 0 16px; }
+
+  /* ══ FOOTER ══ */
+  footer { text-align: center; padding: 24px; border-top: 1px solid var(--border); font-size: .76rem; color: var(--text3); }
+  footer strong { color: var(--blue); }
+
+  @media (max-width: 660px) {
+    .hero { padding: 42px 16px 38px; }
+    .wrap { padding: 22px 12px 60px; }
+    .q-body { padding: 15px; }
+    .chap-head { padding: 16px 18px; }
+    .q-count { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-in">
+    <div class="h-pill">📘 Linux Interview Preparation Guide</div>
+    <h1>Linux System Administration<br><em>Interview Crash Course</em></h1>
+    <p class="hero-sub">Scenario-based, flow-based, and production-ready questions covering 10 major topics. Designed for DevOps, Data Engineering, AI-ML roles — from beginner to RHCSA/RHCE level.</p>
+    <div class="ch-grid">
+      <span class="ch-tag">📁 File Management</span><span class="ch-tag">🔒 Permissions</span>
+      <span class="ch-tag">👤 Users &amp; Groups</span><span class="ch-tag">💾 Disk &amp; LVM</span>
+      <span class="ch-tag">📦 Packages</span><span class="ch-tag">⚙ Services</span>
+      <span class="ch-tag">📊 Text Processing</span><span class="ch-tag">🔧 Diagnostics</span>
+      <span class="ch-tag">⏰ Scheduling</span><span class="ch-tag">🌐 Networking</span>
+    </div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-in">
+    <a href="#ch1">📁 Ch1</a>
+    <a href="#ch2">🔒 Ch2</a>
+    <a href="#ch3">👤 Ch3</a>
+    <a href="#ch4">💾 Ch4</a>
+    <a href="#ch5">📦 Ch5</a>
+    <a href="#ch6">⚙ Ch6</a>
+    <a href="#ch7">📊 Ch7</a>
+    <a href="#ch8">🔧 Ch8</a>
+    <a href="#ch9">⏰ Ch9</a>
+    <a href="#ch10">🌐 Ch10</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 1: FILE & DIRECTORY MANAGEMENT
+═══════════════════════════════════════════ -->
+<div id="ch1">
+  <div class="chap-head ch1">
+    <div><span class="chap-num">Chapter 1</span>
+      <div class="chap-title">📁 File &amp; Directory Management</div>
+      <div class="chap-sub">ls, cp, mv, rm, find, stat, ln, tar, rsync — file operations in production</div>
+    </div>
+    <div class="q-count">8 Questions</div>
+  </div>
+
+  <!-- Q1.1 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 1.1</span>
+      <span class="q-level lv-b">Beginner</span>
+      <div>
+        <div class="q-title">Disk full alert — Find and clean up large old log files without causing service disruption</div>
+        <div class="q-tags"><span class="tag">find</span><span class="tag">du</span><span class="tag">rm</span><span class="tag">truncate</span></div>
+      </div>
+    </div>
+    <div class="q-body">
+      <div class="scenario">
+        <div class="slabel">🧩 Scenario</div>
+        <p>Your monitoring system fires a <strong>"Disk 90% full"</strong> alert on a production web server at 2 AM. The application is still running. You need to identify what is consuming space and free up disk immediately without restarting the application.</p>
+      </div>
+      <div class="problem">
+        <div class="plabel">❓ Problem Statement</div>
+        <p>Identify the top disk consumers, locate large log files, and safely clean them up while the application is live.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Check which filesystem is full</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">df</span> <span class="fl">-h</span>
+<span class="out"># Filesystem      Size  Used Avail Use% Mounted on
+# /dev/xvda1       50G   45G  2.5G  95% /
+# tmpfs            16G     0   16G   0% /dev/shm</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Find top-level directories consuming most space</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo du</span> <span class="fl">-hd1</span> / 2>/dev/null | <span class="cm">sort</span> <span class="fl">-rh</span> | <span class="cm">head</span> <span class="fl">-10</span>
+<span class="out"># 28G  /var
+# 9G   /opt
+# 4G   /home</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Drill down into /var</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo du</span> <span class="fl">-hd2</span> /var | <span class="cm">sort</span> <span class="fl">-rh</span> | <span class="cm">head</span> <span class="fl">-10</span>
+<span class="out"># 24G  /var/log
+# 18G  /var/log/nginx</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">4</span><div class="step-body">
+          <div class="step-desc"><strong>Find all files larger than 1GB in /var/log</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo find</span> /var/log <span class="fl">-type f -size +1G</span> <span class="fl">-exec ls -lh</span> {} \;</code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">5</span><div class="step-body">
+          <div class="step-desc"><strong>Find files open by running processes (CRITICAL — cannot just rm them!)</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo lsof</span> /var/log/nginx/access.log
+<span class="out"># nginx  1234  www-data  4w  REG  202,1  5368709120  nginx/access.log</span>
+<span class="co"># File is OPEN by nginx PID 1234 — do NOT delete!</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">6</span><div class="step-body">
+          <div class="step-desc"><strong>Safely truncate open log files (does NOT disrupt nginx)</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Truncate to 0 bytes — nginx continues writing to the same file descriptor</span>
+<span class="cm">sudo truncate</span> <span class="fl">-s 0</span> /var/log/nginx/access.log
+
+<span class="co"># Alternative: redirect empty output</span>
+> /var/log/nginx/access.log
+
+<span class="co"># Safe delete of OLD rotated logs (not currently open)</span>
+<span class="cm">sudo find</span> /var/log <span class="fl">-name "*.gz" -mtime +7 -delete</span>
+<span class="cm">sudo find</span> /var/log <span class="fl">-name "*.log.[0-9]" -mtime +3 -delete</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">7</span><div class="step-body">
+          <div class="step-desc"><strong>Verify space reclaimed</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">df</span> <span class="fl">-h</span> /</code></pre></div>
+        </div></div>
+      </div>
+
+      <div class="alt">
+        <div class="alt-label">🔄 Alternative Solutions</div>
+        <ul>
+          <li><span class="ic2">journalctl --vacuum-size=500M</span> — reduce systemd journal to 500MB</li>
+          <li><span class="ic2">docker system prune -af</span> — if Docker images/layers are consuming space</li>
+          <li><span class="ic2">sudo apt-get clean</span> or <span class="ic2">yum clean all</span> — clear package cache</li>
+          <li>Check pip/conda caches: <span class="ic2">pip cache purge</span>, <span class="ic2">conda clean --all</span></li>
+        </ul>
+      </div>
+
+      <div class="mistakes">
+        <div class="mis-label">⚠️ Common Mistakes</div>
+        <ul>
+          <li>Deleting a file that's currently open — disk space is NOT freed until process closes the file</li>
+          <li>Using rm on large log files instead of truncate — same problem with open files</li>
+          <li>Running du on NFS mounts without -x flag — can take hours</li>
+        </ul>
+      </div>
+
+      <div class="tips">
+        <div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>Always check <span class="ic2">lsof | grep deleted</span> — files deleted but held open by a process are invisible to du but still consume disk blocks</li>
+          <li>Interviewers expect you to know the truncate trick — it's a classic production gotcha</li>
+          <li>Mention <span class="ic2">df -i</span> to check inode exhaustion — disk can be "full" with 0% block usage if inodes are exhausted</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q1.2 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 1.2</span>
+      <span class="q-level lv-i">Intermediate</span>
+      <div>
+        <div class="q-title">Archive and transfer 90 days of application logs to remote backup server with compression</div>
+        <div class="q-tags"><span class="tag">find</span><span class="tag">tar</span><span class="tag">rsync</span><span class="tag">ssh</span></div>
+      </div>
+    </div>
+    <div class="q-body">
+      <div class="scenario">
+        <div class="slabel">🧩 Scenario</div>
+        <p>Your company's compliance policy requires retaining application logs for 1 year. Local disk is too expensive. You need to archive logs older than 90 days, compress them, and sync to a remote NFS backup server nightly via cron.</p>
+      </div>
+      <div class="problem">
+        <div class="plabel">❓ Problem Statement</div>
+        <p>Create a script that finds logs older than 90 days, archives them with timestamp, transfers to backup server, and removes local copies after successful transfer.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Find log files older than 90 days</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">find</span> /var/log/app <span class="fl">-name "*.log" -mtime +90 -type f</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Archive them into a dated tarball</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Create archive with date stamp</span>
+<span class="va">ARCHIVE</span>=/tmp/app_logs_$(date +%Y%m%d).tar.gz
+
+<span class="cm">find</span> /var/log/app <span class="fl">-name "*.log" -mtime +90 -type f</span> | \
+    <span class="cm">tar</span> <span class="fl">-czf</span> <span class="va">$ARCHIVE</span> <span class="fl">-T</span> -
+
+<span class="co"># Verify archive integrity before deletion</span>
+<span class="cm">tar</span> <span class="fl">-tzf</span> <span class="va">$ARCHIVE</span> > /dev/null && <span class="cm">echo</span> <span class="st">"Archive OK"</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Transfer to backup server with verification</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">rsync</span> <span class="fl">-avz --checksum --remove-source-files</span> \
+    <span class="va">$ARCHIVE</span> backup@10.0.1.200:/mnt/backup/logs/
+
+<span class="co"># --checksum: verify data integrity after transfer
+# --remove-source-files: delete local after successful transfer</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">4</span><div class="step-body">
+          <div class="step-desc"><strong>Remove original log files after successful rsync</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="kw">if</span> [ $? <span class="fl">-eq</span> <span class="nu">0</span> ]; <span class="kw">then</span>
+    <span class="cm">find</span> /var/log/app <span class="fl">-name "*.log" -mtime +90 -delete</span>
+    <span class="cm">echo</span> <span class="st">"$(date): Archive and cleanup complete"</span> >> /var/log/log_archive.log
+<span class="kw">else</span>
+    <span class="cm">echo</span> <span class="st">"$(date): rsync FAILED — logs NOT deleted"</span> >> /var/log/log_archive.log
+    <span class="cm">exit</span> <span class="nu">1</span>
+<span class="kw">fi</span></code></pre></div>
+        </div></div>
+      </div>
+
+      <div class="alt">
+        <div class="alt-label">🔄 Alternative Solutions</div>
+        <ul>
+          <li><span class="ic2">find + xargs tar</span> — for very large numbers of files: <span class="ic2">find /var/log -mtime +90 | xargs tar -czf archive.tar.gz</span></li>
+          <li><span class="ic2">scp</span> — simpler but no checksum verification, no resume on failure</li>
+          <li><span class="ic2">logrotate</span> — the proper production tool for log rotation; configure with compress + dateext + postrotate hooks for archiving</li>
+        </ul>
+      </div>
+
+      <div class="mistakes">
+        <div class="mis-label">⚠️ Common Mistakes</div>
+        <ul>
+          <li>Deleting files before verifying the archive is valid — always verify tar with -t before deleting</li>
+          <li>Not checking rsync exit code before deleting source files</li>
+          <li>Using cp instead of rsync — no checksum, no resume capability</li>
+        </ul>
+      </div>
+
+      <div class="tips">
+        <div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>The pattern: find → archive → verify → transfer → verify transfer → delete is the safe production workflow</li>
+          <li>Mention <span class="ic2">logrotate</span> as the proper tool — shows you know the right approach, not just ad-hoc commands</li>
+          <li>Always check exit codes — <span class="ic2">if [ $? -eq 0 ]</span> before destructive operations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q1.3 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 1.3</span>
+      <span class="q-level lv-a">Advanced</span>
+      <div>
+        <div class="q-title">Find all Python files modified in the last 24 hours, count lines, and generate a report</div>
+        <div class="q-tags"><span class="tag">find</span><span class="tag">xargs</span><span class="tag">wc</span><span class="tag">awk</span></div>
+      </div>
+    </div>
+    <div class="q-body">
+      <div class="scenario">
+        <div class="slabel">🧩 Scenario</div>
+        <p>A team lead wants a daily report of all Python files changed by developers in the last 24 hours — showing filename, line count, and size — sorted by most recently modified. This needs to run from CI/CD pipeline.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Find recently modified .py files</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">find</span> /opt/project <span class="fl">-name "*.py" -mtime -1 -type f</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Count lines in each file using xargs</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">find</span> /opt/project <span class="fl">-name "*.py" -mtime -1 -type f</span> | \
+    <span class="cm">xargs</span> <span class="fl">-I{}</span> <span class="cm">wc</span> <span class="fl">-l</span> {} | \
+    <span class="cm">sort</span> <span class="fl">-rn</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Generate full report with filename, lines, size, last modified</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">echo</span> <span class="st">"=== Python File Change Report: $(date) ==="</span>
+<span class="cm">printf</span> <span class="st">"%-60s %8s %10s %20s\n"</span> <span class="st">"FILE"</span> <span class="st">"LINES"</span> <span class="st">"SIZE"</span> <span class="st">"MODIFIED"</span>
+<span class="cm">echo</span> <span class="st">"$(printf '%0.s-' {1..102})"</span>
+
+<span class="cm">find</span> /opt/project <span class="fl">-name "*.py" -mtime -1 -type f</span> \
+    <span class="fl">-printf "%T@ %p\n"</span> | \
+    <span class="cm">sort</span> <span class="fl">-rn</span> | \
+    <span class="cm">awk</span> <span class="st">'{print $2}'</span> | \
+    <span class="kw">while</span> <span class="cm">read</span> <span class="va">file</span>; <span class="kw">do</span>
+        <span class="va">lines</span>=$(<span class="cm">wc</span> <span class="fl">-l</span> < <span class="st">"$file"</span>)
+        <span class="va">size</span>=$(<span class="cm">du</span> <span class="fl">-sh</span> <span class="st">"$file"</span> | <span class="cm">cut</span> <span class="fl">-f1</span>)
+        <span class="va">mtime</span>=$(<span class="cm">stat</span> <span class="fl">-c "%y"</span> <span class="st">"$file"</span> | <span class="cm">cut</span> <span class="fl">-d.</span> <span class="fl">-f1</span>)
+        <span class="cm">printf</span> <span class="st">"%-60s %8d %10s %20s\n"</span> <span class="st">"$file"</span> <span class="st">"$lines"</span> <span class="st">"$size"</span> <span class="st">"$mtime"</span>
+    <span class="kw">done</span></code></pre></div>
+        </div></div>
+      </div>
+
+      <div class="tips">
+        <div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li><span class="ic2">xargs -P 4</span> runs 4 processes in parallel — useful for processing large numbers of files faster</li>
+          <li>Use <span class="ic2">find -print0 | xargs -0</span> for filenames with spaces</li>
+          <li><span class="ic2">stat -c "%y"</span> gives modification time; <span class="ic2">-c "%s"</span> gives size in bytes</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q1.4 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 1.4</span>
+      <span class="q-level lv-i">Intermediate</span>
+      <div>
+        <div class="q-title">Hard links vs Symbolic links — production scenario with shared configuration files</div>
+        <div class="q-tags"><span class="tag">ln</span><span class="tag">inode</span><span class="tag">symlink</span></div>
+      </div>
+    </div>
+    <div class="q-body">
+      <div class="scenario">
+        <div class="slabel">🧩 Scenario</div>
+        <p>Multiple microservices need to share the same database configuration file. When the config is updated, all services should see the change immediately. You need to choose between hard links and symbolic links.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Create the master config file</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">mkdir</span> <span class="fl">-p</span> /etc/shared-config
+<span class="cm">cat</span> > /etc/shared-config/db.conf << EOF
+DB_HOST=prod-db.internal
+DB_PORT=5432
+DB_USER=app_user
+EOF</code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Create symbolic links for each service</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Symbolic link — recommended for cross-directory config sharing</span>
+<span class="cm">ln</span> <span class="fl">-s</span> /etc/shared-config/db.conf /opt/service-a/config/db.conf
+<span class="cm">ln</span> <span class="fl">-s</span> /etc/shared-config/db.conf /opt/service-b/config/db.conf
+<span class="cm">ln</span> <span class="fl">-s</span> /etc/shared-config/db.conf /opt/service-c/config/db.conf</code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Verify links and understand the difference</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">ls</span> <span class="fl">-lai</span> /etc/shared-config/db.conf /opt/service-a/config/db.conf
+<span class="out"># 123456 -rw-r--r-- 2 root root 64 /etc/shared-config/db.conf
+# 789012 lrwxrwxrwx 1 root root 31 /opt/service-a/config/db.conf -> /etc/shared-config/db.conf</span>
+
+<span class="co"># Hard link demo (same inode!):</span>
+<span class="cm">ln</span> /etc/shared-config/db.conf /etc/shared-config/db.conf.hard
+<span class="cm">ls</span> <span class="fl">-lai</span> /etc/shared-config/
+<span class="out"># 123456 -rw-r--r-- 2 root root 64 db.conf      ← link count = 2
+# 123456 -rw-r--r-- 2 root root 64 db.conf.hard ← SAME inode 123456!</span></code></pre></div>
+        </div></div>
+      </div>
+
+      <div class="alt">
+        <div class="alt-label">🔄 Hard Links vs Soft Links — Key Differences</div>
+        <ul>
+          <li><strong>Hard link:</strong> Same inode, same filesystem only, survives deletion of original — <span class="ic2">ln source dest</span></li>
+          <li><strong>Soft/Symbolic link:</strong> Different inode, works across filesystems, breaks if original deleted — <span class="ic2">ln -s source dest</span></li>
+          <li>Cannot create hard links for directories (prevents circular references)</li>
+          <li>Use symlinks for config sharing — more visible, cross-filesystem capable</li>
+        </ul>
+      </div>
+
+      <div class="mistakes">
+        <div class="mis-label">⚠️ Common Mistakes</div>
+        <ul>
+          <li>Creating symlink with relative path and then moving it — breaks the link. Always use absolute paths for config symlinks</li>
+          <li>Thinking rm on a hard-linked file deletes data — data persists until all hard links are removed</li>
+        </ul>
+      </div>
+
+      <div class="tips">
+        <div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>Classic interview Q: "If you delete the original file of a symlink, what happens?" — the symlink becomes broken (dangling)</li>
+          <li>Find broken symlinks: <span class="ic2">find /opt -type l -! -e</span></li>
+          <li>ls -l shows <strong>l</strong> for symlink, number after permissions is link count for hard links</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /ch1 -->
+
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 2: FILESYSTEM PERMISSIONS & SECURITY
+═══════════════════════════════════════════ -->
+<div id="ch2">
+  <div class="chap-head ch2">
+    <div><span class="chap-num">Chapter 2</span>
+      <div class="chap-title">🔒 Filesystem Permissions &amp; Security</div>
+      <div class="chap-sub">chmod, chown, umask, ACL, SUID/SGID, setfacl, getfacl</div>
+    </div>
+    <div class="q-count">6 Questions</div>
+  </div>
+
+  <!-- Q2.1 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 2.1</span>
+      <span class="q-level lv-i">Intermediate</span>
+      <div>
+        <div class="q-title">Web deployment fails — permission denied errors after deploying as root, app runs as www-data</div>
+        <div class="q-tags"><span class="tag">chmod</span><span class="tag">chown</span><span class="tag">find</span><span class="tag">umask</span></div>
+      </div>
+    </div>
+    <div class="q-body">
+      <div class="scenario">
+        <div class="slabel">🧩 Scenario</div>
+        <p>A developer deployed new code as the root user. Now the nginx/gunicorn application (running as <strong>www-data</strong>) throws "Permission denied" errors trying to read static files and write to upload directories.</p>
+      </div>
+      <div class="problem">
+        <div class="plabel">❓ Problem Statement</div>
+        <p>Fix file ownership and permissions correctly — web files readable by www-data, upload directory writable, config files protected, without making everything 777.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Check current ownership and permissions</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">ls</span> <span class="fl">-la</span> /var/www/html/
+<span class="out"># -rw------- 1 root root  index.html    ← www-data cannot read!
+# drwx------ 1 root root  uploads/      ← www-data cannot write!</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Fix ownership to www-data</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo chown</span> <span class="fl">-R</span> www-data:www-data /var/www/html/</code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Set correct permissions: directories=755, files=644 using find</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Directories: owner rwx, group+others rx (need x to traverse)</span>
+<span class="cm">sudo find</span> /var/www/html <span class="fl">-type d -exec chmod 755</span> {} \;
+
+<span class="co"># Regular files: owner rw, group+others r</span>
+<span class="cm">sudo find</span> /var/www/html <span class="fl">-type f -exec chmod 644</span> {} \;
+
+<span class="co"># Upload directory needs write permission for www-data</span>
+<span class="cm">sudo chmod</span> 775 /var/www/html/uploads/</code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">4</span><div class="step-body">
+          <div class="step-desc"><strong>Protect sensitive config files</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># .env files — readable only by owner</span>
+<span class="cm">sudo chmod</span> 600 /var/www/html/.env
+<span class="cm">sudo chown</span> www-data:www-data /var/www/html/.env
+
+<span class="co"># Make scripts executable but not writable by web process</span>
+<span class="cm">sudo find</span> /var/www/html <span class="fl">-name "*.sh" -exec chmod 750</span> {} \;</code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">5</span><div class="step-body">
+          <div class="step-desc"><strong>Set umask for www-data so new files have correct permissions by default</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># In /etc/profile.d/app.sh or systemd service file:</span>
+<span class="co"># UMask=0022 means: files=644, dirs=755 (default for www-data)</span>
+<span class="cm">grep</span> UMask /lib/systemd/system/nginx.service</code></pre></div>
+        </div></div>
+      </div>
+
+      <div class="alt">
+        <div class="alt-label">🔄 Alternative Solutions (ACL for fine-grained control)</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># ACL: Give www-data read access to /var/www/html without changing ownership</span>
+<span class="cm">sudo setfacl</span> <span class="fl">-R -m u:www-data:rx</span> /var/www/html/
+
+<span class="co"># Give www-data write access only to uploads</span>
+<span class="cm">sudo setfacl</span> <span class="fl">-m u:www-data:rwx</span> /var/www/html/uploads/
+
+<span class="co"># Set default ACL so new files inherit permissions</span>
+<span class="cm">sudo setfacl</span> <span class="fl">-m d:u:www-data:rx</span> /var/www/html/
+
+<span class="co"># View ACL</span>
+<span class="cm">getfacl</span> /var/www/html/</code></pre></div>
+      </div>
+
+      <div class="mistakes">
+        <div class="mis-label">⚠️ Common Mistakes</div>
+        <ul>
+          <li>Using chmod 777 — never acceptable in production. Always specific permissions</li>
+          <li>Recursively chowning without understanding impact — chown -R on / is catastrophic</li>
+          <li>Forgetting execute permission on directories — files inside are inaccessible without x on parent</li>
+        </ul>
+      </div>
+
+      <div class="tips">
+        <div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>Standard web permissions: dirs=755, static files=644, writable dirs=775, secrets=600</li>
+          <li>ACLs shine when you need multiple users with different permissions beyond owner/group/other</li>
+          <li><span class="ic2">stat filename</span> shows all permission info including inode, size, timestamps in one view</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q2.2 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 2.2</span>
+      <span class="q-level lv-a">Advanced</span>
+      <div>
+        <div class="q-title">Security audit — find all SUID/SGID binaries and world-writable files on the server</div>
+        <div class="q-tags"><span class="tag">find</span><span class="tag">SUID</span><span class="tag">SGID</span><span class="tag">security</span></div>
+      </div>
+    </div>
+    <div class="q-body">
+      <div class="scenario">
+        <div class="slabel">🧩 Scenario</div>
+        <p>Your security team requires a monthly audit report of all SUID/SGID binaries and world-writable files on production servers. These are common privilege escalation vectors that must be tracked against a baseline.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Find all SUID (Set User ID) binaries — run as owner, not caller</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo find</span> / <span class="fl">-perm -4000 -type f</span> 2>/dev/null | <span class="cm">sort</span>
+<span class="out"># /usr/bin/passwd    ← needs root to modify /etc/shadow
+# /usr/bin/sudo
+# /usr/bin/su
+# /usr/sbin/ping     ← needs raw socket access
+# Any UNEXPECTED entries here = SECURITY RISK!</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Find all SGID (Set Group ID) files</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo find</span> / <span class="fl">-perm -2000 -type f</span> 2>/dev/null | <span class="cm">sort</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Find world-writable files (potential backdoor locations)</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Files world-writable (excluding /tmp, /proc, /sys)</span>
+<span class="cm">sudo find</span> / <span class="fl">-path /proc -prune -o -path /sys -prune -o \
+    -path /tmp -prune -o -perm -o+w -type f -print</span> 2>/dev/null</code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">4</span><div class="step-body">
+          <div class="step-desc"><strong>Generate and compare against baseline</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Create baseline</span>
+<span class="cm">sudo find</span> / <span class="fl">-perm -4000 -type f</span> 2>/dev/null | <span class="cm">sort</span> > /root/suid_baseline.txt
+
+<span class="co"># Monthly audit — compare with baseline</span>
+<span class="cm">sudo find</span> / <span class="fl">-perm -4000 -type f</span> 2>/dev/null | <span class="cm">sort</span> > /tmp/suid_current.txt
+<span class="cm">diff</span> /root/suid_baseline.txt /tmp/suid_current.txt
+<span class="out"># Lines starting with > = NEW SUID files added since baseline — INVESTIGATE!</span></code></pre></div>
+        </div></div>
+      </div>
+
+      <div class="tips">
+        <div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>SUID on shell binaries (bash, dash, sh) is an immediate red flag — attackers plant these for persistence</li>
+          <li><span class="ic2">-perm -4000</span> means "SUID bit set" (4000 = SUID, 2000 = SGID, 1000 = sticky bit)</li>
+          <li>CIS Benchmark and RHCSA exams specifically test knowledge of SUID/SGID auditing</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /ch2 -->
+
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 3: USER & GROUP MANAGEMENT
+═══════════════════════════════════════════ -->
+<div id="ch3">
+  <div class="chap-head ch3">
+    <div><span class="chap-num">Chapter 3</span>
+      <div class="chap-title">👤 User &amp; Group Management</div>
+      <div class="chap-sub">useradd, usermod, passwd, chage, sudo, groups, su — user lifecycle management</div>
+    </div>
+    <div class="q-count">5 Questions</div>
+  </div>
+
+  <!-- Q3.1 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 3.1</span>
+      <span class="q-level lv-i">Intermediate</span>
+      <div>
+        <div class="q-title">Onboard a new DevOps engineer with proper sudo access, SSH key setup, and password policy</div>
+        <div class="q-tags"><span class="tag">useradd</span><span class="tag">usermod</span><span class="tag">passwd</span><span class="tag">chage</span><span class="tag">sudo</span></div>
+      </div>
+    </div>
+    <div class="q-body">
+      <div class="scenario">
+        <div class="slabel">🧩 Scenario</div>
+        <p>A new DevOps engineer "Alice" joins the team. She needs: a Linux account on 5 production servers, membership in the <strong>devops</strong> and <strong>docker</strong> groups, sudo privileges for specific commands only, SSH key authentication, and a 90-day password expiry policy.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Create user account with home directory and shell</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo useradd</span> <span class="fl">-m -s</span> /bin/bash <span class="fl">-c</span> <span class="st">"Alice DevOps"</span> alice
+<span class="co"># -m: create home directory
+# -s: set login shell
+# -c: comment/description</span>
+
+<span class="co"># Set temporary password (force change on first login)</span>
+<span class="cm">sudo passwd</span> alice
+<span class="cm">sudo passwd</span> <span class="fl">-e</span> alice    <span class="co"># -e: expire immediately, force change at login</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Add to required groups</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Add to supplementary groups (devops, docker)</span>
+<span class="cm">sudo usermod</span> <span class="fl">-aG</span> devops,docker alice
+<span class="co"># CRITICAL: -aG = APPEND to groups. Without -a, existing groups are REPLACED!</span>
+
+<span class="co"># Verify group membership</span>
+<span class="cm">id</span> alice
+<span class="cm">groups</span> alice</code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Configure sudo access for specific commands only</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># ALWAYS edit sudoers with visudo (syntax validation!)</span>
+<span class="cm">sudo visudo</span> <span class="fl">-f</span> /etc/sudoers.d/alice
+
+<span class="co"># Add to file /etc/sudoers.d/alice:</span>
+<span class="co"># alice ALL=(ALL) NOPASSWD: /usr/bin/systemctl, /usr/bin/docker</span>
+<span class="co"># alice ALL=(ALL) /usr/bin/apt-get, !/usr/bin/apt-get install curl</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">4</span><div class="step-body">
+          <div class="step-desc"><strong>Set up SSH key authentication</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Create .ssh directory with correct permissions</span>
+<span class="cm">sudo mkdir</span> <span class="fl">-p</span> /home/alice/.ssh
+<span class="cm">sudo chmod</span> 700 /home/alice/.ssh
+
+<span class="co"># Add her public key</span>
+<span class="cm">echo</span> <span class="st">"ssh-ed25519 AAAA...her_public_key alice@laptop"</span> | \
+    <span class="cm">sudo tee</span> /home/alice/.ssh/authorized_keys
+
+<span class="co"># Strict permissions on authorized_keys</span>
+<span class="cm">sudo chmod</span> 600 /home/alice/.ssh/authorized_keys
+<span class="cm">sudo chown</span> <span class="fl">-R</span> alice:alice /home/alice/.ssh</code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">5</span><div class="step-body">
+          <div class="step-desc"><strong>Set password expiry policy with chage</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Set password to expire in 90 days, warn at 7 days</span>
+<span class="cm">sudo chage</span> <span class="fl">-M 90 -W 7 -I 14</span> alice
+<span class="co"># -M 90: max password age = 90 days
+# -W 7:  warn 7 days before expiry
+# -I 14: lock account if inactive 14 days after expiry</span>
+
+<span class="co"># View password aging info</span>
+<span class="cm">sudo chage</span> <span class="fl">-l</span> alice</code></pre></div>
+        </div></div>
+      </div>
+
+      <div class="mistakes">
+        <div class="mis-label">⚠️ Common Mistakes</div>
+        <ul>
+          <li>usermod -G groups (without -a) REPLACES all supplementary groups — user loses existing group memberships</li>
+          <li>Directly editing /etc/sudoers instead of visudo — a syntax error can lock out ALL sudo access</li>
+          <li>Not setting correct permissions on .ssh directory — SSH will refuse key auth if .ssh is group/world readable</li>
+        </ul>
+      </div>
+
+      <div class="tips">
+        <div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>The -aG distinction is one of the most commonly tested Linux admin questions</li>
+          <li>RHCSA exam specifically tests: useradd, usermod -aG, chage, visudo, and SSH key setup</li>
+          <li>Mention that group changes take effect at next login — use <span class="ic2">newgrp groupname</span> for immediate effect in current session</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q3.2 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 3.2</span>
+      <span class="q-level lv-a">Advanced</span>
+      <div>
+        <div class="q-title">Find all users with UID 0 (root equivalents) and audit sudo access — security hardening</div>
+        <div class="q-tags"><span class="tag">awk</span><span class="tag">passwd</span><span class="tag">sudo</span><span class="tag">security</span></div>
+      </div>
+    </div>
+    <div class="q-body">
+      <div class="scenario">
+        <div class="slabel">🧩 Scenario</div>
+        <p>Your security team audited the server and wants a report of: all users with UID=0 (root equivalents), all accounts that can run sudo, accounts with no password, and accounts with expired passwords.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># 1. Find all UID=0 accounts (root equivalents — should be ONLY root!)</span>
+<span class="cm">awk</span> <span class="fl">-F:</span> <span class="st">'$3 == 0 {print "UID-0 account:", $1}'</span> /etc/passwd
+
+<span class="co"># 2. Find users with NO password (!! or empty in /etc/shadow)</span>
+<span class="cm">sudo awk</span> <span class="fl">-F:</span> <span class="st">'$2 == "" || $2 == "!!" {print "No password:", $1}'</span> /etc/shadow
+
+<span class="co"># 3. Find accounts not logged in for 90+ days</span>
+<span class="cm">sudo lastlog</span> | <span class="cm">awk</span> <span class="st">'NR>1 && $0 !~ "Never" {print}'</span>
+
+<span class="co"># 4. List all users who can run sudo</span>
+<span class="cm">sudo grep</span> <span class="fl">-r</span> <span class="st">"ALL=\|sudo"</span> /etc/sudoers /etc/sudoers.d/ 2>/dev/null
+
+<span class="co"># 5. Find all human users (UID >= 1000)</span>
+<span class="cm">awk</span> <span class="fl">-F:</span> <span class="st">'$3 >= 1000 && $3 != 65534 {print $1, $3, $6}'</span> /etc/passwd
+
+<span class="co"># 6. Find users with shell access (not /sbin/nologin)</span>
+<span class="cm">grep</span> <span class="fl">-v</span> <span class="st">"\(nologin\|false\)"</span> /etc/passwd | <span class="cm">awk</span> <span class="fl">-F:</span> <span class="st">'{print $1, $7}'</span></code></pre></div>
+      </div>
+
+      <div class="tips">
+        <div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>Service accounts should have /sbin/nologin or /bin/false as shell — prevents interactive login</li>
+          <li>UID 0 accounts besides root are a critical security finding in any audit</li>
+          <li>RHCE/CIS Benchmark: lock inactive accounts with <span class="ic2">usermod -L username</span> and set expiry with <span class="ic2">chage -E 0 username</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /ch3 -->
+
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 4: DISK MANAGEMENT
+═══════════════════════════════════════════ -->
+<div id="ch4">
+  <div class="chap-head ch4">
+    <div><span class="chap-num">Chapter 4</span>
+      <div class="chap-title">💾 Disk Management (Partitions, LVM, Mounting)</div>
+      <div class="chap-sub">lsblk, fdisk, parted, df, du, mkfs, mount, LVM, fstab</div>
+    </div>
+    <div class="q-count">6 Questions</div>
+  </div>
+
+  <!-- Q4.1 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 4.1</span>
+      <span class="q-level lv-a">Advanced</span>
+      <div>
+        <div class="q-title">Production database server running out of space at 3 AM — extend LVM volume online without downtime</div>
+        <div class="q-tags"><span class="tag">LVM</span><span class="tag">lvextend</span><span class="tag">resize2fs</span><span class="tag">vgextend</span></div>
+      </div>
+    </div>
+    <div class="q-body">
+      <div class="scenario">
+        <div class="slabel">🧩 Scenario</div>
+        <p>PostgreSQL on a production server is failing with "No space left on device" at 3 AM. <strong>/var/lib/postgresql</strong> is on an LVM logical volume. A new 100GB EBS volume has been attached to the server. The database CANNOT be stopped.</p>
+      </div>
+      <div class="problem">
+        <div class="plabel">❓ Problem Statement</div>
+        <p>Extend the LVM volume while PostgreSQL is running, add new disk to the volume group, grow the filesystem online — zero downtime.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Identify current state</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">df</span> <span class="fl">-h</span> /var/lib/postgresql
+<span class="out"># /dev/mapper/vg0-lv_pgsql   50G   50G    0  100% /var/lib/postgresql</span>
+
+<span class="cm">lvs</span>    <span class="co"># Show LVs</span>
+<span class="cm">vgs</span>    <span class="co"># Show VGs and FREE SPACE</span>
+<span class="cm">pvs</span>    <span class="co"># Show PVs</span>
+<span class="cm">lsblk</span>  <span class="co"># Identify new attached disk (e.g., /dev/xvdb)</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Initialize new disk as LVM physical volume</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo pvcreate</span> /dev/xvdb
+<span class="out"># Physical volume "/dev/xvdb" successfully created</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Add new PV to existing volume group</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo vgextend</span> vg0 /dev/xvdb
+<span class="out"># Volume group "vg0" successfully extended</span>
+
+<span class="cm">vgs</span>  <span class="co"># Verify — VFree should now show 100G</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">4</span><div class="step-body">
+          <div class="step-desc"><strong>Extend logical volume AND filesystem in one command (ONLINE!)</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># -r flag: resize filesystem automatically after LV extension</span>
+<span class="cm">sudo lvextend</span> <span class="fl">-L +100G -r</span> /dev/vg0/lv_pgsql
+<span class="out"># Size of logical volume vg0/lv_pgsql changed from 50 GiB to 150 GiB
+# Filesystem resize successful — NO DOWNTIME!</span>
+
+<span class="co"># Verify — PostgreSQL never stopped</span>
+<span class="cm">df</span> <span class="fl">-h</span> /var/lib/postgresql
+<span class="out"># /dev/mapper/vg0-lv_pgsql  150G  50G  100G  34% /var/lib/postgresql</span></code></pre></div>
+        </div></div>
+      </div>
+
+      <div class="alt">
+        <div class="alt-label">🔄 Without the -r flag (manual filesystem resize)</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Extend LV only</span>
+<span class="cm">sudo lvextend</span> <span class="fl">-L +100G</span> /dev/vg0/lv_pgsql
+
+<span class="co"># Then grow filesystem manually:</span>
+<span class="co"># For ext4 (can be done ONLINE on mounted filesystem):</span>
+<span class="cm">sudo resize2fs</span> /dev/vg0/lv_pgsql
+
+<span class="co"># For XFS (also online):</span>
+<span class="cm">sudo xfs_growfs</span> /var/lib/postgresql
+
+<span class="co"># IMPORTANT: XFS cannot be SHRUNK — plan carefully</span></code></pre></div>
+      </div>
+
+      <div class="mistakes">
+        <div class="mis-label">⚠️ Common Mistakes</div>
+        <ul>
+          <li>Trying to shrink XFS — it's not supported. Plan ahead or use ext4 if shrinking is needed</li>
+          <li>Shrinking LV before shrinking filesystem — data corruption! Always: shrink filesystem first, then LV</li>
+          <li>Forgetting -r flag — extending LV without growing filesystem leaves the extra space unusable</li>
+        </ul>
+      </div>
+
+      <div class="tips">
+        <div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>This scenario is RHCSA exam content — know the 4-step flow: pvcreate → vgextend → lvextend -r</li>
+          <li>ext4 and XFS can both be grown online (while mounted). Only ext4 can be shrunk (offline only)</li>
+          <li>Always verify with <span class="ic2">vgs</span> that VFree is sufficient before attempting to extend</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q4.2 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 4.2</span>
+      <span class="q-level lv-i">Intermediate</span>
+      <div>
+        <div class="q-title">Mount NFS share persistently in /etc/fstab and handle boot failure gracefully with nofail</div>
+        <div class="q-tags"><span class="tag">mount</span><span class="tag">fstab</span><span class="tag">NFS</span><span class="tag">blkid</span></div>
+      </div>
+    </div>
+    <div class="q-body">
+      <div class="scenario">
+        <div class="slabel">🧩 Scenario</div>
+        <p>A data engineering team needs an NFS share from the file server (10.0.1.100:/data/shared) mounted on all compute nodes at <strong>/mnt/shared-data</strong>. The mount must persist after reboot, and servers should still boot successfully even if the NFS server is temporarily unavailable.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Test the NFS mount manually first</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo mkdir</span> <span class="fl">-p</span> /mnt/shared-data
+<span class="cm">sudo mount</span> <span class="fl">-t nfs</span> 10.0.1.100:/data/shared /mnt/shared-data
+<span class="cm">df</span> <span class="fl">-h</span> /mnt/shared-data  <span class="co"># Verify it works</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Add to /etc/fstab with production-safe options</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo nano</span> /etc/fstab
+<span class="co"># Add line:</span>
+<span class="st">10.0.1.100:/data/shared  /mnt/shared-data  nfs  defaults,_netdev,nofail,soft,timeo=15,retrans=3  0 0</span>
+
+<span class="co"># Options explained:
+# _netdev:  wait for network before mounting (critical for NFS at boot)
+# nofail:   don't fail boot if NFS unavailable
+# soft:     timeout instead of hanging indefinitely  
+# timeo=15: 1.5 second NFS timeout
+# retrans=3: retry 3 times before giving up</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Verify fstab is correct BEFORE rebooting</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo umount</span> /mnt/shared-data
+<span class="cm">sudo mount</span> <span class="fl">-a</span>              <span class="co"># Mount all in fstab — shows errors immediately</span>
+<span class="cm">sudo findmnt</span> <span class="fl">--verify</span>     <span class="co"># Verify fstab syntax</span>
+<span class="cm">df</span> <span class="fl">-h</span> /mnt/shared-data</code></pre></div>
+        </div></div>
+      </div>
+
+      <div class="mistakes">
+        <div class="mis-label">⚠️ Common Mistakes</div>
+        <ul>
+          <li>Missing _netdev — system tries to mount before network is up, fails at boot</li>
+          <li>Missing nofail — if NFS server is down, server gets stuck in emergency mode at boot</li>
+          <li>Not testing with mount -a before rebooting — a bad fstab entry renders the server unbootable</li>
+        </ul>
+      </div>
+
+      <div class="tips">
+        <div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>The nofail + _netdev combination is the correct production pattern for any network-dependent mount</li>
+          <li>For local block devices, use UUID= instead of /dev/sdX — device names can change on reboot</li>
+          <li><span class="ic2">sudo blkid /dev/sdb1</span> gets the UUID for fstab entries</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /ch4 -->
+
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 5: PACKAGE MANAGEMENT
+═══════════════════════════════════════════ -->
+<div id="ch5">
+  <div class="chap-head ch5">
+    <div><span class="chap-num">Chapter 5</span>
+      <div class="chap-title">📦 Package Management</div>
+      <div class="chap-sub">apt-get, yum, dnf, rpm, dpkg — Debian and Red Hat ecosystems</div>
+    </div>
+    <div class="q-count">5 Questions</div>
+  </div>
+
+  <!-- Q5.1 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 5.1</span>
+      <span class="q-level lv-i">Intermediate</span>
+      <div>
+        <div class="q-title">Kubernetes cluster upgrade fails — package held at wrong version, need to pin and upgrade carefully</div>
+        <div class="q-tags"><span class="tag">apt-get</span><span class="tag">apt-mark</span><span class="tag">apt-cache</span><span class="tag">dpkg</span></div>
+      </div>
+    </div>
+    <div class="q-body">
+      <div class="scenario">
+        <div class="slabel">🧩 Scenario</div>
+        <p>During a Kubernetes upgrade, <span class="ic2">apt-get upgrade</span> accidentally upgraded kubeadm from 1.28 to 1.29. The worker nodes need to stay on 1.28 until the control plane is updated. You need to: rollback kubeadm to 1.28, pin all kube packages at 1.28, then perform a controlled upgrade later.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Check available versions of kubeadm</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">apt-cache</span> madison kubeadm
+<span class="out"># kubeadm | 1.29.0-1.1 | https://pkgs.k8s.io ...
+# kubeadm | 1.28.4-1.1 | https://pkgs.k8s.io ...
+# kubeadm | 1.28.3-1.1 | https://pkgs.k8s.io ...</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Downgrade kubeadm to specific version</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo apt-get install</span> <span class="fl">-y</span> <span class="st">kubeadm=1.28.4-1.1</span> <span class="fl">--allow-downgrades</span>
+<span class="cm">kubeadm version</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Pin all kube packages to prevent accidental upgrade</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo apt-mark hold</span> kubeadm kubelet kubectl
+<span class="out"># kubeadm set on hold
+# kubelet set on hold
+# kubectl set on hold</span>
+
+<span class="co"># Verify held packages</span>
+<span class="cm">sudo apt-mark showhold</span>
+<span class="out"># kubeadm
+# kubelet
+# kubectl</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">4</span><div class="step-body">
+          <div class="step-desc"><strong>When ready to upgrade — unhold, upgrade specific version, re-hold</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Unhold</span>
+<span class="cm">sudo apt-mark unhold</span> kubeadm kubelet kubectl
+
+<span class="co"># Upgrade to specific version</span>
+<span class="cm">sudo apt-get install</span> <span class="fl">-y</span> \
+    kubeadm=1.29.0-1.1 \
+    kubelet=1.29.0-1.1 \
+    kubectl=1.29.0-1.1
+
+<span class="co"># Re-hold at new version</span>
+<span class="cm">sudo apt-mark hold</span> kubeadm kubelet kubectl</code></pre></div>
+        </div></div>
+      </div>
+
+      <div class="alt">
+        <div class="alt-label">🔄 RHEL/CentOS equivalent with yum-versionlock</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Install versionlock plugin</span>
+<span class="cm">sudo yum install</span> <span class="fl">-y</span> yum-versionlock
+<span class="co"># or for dnf:</span>
+<span class="cm">sudo dnf install</span> <span class="fl">-y</span> python3-dnf-plugin-versionlock
+
+<span class="co"># Lock versions</span>
+<span class="cm">sudo yum versionlock add</span> kubeadm kubelet kubectl
+
+<span class="co"># List locked packages</span>
+<span class="cm">sudo yum versionlock list</span>
+
+<span class="co"># Remove lock</span>
+<span class="cm">sudo yum versionlock delete</span> kubeadm</code></pre></div>
+      </div>
+
+      <div class="tips">
+        <div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>apt-mark hold is the standard Kubernetes upgrade safety mechanism — all K8s docs reference it</li>
+          <li>Always check <span class="ic2">apt-cache policy package-name</span> before upgrading — see exactly which version will be installed and from which repository</li>
+          <li>In Docker best practices: always pin versions in Dockerfile: <span class="ic2">apt-get install nginx=1.24.*</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q5.2 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 5.2</span>
+      <span class="q-level lv-i">Intermediate</span>
+      <div>
+        <div class="q-title">Find which package owns a missing library causing application crash — rpm/dpkg forensics</div>
+        <div class="q-tags"><span class="tag">rpm</span><span class="tag">dpkg</span><span class="tag">ldd</span><span class="tag">ldconfig</span></div>
+      </div>
+    </div>
+    <div class="q-body">
+      <div class="scenario">
+        <div class="slabel">🧩 Scenario</div>
+        <p>After a server migration, a Python application crashes with: <code>ImportError: libpq.so.5: cannot open shared object file</code>. You need to find which package provides this library and install it.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>On Debian/Ubuntu — find which package provides the library</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Search for package providing libpq.so.5</span>
+<span class="cm">apt-cache search</span> libpq
+<span class="cm">apt-file search</span> libpq.so.5    <span class="co"># Requires: apt-get install apt-file</span>
+<span class="out"># libpq5: /usr/lib/x86_64-linux-gnu/libpq.so.5</span>
+
+<span class="co"># Install it</span>
+<span class="cm">sudo apt-get install</span> libpq5</code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>On RHEL/CentOS — find package providing the library</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">yum provides</span> <span class="st">'*/libpq.so.5'</span>
+<span class="out"># postgresql-libs-13.3.x86_64 provides libpq.so.5</span>
+
+<span class="co"># Or with rpm for already-installed packages:</span>
+<span class="cm">rpm</span> <span class="fl">-qf</span> /usr/lib64/libpq.so.5
+<span class="out"># postgresql-libs-13.3-1.el8.x86_64</span></code></pre></div>
+        </div></div>
+
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Verify library is found by linker</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">ldconfig</span> <span class="fl">-p</span> | <span class="cm">grep</span> libpq
+<span class="co"># If empty: sudo ldconfig  (update library cache)</span>
+
+<span class="co"># Check what libraries an application needs</span>
+<span class="cm">ldd</span> /usr/bin/myapp
+<span class="out"># libpq.so.5 => /usr/lib/x86_64-linux-gnu/libpq.so.5 ✓
+# libssl.so.3 => not found ← next problem to fix!</span></code></pre></div>
+        </div></div>
+      </div>
+
+      <div class="tips">
+        <div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li><span class="ic2">ldd binary</span> shows ALL shared libraries an application needs — great for diagnosing missing library errors</li>
+          <li><span class="ic2">rpm -qf /path/to/file</span> is the RPM equivalent of <span class="ic2">dpkg -S /path/to/file</span> — both identify the owner package</li>
+          <li>After installing libraries: always run <span class="ic2">sudo ldconfig</span> to refresh the dynamic linker cache</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /ch5 -->
+
+</main>
+
+<footer>
+  <strong>Linux Interview Preparation Guide</strong> &nbsp;|&nbsp; Chapters 1–5 &nbsp;|&nbsp; Part 1 of 2 &nbsp;|&nbsp; DevOps · Data Engineering · AI-ML Engineering
+</footer>
+</body>
+</html>

@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Section 8 — Package Management</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --navy:       #0B1F3A;
+    --blue:       #1565C0;
+    --sky:        #1E88E5;
+    --teal:       #00897B;
+    --green:      #2E7D32;
+    --amber:      #E65100;
+    --red:        #B71C1C;
+    --purple:     #6A1B9A;
+    --indigo:     #283593;
+    --orange:     #BF360C;
+    --bg:         #F3F6FC;
+    --surface:    #FFFFFF;
+    --surface2:   #EBF2FB;
+    --border:     #C9D8F0;
+    --text:       #0F1C2E;
+    --text2:      #2C3E5A;
+    --text3:      #556070;
+    --code-bg:    #0C1824;
+    --shadow-sm:  0 1px 4px rgba(11,31,58,.07), 0 1px 2px rgba(11,31,58,.05);
+    --shadow-md:  0 4px 16px rgba(11,31,58,.10), 0 2px 6px rgba(11,31,58,.07);
+    --shadow-lg:  0 12px 40px rgba(11,31,58,.13), 0 4px 14px rgba(11,31,58,.08);
+    --r:          14px;
+    --r-sm:       9px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    min-height: 100vh;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ═══════════ HERO ═══════════ */
+  .hero {
+    background: linear-gradient(145deg, #071428 0%, #0B2040 35%, #0D3060 65%, #1A237E 100%);
+    padding: 72px 24px 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(30,136,229,.18) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 20%, rgba(0,137,123,.12) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero-inner { position: relative; z-index: 1; }
+
+  .hero-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.09);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #90CAF9;
+    font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 7px 20px; border-radius: 100px;
+    margin-bottom: 22px;
+  }
+
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 800; line-height: 1.15;
+    letter-spacing: -0.03em; color: #fff;
+    margin-bottom: 14px;
+  }
+  .hero h1 em { font-style: normal; color: #64B5F6; }
+
+  .hero-desc {
+    font-size: 1rem; color: #90CAF9; max-width: 580px;
+    margin: 0 auto 28px; line-height: 1.7;
+  }
+
+  .hero-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .chip {
+    background: rgba(255,255,255,0.09);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #B3E5FC; font-size: 0.76rem; font-weight: 500;
+    padding: 5px 15px; border-radius: 100px;
+  }
+
+  /* ═══════════ STICKY NAV ═══════════ */
+  .nav-bar {
+    position: sticky; top: 0; z-index: 200;
+    background: rgba(255,255,255,0.93);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .nav-inner {
+    max-width: 1160px; margin: 0 auto;
+    display: flex; align-items: center; gap: 2px;
+    height: 52px; padding: 0 20px;
+    overflow-x: auto; white-space: nowrap;
+  }
+  .nav-inner a {
+    text-decoration: none; color: var(--text2);
+    font-size: 0.8rem; font-weight: 500;
+    padding: 5px 13px; border-radius: 100px;
+    transition: all 0.16s; flex-shrink: 0;
+  }
+  .nav-inner a:hover { background: var(--surface2); color: var(--sky); }
+  .nav-sep { color: var(--border); font-size: 1.2rem; margin: 0 2px; flex-shrink: 0; }
+
+  /* ═══════════ LAYOUT ═══════════ */
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 44px 22px 90px; }
+
+  /* ═══════════ INTRO BANNER ═══════════ */
+  .intro-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px; margin-bottom: 42px;
+  }
+  .intro-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 20px 22px;
+    display: flex; gap: 14px; align-items: flex-start;
+    box-shadow: var(--shadow-sm);
+  }
+  .intro-card .ico { font-size: 1.7rem; flex-shrink: 0; }
+  .intro-card h3 {
+    font-size: 0.72rem; font-weight: 700; color: var(--blue);
+    text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 5px;
+  }
+  .intro-card p { font-size: 0.85rem; color: var(--text2); line-height: 1.65; }
+
+  /* ═══════════ CMD CARD ═══════════ */
+  .cmd-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    box-shadow: var(--shadow-md);
+    margin-bottom: 44px;
+    overflow: hidden;
+  }
+
+  /* Header variants */
+  .cmd-head {
+    padding: 22px 28px;
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  }
+  .head-apt    { background: linear-gradient(135deg, #0D3060 0%, #1565C0 100%); }
+  .head-yum    { background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%); }
+  .head-dnf    { background: linear-gradient(135deg, #1A237E 0%, #283593 100%); }
+  .head-rpm    { background: linear-gradient(135deg, #4A148C 0%, #6A1B9A 100%); }
+  .head-dpkg   { background: linear-gradient(135deg, #B71C1C 0%, #C62828 100%); }
+  .head-aptcache { background: linear-gradient(135deg, #004D40 0%, #00695C 100%); }
+
+  .cmd-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.25rem; font-weight: 700;
+    background: rgba(255,255,255,0.13);
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 8px; padding: 6px 18px;
+    flex-shrink: 0;
+  }
+  .apt-color     { color: #82B1FF; }
+  .yum-color     { color: #69F0AE; }
+  .dnf-color     { color: #82B1FF; }
+  .rpm-color     { color: #E040FB; }
+  .dpkg-color    { color: #FF8A80; }
+  .aptcache-color{ color: #64FFDA; }
+
+  .cmd-meta { flex: 1; min-width: 200px; }
+  .cmd-label { color: rgba(255,255,255,0.5); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+  .cmd-tagline { color: #fff; font-size: 0.95rem; font-weight: 600; margin-top: 2px; }
+
+  .cmd-body { padding: 28px; }
+
+  /* ═══════════ SECTION LABELS ═══════════ */
+  .sec-label {
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--border);
+    margin: 30px 0 14px;
+  }
+  .sec-label:first-of-type { margin-top: 0; }
+  .sec-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--blue); color: #fff;
+    font-size: 0.68rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .sec-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+
+  .sub { font-size: 0.75rem; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: 0.09em; margin: 18px 0 8px; }
+
+  .desc { font-size: 0.88rem; color: var(--text2); line-height: 1.82; margin-bottom: 11px; }
+
+  /* ═══════════ INLINE CODE ═══════════ */
+  ic, code.ic {
+    display: inline;
+    font-family: 'JetBrains Mono', monospace;
+    background: #E8F0FE; color: #B71C1C;
+    padding: 2px 7px; border-radius: 4px;
+    font-size: 0.8rem; border: 1px solid #C5D5FB;
+  }
+
+  /* ═══════════ CODE BLOCK ═══════════ */
+  .code-wrap { margin-bottom: 14px; border-radius: var(--r-sm); overflow: hidden; }
+  .code-top {
+    background: #162033;
+    padding: 8px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.7rem; font-weight: 700;
+    color: #4D7099; letter-spacing: 0.09em; text-transform: uppercase;
+  }
+  .code-top .lang { color: #4DB6FF; }
+  pre.cb {
+    background: var(--code-bg);
+    padding: 18px 20px;
+    overflow-x: auto; margin: 0;
+    border-top: 1px solid #1E2F45;
+  }
+  pre.cb code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem; line-height: 1.85;
+    color: #A8D8FF; background: none; padding: 0;
+  }
+  .c  { color: #5FAD5E; }   /* comment */
+  .k  { color: #FF8A80; font-weight: 600; } /* keyword */
+  .cm { color: #82CFFF; }   /* command */
+  .fl { color: #FFCC80; }   /* flag */
+  .st { color: #A5D6A7; }   /* string */
+  .sc { color: #CE93D8; font-weight: 600; } /* section */
+  .di { color: #FFD54F; }   /* directive */
+  .nu { color: #80CBC4; }   /* number */
+
+  /* ═══════════ FLAG TABLE ═══════════ */
+  .tbl-wrap { overflow-x: auto; border-radius: var(--r-sm); border: 1px solid var(--border); margin-bottom: 14px; }
+  table.ft { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  table.ft thead tr { background: linear-gradient(90deg, #0D2547, #1565C0); }
+  table.ft thead th { padding: 11px 14px; color: #fff; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; text-align: left; border: none; white-space: nowrap; }
+  table.ft tbody tr:nth-child(odd)  { background: #FAFCFF; }
+  table.ft tbody tr:nth-child(even) { background: #EEF4FB; }
+  table.ft tbody tr:hover { background: #DDE8F8; }
+  table.ft td { padding: 9px 14px; border-bottom: 1px solid #E0EAF8; vertical-align: top; color: var(--text2); line-height: 1.55; }
+  table.ft td:first-child { font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; font-weight: 600; color: #B71C1C; white-space: nowrap; border-right: 1px solid var(--border); }
+  table.ft td:last-child  { font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; color: #37474F; background: rgba(0,0,0,0.015); }
+  table.ft .cat td { background: linear-gradient(90deg, #E3EAF8, #EEF4FB) !important; font-weight: 700; font-size: 0.72rem; color: var(--navy); text-transform: uppercase; letter-spacing: 0.07em; padding: 7px 14px; font-family: 'Inter', sans-serif; }
+
+  /* ═══════════ CALLOUT ═══════════ */
+  .box {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 14px 18px; border-radius: var(--r-sm);
+    margin-bottom: 11px; font-size: 0.86rem; line-height: 1.7;
+  }
+  .box .bi { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .box strong { display: block; margin-bottom: 3px; font-size: 0.83rem; }
+  .box.info   { background: #E3F2FD; border-left: 4px solid #1E88E5; color: #0D2B4E; }
+  .box.tip    { background: #E8F5E9; border-left: 4px solid #43A047; color: #1B5E20; }
+  .box.warn   { background: #FFF8E1; border-left: 4px solid #F9A825; color: #4E342E; }
+  .box.danger { background: #FEEBEA; border-left: 4px solid #E53935; color: #7F1D1D; }
+  .box.purple { background: #F3E5F5; border-left: 4px solid #8E24AA; color: #3E0D5C; }
+  .box.teal   { background: #E0F2F1; border-left: 4px solid #00897B; color: #004D40; }
+  .box.orange { background: #FBE9E7; border-left: 4px solid #E64A19; color: #4E1500; }
+
+  /* ═══════════ Q&A ═══════════ */
+  .qa-stack { display: flex; flex-direction: column; gap: 11px; }
+  .qa {
+    border-radius: var(--r-sm); overflow: hidden;
+    border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  }
+  .qa-q {
+    background: linear-gradient(90deg, #0D2547, #1A3D6B);
+    padding: 12px 16px; display: flex; gap: 10px; align-items: flex-start;
+    font-size: 0.86rem; font-weight: 600; color: #E3F2FD;
+  }
+  .qb { background: rgba(255,255,255,0.14); color: #64B5F6; font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+  .qa-a { background: #fff; padding: 13px 16px 13px 34px; font-size: 0.86rem; color: var(--text2); line-height: 1.78; border-top: 1px solid var(--border); }
+  .qa-a .al { color: var(--teal); font-weight: 700; margin-right: 5px; }
+
+  /* ═══════════ BULLET LIST ═══════════ */
+  ul.bl { list-style: none; padding: 0; margin-bottom: 10px; }
+  ul.bl li { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid #F0F4FB; font-size: 0.86rem; color: var(--text2); line-height: 1.65; }
+  ul.bl li:last-child { border-bottom: none; }
+  ul.bl li::before { content: '▸'; color: var(--sky); flex-shrink: 0; margin-top: 2px; font-size: 0.72rem; }
+  ul.bl li strong { color: var(--text); }
+
+  /* ═══════════ DISTRO BADGE ═══════════ */
+  .distro-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .dbadge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.75rem; font-weight: 700; padding: 4px 13px;
+    border-radius: 100px; border: 1px solid;
+  }
+  .dbadge.deb  { background: #E3F2FD; color: #0D47A1; border-color: #90CAF9; }
+  .dbadge.rhel { background: #FEEBEA; color: #B71C1C; border-color: #EF9A9A; }
+  .dbadge.gen  { background: #F3E5F5; color: #6A1B9A; border-color: #CE93D8; }
+
+  /* ═══════════ COMPARISON TABLE ═══════════ */
+  .cmp-wrap { overflow-x: auto; border-radius: var(--r-sm); border: 1px solid var(--border); margin-bottom: 14px; }
+  table.cmp { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  table.cmp thead tr { background: linear-gradient(90deg, #0B1F3A, #1565C0); }
+  table.cmp thead th { padding: 11px 14px; color: #fff; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; text-align: left; border: none; }
+  table.cmp tbody tr:nth-child(odd)  { background: #FAFCFF; }
+  table.cmp tbody tr:nth-child(even) { background: #EEF4FB; }
+  table.cmp tbody tr:hover { background: #DDE8F8; }
+  table.cmp td { padding: 9px 14px; border-bottom: 1px solid #E0EAF8; color: var(--text2); vertical-align: top; font-size: 0.83rem; }
+  table.cmp td:first-child { font-weight: 600; color: var(--navy); }
+  .yes  { color: #2E7D32; font-weight: 700; }
+  .no   { color: #B71C1C; }
+  .par  { color: #E65100; font-weight: 600; }
+
+  /* ═══════════ CHEAT SHEET ═══════════ */
+  .cheat {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); box-shadow: var(--shadow-md);
+    overflow: hidden; margin-bottom: 44px;
+  }
+  .cheat-head {
+    padding: 18px 26px;
+    background: linear-gradient(135deg, #004D40, #00695C);
+  }
+  .cheat-head h2 { color: #fff; font-size: 1rem; font-weight: 700; }
+  .cheat-head p  { color: #B2DFDB; font-size: 0.82rem; margin-top: 3px; }
+  table.ct { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  table.ct tr { border-bottom: 1px solid #C8E6E1; }
+  table.ct tr:nth-child(odd)  { background: #F5FFFE; }
+  table.ct tr:nth-child(even) { background: #E8FAF7; }
+  table.ct tr:hover { background: #D0F0E8; }
+  table.ct td { padding: 9px 16px; vertical-align: middle; }
+  table.ct td:first-child { font-family: 'JetBrains Mono', monospace; color: #00695C; font-size: 0.77rem; font-weight: 600; border-right: 1px solid #C8E6E1; background: rgba(0,105,92,.04); width: 48%; }
+  table.ct td:last-child  { color: var(--text2); }
+  .ct-section td { background: linear-gradient(90deg, #004D40, #00695C) !important; color: #fff !important; font-weight: 700 !important; font-size: 0.7rem !important; letter-spacing: 0.1em; text-transform: uppercase; font-family: 'Inter', sans-serif !important; padding: 7px 16px !important; border-bottom: none !important; }
+
+  /* ═══════════ FINAL TIP ═══════════ */
+  .final-tip {
+    background: linear-gradient(135deg, #0D1B4E, #1A237E);
+    border-radius: var(--r); padding: 28px 32px;
+    display: flex; gap: 18px; align-items: flex-start;
+    box-shadow: var(--shadow-lg); margin-bottom: 44px;
+  }
+  .final-tip .ti { font-size: 2.2rem; flex-shrink: 0; }
+  .final-tip h3 { color: #BBDEFB; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+  .final-tip p  { color: #E3F2FD; font-size: 0.9rem; line-height: 1.82; }
+
+  /* ═══════════ FOOTER ═══════════ */
+  footer { text-align: center; padding: 24px; border-top: 1px solid var(--border); font-size: 0.76rem; color: var(--text3); }
+  footer strong { color: var(--blue); }
+
+  /* ═══════════ RESPONSIVE ═══════════ */
+  @media (max-width: 660px) {
+    .hero { padding: 44px 16px 40px; }
+    .wrap { padding: 22px 12px 60px; }
+    .cmd-body { padding: 16px; }
+    table.ft td:last-child { display: none; }
+    .final-tip { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ HERO ══════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-pill">🐧 Linux Commands — Interview Guide</div>
+    <h1>Section 8:<br><em>Package Management</em></h1>
+    <p class="hero-desc">Master apt-get, apt-cache, yum, dnf, rpm, and dpkg — the six package management commands asked in virtually every DevOps, Data Engineering, and AI-ML infrastructure interview.</p>
+    <div class="hero-chips">
+      <span class="chip">📦 apt-get</span>
+      <span class="chip">🔍 apt-cache</span>
+      <span class="chip">🔴 yum</span>
+      <span class="chip">🔵 dnf</span>
+      <span class="chip">⚙ rpm</span>
+      <span class="chip">🟣 dpkg</span>
+      <span class="chip">🚀 DevOps</span>
+      <span class="chip">📊 Data Engineering</span>
+      <span class="chip">🤖 AI-ML Infra</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════ STICKY NAV ══════════ -->
+<nav class="nav-bar">
+  <div class="nav-inner">
+    <a href="#apt-get">📦 apt-get</a>
+    <span class="nav-sep">·</span>
+    <a href="#apt-cache">🔍 apt-cache</a>
+    <span class="nav-sep">·</span>
+    <a href="#yum">🔴 yum</a>
+    <span class="nav-sep">·</span>
+    <a href="#dnf">🔵 dnf</a>
+    <span class="nav-sep">·</span>
+    <a href="#rpm">⚙ rpm</a>
+    <span class="nav-sep">·</span>
+    <a href="#dpkg">🟣 dpkg</a>
+    <span class="nav-sep">·</span>
+    <a href="#cheatsheet">📋 Cheat Sheet</a>
+  </div>
+</nav>
+
+<!-- ══════════ MAIN ══════════ -->
+<main class="wrap">
+
+  <!-- Intro cards -->
+  <div class="intro-grid">
+    <div class="intro-card">
+      <span class="ico">📦</span>
+      <div>
+        <h3>Commands Covered</h3>
+        <p>apt-get, apt-cache, yum, dnf, rpm, dpkg — covering Debian/Ubuntu and Red Hat/CentOS/Fedora ecosystems with all critical subcommands and flags.</p>
+      </div>
+    </div>
+    <div class="intro-card">
+      <span class="ico">🎯</span>
+      <div>
+        <h3>Interview Relevance</h3>
+        <p>Package management is tested in every Linux-focused DevOps interview. Expect questions on dependency resolution, GPG key management, rollbacks, pinning, and building reproducible environments.</p>
+      </div>
+    </div>
+    <div class="intro-card">
+      <span class="ico">🗺️</span>
+      <div>
+        <h3>Distro Map</h3>
+        <p><strong>Debian/Ubuntu:</strong> apt-get, apt-cache, dpkg<br>
+           <strong>RHEL/CentOS 6:</strong> yum, rpm<br>
+           <strong>Fedora/CentOS 8+:</strong> dnf, rpm</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       1. APT-GET
+  ══════════════════════════════════ -->
+  <div class="cmd-card" id="apt-get">
+    <div class="cmd-head head-apt">
+      <div class="cmd-mono apt-color">apt-get</div>
+      <div class="cmd-meta">
+        <div class="cmd-label">Debian / Ubuntu</div>
+        <div class="cmd-tagline">APT package handling utility — install, remove, and update packages</div>
+      </div>
+      <div class="distro-row" style="margin:0">
+        <span class="dbadge deb">🐧 Ubuntu</span>
+        <span class="dbadge deb">🐧 Debian</span>
+      </div>
+    </div>
+
+    <div class="cmd-body">
+
+      <!-- 1 Overview -->
+      <div class="sec-label"><span class="sec-num">1</span><span class="sec-title">Command Overview</span></div>
+      <p class="desc"><code class="ic">apt-get</code> is the traditional command-line package manager for Debian-based distributions. It interacts with the APT (Advanced Package Tool) library to install, upgrade, and remove packages, resolving dependencies automatically from configured repositories.</p>
+      <p class="desc">In DevOps and AI/ML roles, <code class="ic">apt-get</code> is used in Dockerfiles to install system dependencies (<code class="ic">libpq-dev</code>, <code class="ic">build-essential</code>, CUDA tools), in CI/CD pipelines to provision build agents, and in Ansible playbooks to ensure reproducible server environments. The <code class="ic">-y</code> flag and <code class="ic">DEBIAN_FRONTEND=noninteractive</code> pattern is ubiquitous in automated provisioning.</p>
+      <div class="box info"><span class="bi">💡</span><div><strong>apt-get vs apt</strong> <code class="ic">apt</code> is the newer, friendlier CLI (combines apt-get + apt-cache). <code class="ic">apt-get</code> is preferred in <strong>scripts</strong> because its output format is stable. <code class="ic">apt</code> may change output in future releases, breaking script parsers.</div></div>
+
+      <!-- 2 Syntax -->
+      <div class="sec-label"><span class="sec-num">2</span><span class="sec-title">Syntax</span></div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH</span></div>
+        <pre class="cb"><code><span class="cm">apt-get</span> <span class="fl">[OPTIONS]</span> <span class="k">COMMAND</span> <span class="st">[package...]</span>
+
+  <span class="c">OPTIONS</span>  — Flags modifying behavior  (-y, -q, --no-install-recommends ...)
+  <span class="c">COMMAND</span>  — Subcommand: install | remove | update | upgrade | dist-upgrade ...
+  <span class="c">package</span>  — One or more package names  (e.g., nginx python3-pip)</code></pre>
+      </div>
+
+      <!-- 3 Flags -->
+      <div class="sec-label"><span class="sec-num">3</span><span class="sec-title">Commonly Used Options &amp; Subcommands</span></div>
+      <div class="sub">Core Subcommands</div>
+      <div class="tbl-wrap">
+        <table class="ft">
+          <thead><tr><th>Subcommand</th><th>Description</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>update</td><td>Refresh local package index from repositories (no installs)</td><td>apt-get update</td></tr>
+            <tr><td>upgrade</td><td>Upgrade all installed packages to latest versions</td><td>apt-get upgrade</td></tr>
+            <tr><td>dist-upgrade</td><td>Smart upgrade — handles added/removed dependencies</td><td>apt-get dist-upgrade</td></tr>
+            <tr><td>install PKG</td><td>Install a package and its dependencies</td><td>apt-get install nginx</td></tr>
+            <tr><td>remove PKG</td><td>Remove package but keep config files</td><td>apt-get remove nginx</td></tr>
+            <tr><td>purge PKG</td><td>Remove package AND all config files</td><td>apt-get purge nginx</td></tr>
+            <tr><td>autoremove</td><td>Remove orphaned dependencies no longer needed</td><td>apt-get autoremove</td></tr>
+            <tr><td>autoclean</td><td>Remove obsolete cached package files</td><td>apt-get autoclean</td></tr>
+            <tr><td>clean</td><td>Remove ALL cached package files (free disk space)</td><td>apt-get clean</td></tr>
+            <tr><td>download PKG</td><td>Download .deb without installing</td><td>apt-get download curl</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sub">Important Flags</div>
+      <div class="tbl-wrap">
+        <table class="ft">
+          <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>-y</td><td>Assume yes to all prompts (non-interactive)</td><td>apt-get install -y nginx</td></tr>
+            <tr><td>-q</td><td>Quiet mode — reduce output (use -qq for even less)</td><td>apt-get -q update</td></tr>
+            <tr><td>--no-install-recommends</td><td>Skip recommended (non-essential) packages — smaller installs</td><td>apt-get install --no-install-recommends python3</td></tr>
+            <tr><td>--dry-run / -s</td><td>Simulate — show what would happen without doing it</td><td>apt-get -s upgrade</td></tr>
+            <tr><td>--fix-broken / -f</td><td>Fix broken dependency state</td><td>apt-get --fix-broken install</td></tr>
+            <tr><td>--reinstall</td><td>Reinstall a package even if up-to-date</td><td>apt-get install --reinstall nginx</td></tr>
+            <tr><td>-t RELEASE</td><td>Target a specific release (pinning)</td><td>apt-get install -t bookworm nginx</td></tr>
+            <tr><td>--only-upgrade</td><td>Upgrade a package without installing if absent</td><td>apt-get install --only-upgrade nginx</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 4 Examples -->
+      <div class="sec-label"><span class="sec-num">4</span><span class="sec-title">Practical Examples</span></div>
+      <div class="sub">Beginner — Daily Operations</div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH</span></div>
+        <pre class="cb"><code><span class="c"># ALWAYS update index before installing</span>
+<span class="cm">sudo apt-get update</span>
+
+<span class="c"># Install a package</span>
+<span class="cm">sudo apt-get install</span> nginx
+
+<span class="c"># Install multiple packages at once</span>
+<span class="cm">sudo apt-get install</span> -y python3 python3-pip python3-venv
+
+<span class="c"># Remove package (keep config files)</span>
+<span class="cm">sudo apt-get remove</span> nginx
+
+<span class="c"># Remove package AND config files (clean slate)</span>
+<span class="cm">sudo apt-get purge</span> nginx
+
+<span class="c"># Upgrade all packages</span>
+<span class="cm">sudo apt-get update</span> && <span class="cm">sudo apt-get upgrade</span> -y
+
+<span class="c"># Clean up orphaned dependencies</span>
+<span class="cm">sudo apt-get autoremove</span> -y && <span class="cm">sudo apt-get autoclean</span></code></pre>
+      </div>
+
+      <div class="sub">Intermediate — DevOps &amp; Automation</div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH — Dockerfile / CI-CD Pattern</span></div>
+        <pre class="cb"><code><span class="c"># Dockerfile best practice — one RUN layer, clean cache at end</span>
+<span class="k">RUN</span> <span class="cm">apt-get update</span> && \
+    <span class="cm">apt-get install</span> -y --no-install-recommends \
+        <span class="st">build-essential</span> \
+        <span class="st">libpq-dev</span> \
+        <span class="st">python3-dev</span> \
+        <span class="st">curl</span> \
+    && <span class="cm">apt-get clean</span> \
+    && <span class="cm">rm -rf</span> /var/lib/apt/lists/*
+<span class="c"># Removing /var/lib/apt/lists/* shrinks the image layer</span>
+
+<span class="c"># Install specific version (reproducible builds)</span>
+<span class="cm">apt-get install</span> -y <span class="st">nginx=1.24.0-1~jammy</span>
+
+<span class="c"># Simulate upgrade — see what will change</span>
+<span class="cm">apt-get</span> -s dist-upgrade
+
+<span class="c"># Fix broken packages (common after interrupted installs)</span>
+<span class="cm">sudo apt-get</span> --fix-broken install
+
+<span class="c"># Hold a package at current version (prevent auto-upgrade)</span>
+<span class="cm">sudo apt-mark hold</span> kubernetes-cni
+<span class="cm">apt-get upgrade</span>          <span class="c"># kubernetes-cni stays pinned</span>
+<span class="cm">sudo apt-mark unhold</span> kubernetes-cni</code></pre>
+      </div>
+
+      <div class="sub">Advanced — ML / Data Infra Provisioning</div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH — Provisioning ML Server</span></div>
+        <pre class="cb"><code><span class="c"># Install CUDA toolkit + ML dependencies (Ubuntu 22.04)</span>
+<span class="cm">sudo apt-get update</span>
+<span class="cm">sudo apt-get install</span> -y --no-install-recommends \
+    <span class="st">cuda-toolkit-12-2</span> \
+    <span class="st">libcudnn8</span> \
+    <span class="st">python3.11</span> <span class="st">python3.11-dev</span> \
+    <span class="st">gcc</span> <span class="st">g++</span> <span class="st">make</span>
+
+<span class="c"># Add external repository (e.g., Docker, PostgreSQL, NodeSource)</span>
+<span class="cm">curl -fsSL</span> https://download.docker.com/linux/ubuntu/gpg | \
+    <span class="cm">sudo gpg --dearmor</span> -o /etc/apt/keyrings/docker.gpg
+<span class="cm">echo</span> <span class="st">"deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"</span> | \
+    <span class="cm">sudo tee</span> /etc/apt/sources.list.d/docker.list
+<span class="cm">sudo apt-get update</span>
+<span class="cm">sudo apt-get install</span> -y docker-ce docker-ce-cli containerd.io
+
+<span class="c"># Non-interactive for CI pipelines (suppress all prompts)</span>
+<span class="di">DEBIAN_FRONTEND</span>=noninteractive <span class="cm">apt-get install</span> -y tzdata</code></pre>
+      </div>
+
+      <!-- 5 Use Cases -->
+      <div class="sec-label"><span class="sec-num">5</span><span class="sec-title">Real-World Use Cases</span></div>
+      <ul class="bl">
+        <li><strong>Dockerfile dependency installation:</strong> Every Python/Node/Go container image uses <code class="ic">apt-get install --no-install-recommends</code> to keep image layers minimal — a key Docker best practice.</li>
+        <li><strong>CI/CD agent provisioning:</strong> GitHub Actions, GitLab CI, and Jenkins pipelines install tools with <code class="ic">apt-get install -y</code> in setup steps before running build/test stages.</li>
+        <li><strong>Ansible playbooks:</strong> The <code class="ic">ansible.builtin.apt</code> module wraps <code class="ic">apt-get</code> for idempotent package management across fleets of Ubuntu servers.</li>
+        <li><strong>Kubernetes node setup:</strong> kubeadm, kubelet, kubectl are installed via <code class="ic">apt-get</code> with version pinning and <code class="ic">apt-mark hold</code> to prevent accidental cluster upgrades.</li>
+        <li><strong>Security patching:</strong> <code class="ic">apt-get update && apt-get upgrade -y</code> in a nightly cron job or via unattended-upgrades for automated security patch application.</li>
+      </ul>
+
+      <!-- 6 Q&A -->
+      <div class="sec-label"><span class="sec-num">6</span><span class="sec-title">Interview Questions &amp; Answers</span></div>
+      <div class="qa-stack">
+
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q1</span>What is the difference between <code class="ic">apt-get update</code> and <code class="ic">apt-get upgrade</code>?</div>
+          <div class="qa-a"><span class="al">A:</span><code class="ic">update</code> only refreshes the local package index — it downloads the latest package lists from all configured repositories but does NOT install or upgrade anything. <code class="ic">upgrade</code> then uses that updated index to upgrade all installed packages. You must always run <code class="ic">update</code> before <code class="ic">upgrade</code> — otherwise, you're upgrading based on a stale index.</div>
+        </div>
+
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q2</span>What is the difference between <code class="ic">remove</code> and <code class="ic">purge</code>?</div>
+          <div class="qa-a"><span class="al">A:</span><code class="ic">remove</code> uninstalls the package binaries but leaves configuration files in place — useful when you plan to reinstall later and want to preserve your settings. <code class="ic">purge</code> removes both binaries AND config files (including <code class="ic">/etc</code> configs) — use for a clean slate. In production, <code class="ic">purge</code> is used when migrating to a different solution.</div>
+        </div>
+
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q3</span>What is the difference between <code class="ic">upgrade</code> and <code class="ic">dist-upgrade</code>?</div>
+          <div class="qa-a"><span class="al">A:</span><code class="ic">upgrade</code> only upgrades packages that don't require installing new packages or removing existing ones. <code class="ic">dist-upgrade</code> is smarter — it handles changing dependencies, installs new required packages, and removes obsolete ones. Use <code class="ic">dist-upgrade</code> for major kernel or library updates, and for OS distribution upgrades. In Docker, <code class="ic">dist-upgrade</code> is used for security-complete image builds.</div>
+        </div>
+
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q4</span>Scenario: Your Dockerfile build fails because <code class="ic">apt-get install</code> can't find a package. How do you diagnose?</div>
+          <div class="qa-a"><span class="al">A:</span>The root cause is almost always a <strong>stale package index in the build cache</strong>. Fix: ensure <code class="ic">apt-get update</code> and <code class="ic">apt-get install</code> are in the same <code class="ic">RUN</code> layer — <code class="ic">RUN apt-get update && apt-get install -y pkg</code>. If they're in separate layers, Docker caches the update layer and uses a stale index for the install. Also check: package name changed, package requires a PPA, or the base image is too old.</div>
+        </div>
+
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q5</span>How do you install a specific version of a package?</div>
+          <div class="qa-a"><span class="al">A:</span><code class="ic">apt-get install nginx=1.24.0-1~jammy</code> — use <code class="ic">apt-cache policy nginx</code> to first see available versions. For Kubernetes components: <code class="ic">apt-get install -y kubelet=1.28.0-00 kubeadm=1.28.0-00 kubectl=1.28.0-00</code> then <code class="ic">apt-mark hold</code> all three to prevent accidental upgrade.</div>
+        </div>
+
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q6</span>Why do we run <code class="ic">apt-get clean && rm -rf /var/lib/apt/lists/*</code> in Dockerfiles?</div>
+          <div class="qa-a"><span class="al">A:</span>Each RUN instruction creates a new Docker layer. The APT package cache in <code class="ic">/var/cache/apt/archives/</code> and index files in <code class="ic">/var/lib/apt/lists/</code> can add 100–500MB to an image. Cleaning them in the SAME RUN instruction (same layer) prevents that data from being committed to the image. If you clean in a SEPARATE RUN layer, the data is already committed to the prior layer and the cleanup has no effect on final image size.</div>
+        </div>
+
+      </div>
+
+      <!-- 7 Tips -->
+      <div class="sec-label"><span class="sec-num">7</span><span class="sec-title">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — Running apt-get without update first</strong> Installing without refreshing the index may install outdated versions or fail if a package was renamed. Always chain: <code class="ic">apt-get update && apt-get install -y pkg</code>.</div></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — Separate RUN layers for update and install in Docker</strong> Docker's layer cache will reuse the cached <code class="ic">update</code> layer with a stale index. Always combine them in one <code class="ic">RUN</code> statement.</div></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — Not setting DEBIAN_FRONTEND=noninteractive</strong> Some packages (tzdata, postfix) prompt for user input. In CI/CD and Docker this hangs indefinitely. Always export <code class="ic">DEBIAN_FRONTEND=noninteractive</code> in automated environments.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Use --no-install-recommends in Docker</strong> Reduces image size significantly. Recommended packages are often GUI tools or optional extras irrelevant in containers. Typical savings: 20–40% smaller layer.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Pin versions for reproducibility</strong> <code class="ic">apt-get install nginx=1.24.0-1~jammy</code> ensures every build or server gets the exact same version. Critical for compliance environments and Kubernetes cluster consistency.</div></div>
+
+      <!-- 8 Advanced -->
+      <div class="sec-label"><span class="sec-num">8</span><span class="sec-title">Advanced Insights</span></div>
+      <div class="sub">APT Configuration Files</div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH</span></div>
+        <pre class="cb"><code><span class="c"># Repository sources</span>
+/etc/apt/sources.list               <span class="c"># Main repo file</span>
+/etc/apt/sources.list.d/*.list      <span class="c"># Drop-in repo files</span>
+/etc/apt/sources.list.d/*.sources   <span class="c"># DEB822 format (newer)</span>
+
+<span class="c"># Pinning — control which version gets installed</span>
+<span class="c"># /etc/apt/preferences.d/pin-nginx</span>
+Package: nginx
+Pin: version 1.24.*
+Pin-Priority: 1001
+
+<span class="c"># Check APT cache and package info</span>
+<span class="cm">apt-cache policy</span> nginx          <span class="c"># See available versions and priorities</span>
+<span class="cm">apt-cache show</span> nginx             <span class="c"># Full package metadata</span>
+<span class="cm">apt-get</span> -s upgrade               <span class="c"># Dry run — simulate without applying</span>
+
+<span class="c"># Unattended security upgrades (production hardening)</span>
+<span class="cm">sudo apt-get install</span> -y unattended-upgrades
+<span class="cm">sudo dpkg-reconfigure</span> --priority=low unattended-upgrades</code></pre>
+      </div>
+
+    </div>
+  </div><!-- /apt-get -->
+
+
+  <!-- ══════════════════════════════════
+       2. APT-CACHE
+  ══════════════════════════════════ -->
+  <div class="cmd-card" id="apt-cache">
+    <div class="cmd-head head-aptcache">
+      <div class="cmd-mono aptcache-color">apt-cache</div>
+      <div class="cmd-meta">
+        <div class="cmd-label">Debian / Ubuntu</div>
+        <div class="cmd-tagline">Query the APT package cache — search, inspect, and analyse packages</div>
+      </div>
+      <div class="distro-row" style="margin:0">
+        <span class="dbadge deb">🐧 Ubuntu</span>
+        <span class="dbadge deb">🐧 Debian</span>
+      </div>
+    </div>
+
+    <div class="cmd-body">
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--teal)">1</span><span class="sec-title">Command Overview</span></div>
+      <p class="desc"><code class="ic">apt-cache</code> queries the local APT package cache (stored in <code class="ic">/var/cache/apt/</code>) to search for packages, display metadata, check dependencies, and compare available versions. It is a read-only tool — it never installs or modifies anything.</p>
+      <p class="desc">In engineering roles it's used to discover package names, check which version will be installed, inspect dependency chains before installing software, and verify that a pinned version is available in the configured repositories.</p>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--teal)">2</span><span class="sec-title">Syntax</span></div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH</span></div>
+        <pre class="cb"><code><span class="cm">apt-cache</span> <span class="k">COMMAND</span> <span class="fl">[OPTIONS]</span> <span class="st">[package...]</span>
+
+  <span class="c">COMMAND</span>  — search | show | policy | depends | rdepends | showpkg | stats</span>
+  <span class="c">package</span>  — Package name or search term</code></pre>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--teal)">3</span><span class="sec-title">Commonly Used Subcommands</span></div>
+      <div class="tbl-wrap">
+        <table class="ft">
+          <thead><tr><th>Subcommand</th><th>Description</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>search TERM</td><td>Search package names and descriptions by keyword</td><td>apt-cache search opencv</td></tr>
+            <tr><td>show PKG</td><td>Display full metadata: version, size, deps, description</td><td>apt-cache show nginx</td></tr>
+            <tr><td>policy PKG</td><td>Show installed/candidate versions + repository priorities</td><td>apt-cache policy python3</td></tr>
+            <tr><td>depends PKG</td><td>Show direct dependencies of a package</td><td>apt-cache depends nginx</td></tr>
+            <tr><td>rdepends PKG</td><td>Show reverse dependencies — what depends ON this package</td><td>apt-cache rdepends libc6</td></tr>
+            <tr><td>showpkg PKG</td><td>Show detailed package info including reverse deps</td><td>apt-cache showpkg nginx</td></tr>
+            <tr><td>stats</td><td>Show APT cache statistics</td><td>apt-cache stats</td></tr>
+            <tr><td>pkgnames PREFIX</td><td>List package names matching a prefix</td><td>apt-cache pkgnames python3-</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--teal)">4</span><span class="sec-title">Practical Examples</span></div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH</span></div>
+        <pre class="cb"><code><span class="c"># Search for packages related to machine learning</span>
+<span class="cm">apt-cache search</span> <span class="st">"machine learning"</span>
+<span class="cm">apt-cache search</span> tensorflow | <span class="cm">grep</span> python3
+
+<span class="c"># Check exactly what version will be installed + source repo</span>
+<span class="cm">apt-cache policy</span> nginx
+<span class="c"># Output shows: Installed, Candidate, and Version table with priorities</span>
+
+<span class="c"># See all available versions of a package</span>
+<span class="cm">apt-cache policy</span> python3-tensorflow
+
+<span class="c"># Inspect full package metadata before installing</span>
+<span class="cm">apt-cache show</span> cuda-toolkit-12-2 | <span class="cm">grep</span> -E <span class="st">"Version|Size|Depends"</span>
+
+<span class="c"># See what a package depends on (before installing)</span>
+<span class="cm">apt-cache depends</span> docker-ce
+
+<span class="c"># Find what would break if you remove a package</span>
+<span class="cm">apt-cache rdepends</span> --installed libssl3
+
+<span class="c"># List all python3 packages available</span>
+<span class="cm">apt-cache pkgnames</span> python3- | <span class="cm">sort</span> | <span class="cm">head</span> -20</code></pre>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--teal)">6</span><span class="sec-title">Interview Questions &amp; Answers</span></div>
+      <div class="qa-stack">
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q1</span>What does <code class="ic">apt-cache policy</code> tell you and when is it useful?</div>
+          <div class="qa-a"><span class="al">A:</span><code class="ic">apt-cache policy PKG</code> shows the currently installed version, the candidate version that would be installed by <code class="ic">apt-get install</code>, and a version table listing every available version from each repository with its priority. This is essential when debugging why the wrong version is being installed, verifying pinning is working correctly, or confirming that a required version exists in the configured repos before writing automation scripts.</div>
+        </div>
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q2</span>What is the difference between <code class="ic">apt-cache search</code> and <code class="ic">apt-cache show</code>?</div>
+          <div class="qa-a"><span class="al">A:</span><code class="ic">search</code> queries package names and descriptions using a keyword — returns a list of matching packages. <code class="ic">show</code> requires an exact package name and returns full metadata: version, installed size, download size, maintainer, dependencies, and description. Use <code class="ic">search</code> to discover packages, then <code class="ic">show</code> to inspect the one you want to install.</div>
+        </div>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--teal)">7</span><span class="sec-title">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box warn"><span class="bi">⚠️</span><div><strong>Mistake — apt-cache search with stale index</strong> <code class="ic">apt-cache</code> queries the LOCAL cache. If you haven't run <code class="ic">apt-get update</code> recently, results may not reflect the latest packages. Always update before searching for newly added packages.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Use policy before installing in CI</strong> In CI scripts, run <code class="ic">apt-cache policy PKG</code> to log exactly which version will be installed. This creates an audit trail and catches version drift between builds.</div></div>
+
+    </div>
+  </div><!-- /apt-cache -->
+
+
+  <!-- ══════════════════════════════════
+       3. YUM
+  ══════════════════════════════════ -->
+  <div class="cmd-card" id="yum">
+    <div class="cmd-head head-yum">
+      <div class="cmd-mono yum-color">yum</div>
+      <div class="cmd-meta">
+        <div class="cmd-label">Red Hat / CentOS 6 &amp; 7</div>
+        <div class="cmd-tagline">Package manager for RPM-based systems — Yellowdog Updater Modified</div>
+      </div>
+      <div class="distro-row" style="margin:0">
+        <span class="dbadge rhel">🔴 RHEL 7</span>
+        <span class="dbadge rhel">🔴 CentOS 7</span>
+        <span class="dbadge rhel">🔴 Amazon Linux</span>
+      </div>
+    </div>
+
+    <div class="cmd-body">
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--green)">1</span><span class="sec-title">Command Overview</span></div>
+      <p class="desc"><code class="ic">yum</code> (Yellowdog Updater Modified) is the package manager for RPM-based distributions — RHEL 7, CentOS 7, Amazon Linux 1, and Oracle Linux. It resolves dependencies automatically from configured repositories (yum repos) and handles the full package lifecycle.</p>
+      <p class="desc">Despite being superseded by <code class="ic">dnf</code> in newer releases, <code class="ic">yum</code> remains critical knowledge because many enterprise environments and AWS EC2 instances still run CentOS 7 or Amazon Linux 2. On CentOS 8+, <code class="ic">yum</code> is actually an alias to <code class="ic">dnf</code>.</p>
+      <div class="box warn"><span class="bi">⚠️</span><div><strong>EOL Notice</strong> CentOS 7 reached End-of-Life June 2024. However, yum knowledge remains essential for Amazon Linux 2, legacy RHEL 7 systems, and reading existing Ansible/Chef/Puppet code targeting these platforms.</div></div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--green)">2</span><span class="sec-title">Syntax</span></div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH</span></div>
+        <pre class="cb"><code><span class="cm">yum</span> <span class="fl">[OPTIONS]</span> <span class="k">COMMAND</span> <span class="st">[package...]</span>
+
+  <span class="c">OPTIONS</span>  — Flags: -y, -q, --assumeyes, --enablerepo, --disablerepo ...
+  <span class="c">COMMAND</span>  — install | remove | update | upgrade | search | info | list | clean
+  <span class="c">package</span>  — Package name, glob, or package-name.arch</code></pre>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--green)">3</span><span class="sec-title">Commonly Used Subcommands &amp; Flags</span></div>
+      <div class="tbl-wrap">
+        <table class="ft">
+          <thead><tr><th>Command/Flag</th><th>Description</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr class="cat"><td colspan="3">Package Operations</td></tr>
+            <tr><td>install PKG</td><td>Install a package and resolve dependencies</td><td>yum install nginx</td></tr>
+            <tr><td>remove PKG</td><td>Remove a package</td><td>yum remove httpd</td></tr>
+            <tr><td>update [PKG]</td><td>Update all packages or a specific one</td><td>yum update kernel</td></tr>
+            <tr><td>upgrade</td><td>Update packages including obsoletes handling</td><td>yum upgrade</td></tr>
+            <tr><td>reinstall PKG</td><td>Reinstall a package</td><td>yum reinstall nginx</td></tr>
+            <tr><td>downgrade PKG</td><td>Downgrade to a previous version</td><td>yum downgrade nginx-1.20</td></tr>
+            <tr class="cat"><td colspan="3">Information &amp; Search</td></tr>
+            <tr><td>search TERM</td><td>Search package names and summaries</td><td>yum search python3</td></tr>
+            <tr><td>info PKG</td><td>Show detailed package information</td><td>yum info docker</td></tr>
+            <tr><td>list installed</td><td>List all installed packages</td><td>yum list installed</td></tr>
+            <tr><td>list available</td><td>List all available packages</td><td>yum list available | grep python</td></tr>
+            <tr><td>provides FILE</td><td>Find which package provides a file/command</td><td>yum provides */netstat</td></tr>
+            <tr><td>deplist PKG</td><td>Show package dependencies</td><td>yum deplist nginx</td></tr>
+            <tr class="cat"><td colspan="3">Repository &amp; Cache</td></tr>
+            <tr><td>clean all</td><td>Clear all cached data</td><td>yum clean all</td></tr>
+            <tr><td>makecache</td><td>Download and build metadata cache</td><td>yum makecache</td></tr>
+            <tr><td>repolist</td><td>Show configured repositories</td><td>yum repolist all</td></tr>
+            <tr><td>--enablerepo</td><td>Enable a specific repo for this command</td><td>yum install --enablerepo=epel htop</td></tr>
+            <tr><td>--disablerepo</td><td>Disable a specific repo for this command</td><td>yum update --disablerepo=internal</td></tr>
+            <tr class="cat"><td colspan="3">Groups &amp; History</td></tr>
+            <tr><td>groupinstall GRP</td><td>Install a package group</td><td>yum groupinstall "Development Tools"</td></tr>
+            <tr><td>history list</td><td>Show transaction history</td><td>yum history list</td></tr>
+            <tr><td>history undo ID</td><td>Rollback a specific transaction</td><td>yum history undo 42</td></tr>
+            <tr class="cat"><td colspan="3">Key Flags</td></tr>
+            <tr><td>-y</td><td>Assume yes to all prompts</td><td>yum install -y nginx</td></tr>
+            <tr><td>-q</td><td>Quiet mode</td><td>yum -q install nginx</td></tr>
+            <tr><td>--downloadonly</td><td>Download without installing</td><td>yum install --downloadonly nginx</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--green)">4</span><span class="sec-title">Practical Examples</span></div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH</span></div>
+        <pre class="cb"><code><span class="c"># Install development tools (essential for building Python packages)</span>
+<span class="cm">sudo yum groupinstall</span> -y <span class="st">"Development Tools"</span>
+
+<span class="c"># Install EPEL repository (Extra Packages for Enterprise Linux)</span>
+<span class="cm">sudo yum install</span> -y epel-release
+<span class="cm">sudo yum install</span> -y --enablerepo=epel htop iotop
+
+<span class="c"># Find which package provides a binary (e.g., netstat)</span>
+<span class="cm">yum provides</span> <span class="st">'*/netstat'</span>
+
+<span class="c"># Check transaction history and rollback</span>
+<span class="cm">yum history list</span>
+<span class="cm">sudo yum history undo</span> <span class="nu">42</span>      <span class="c"># Rollback transaction #42</span>
+
+<span class="c"># Download RPM without installing (for air-gapped servers)</span>
+<span class="cm">yum install</span> --downloadonly --downloaddir=/tmp/rpms nginx
+
+<span class="c"># Lock a package version (requires yum-versionlock plugin)</span>
+<span class="cm">sudo yum install</span> -y yum-versionlock
+<span class="cm">sudo yum versionlock add</span> docker-ce
+<span class="cm">yum versionlock list</span>
+
+<span class="c"># Clean and rebuild cache (fix broken metadata)</span>
+<span class="cm">sudo yum clean all</span>
+<span class="cm">sudo yum makecache</span>
+
+<span class="c"># Install specific version</span>
+<span class="cm">yum install</span> -y <span class="st">'docker-ce-20.10.24'</span></code></pre>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--green)">5</span><span class="sec-title">Real-World Use Cases</span></div>
+      <ul class="bl">
+        <li><strong>Amazon Linux 2 / EC2 provisioning:</strong> AWS still widely uses Amazon Linux 2 (yum-based). EC2 user data scripts and Systems Manager Run Command use yum for instance setup.</li>
+        <li><strong>Air-gapped environments:</strong> <code class="ic">yum install --downloadonly</code> + <code class="ic">createrepo</code> to build offline local repos for secure government or financial networks.</li>
+        <li><strong>Rollback after bad update:</strong> <code class="ic">yum history undo LAST</code> — unique yum feature that reverses an entire transaction, invaluable in production incident response.</li>
+        <li><strong>EPEL for ML tools:</strong> Many ML-adjacent tools (htop, iotop, nmap) are in EPEL, not base repos. <code class="ic">yum install epel-release && yum install htop</code>.</li>
+      </ul>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--green)">6</span><span class="sec-title">Interview Questions &amp; Answers</span></div>
+      <div class="qa-stack">
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q1</span>What is the difference between <code class="ic">yum update</code> and <code class="ic">yum upgrade</code>?</div>
+          <div class="qa-a"><span class="al">A:</span>In yum, <code class="ic">update</code> and <code class="ic">upgrade</code> behave similarly — both upgrade installed packages to their latest versions. The subtle difference: <code class="ic">upgrade</code> also removes obsolete packages (packages that are superseded by newer names). In practice on CentOS 7, they are often used interchangeably, but <code class="ic">upgrade</code> is slightly more aggressive in handling package obsoletes. This is different from the apt-get behavior where the distinction is more pronounced.</div>
+        </div>
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q2</span>What is EPEL and why is it important?</div>
+          <div class="qa-a"><span class="al">A:</span>EPEL (Extra Packages for Enterprise Linux) is a Fedora Special Interest Group repository that provides high-quality additional packages for RHEL/CentOS that are not in the default repos. It's important because many tools needed in DevOps and data engineering (htop, jq, sysstat, redis, many Python libraries) are only available in EPEL. Install with: <code class="ic">yum install epel-release</code> then access packages with <code class="ic">yum install --enablerepo=epel PKG</code>.</div>
+        </div>
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q3</span>Scenario: You updated nginx on a production server and it broke an application. How do you rollback?</div>
+          <div class="qa-a"><span class="al">A:</span>yum's transaction history makes this straightforward. <strong>1.</strong> <code class="ic">yum history list</code> — find the transaction ID for the nginx update. <strong>2.</strong> <code class="ic">yum history info &lt;ID&gt;</code> — confirm what was changed. <strong>3.</strong> <code class="ic">sudo yum history undo &lt;ID&gt;</code> — reverses the entire transaction, reinstalling the previous version. This is a key differentiator of yum over apt — built-in transactional rollback.</div>
+        </div>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--green)">7</span><span class="sec-title">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — Running yum update without testing</strong> On production RHEL systems, an unconstrained <code class="ic">yum update</code> can upgrade the kernel and critical libraries, requiring a reboot and potentially breaking application compatibility. Always test updates in staging first and consider <code class="ic">yum-versionlock</code>.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — yum provides is your friend</strong> If you know you need a specific binary or library but don't know the package name, <code class="ic">yum provides '*/binary_name'</code> is invaluable. Example: <code class="ic">yum provides '*/python3.11'</code>.</div></div>
+      <div class="box info"><span class="bi">ℹ️</span><div><strong>On CentOS 8+ / RHEL 8+</strong> <code class="ic">yum</code> is now a symlink to <code class="ic">dnf</code>. All yum commands are supported but dnf is the true engine. Migrate scripts to dnf for new deployments.</div></div>
+
+    </div>
+  </div><!-- /yum -->
+
+
+  <!-- ══════════════════════════════════
+       4. DNF
+  ══════════════════════════════════ -->
+  <div class="cmd-card" id="dnf">
+    <div class="cmd-head head-dnf">
+      <div class="cmd-mono dnf-color">dnf</div>
+      <div class="cmd-meta">
+        <div class="cmd-label">Fedora / RHEL 8+ / CentOS 8+</div>
+        <div class="cmd-tagline">Next-generation package manager — Dandified YUM (replaces yum)</div>
+      </div>
+      <div class="distro-row" style="margin:0">
+        <span class="dbadge rhel">🔴 RHEL 8+</span>
+        <span class="dbadge rhel">🔴 CentOS 8+</span>
+        <span class="dbadge rhel">🔴 Fedora</span>
+        <span class="dbadge rhel">🔴 Rocky/Alma</span>
+      </div>
+    </div>
+
+    <div class="cmd-body">
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--indigo)">1</span><span class="sec-title">Command Overview</span></div>
+      <p class="desc"><code class="ic">dnf</code> (Dandified YUM) is the next-generation package manager for Fedora, RHEL 8+, CentOS 8+, Rocky Linux, and AlmaLinux. It replaces <code class="ic">yum</code> with better performance, improved dependency resolution (using libsolv), proper Python 3 support, and a cleaner API.</p>
+      <p class="desc">For DevOps and MLOps engineers working in enterprise environments or building RHEL-based container images, <code class="ic">dnf</code> is the standard tool. Red Hat OpenShift, Red Hat Ansible Automation Platform, and modern RHEL-based Kubernetes nodes all rely on <code class="ic">dnf</code>.</p>
+
+      <div class="box teal"><span class="bi">🚀</span><div><strong>dnf vs yum</strong> dnf is largely command-compatible with yum — most commands work identically. Key improvements: faster dependency resolution, better error messages, automatic handling of weak dependencies, and a proper module system (dnf module) for handling multiple versions of language runtimes.</div></div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--indigo)">2</span><span class="sec-title">Syntax</span></div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH</span></div>
+        <pre class="cb"><code><span class="cm">dnf</span> <span class="fl">[OPTIONS]</span> <span class="k">COMMAND</span> <span class="st">[package...]</span>
+
+  <span class="c">OPTIONS</span>  — -y, -q, --allowerasing, --nobest, --repo ...
+  <span class="c">COMMAND</span>  — install | remove | update | upgrade | search | info | module ...</code></pre>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--indigo)">3</span><span class="sec-title">Commonly Used Subcommands &amp; Flags</span></div>
+      <div class="tbl-wrap">
+        <table class="ft">
+          <thead><tr><th>Command/Flag</th><th>Description</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr class="cat"><td colspan="3">Package Operations (same as yum)</td></tr>
+            <tr><td>install PKG</td><td>Install package with dependency resolution</td><td>dnf install nginx</td></tr>
+            <tr><td>remove PKG</td><td>Remove package and orphaned dependencies</td><td>dnf remove httpd</td></tr>
+            <tr><td>update / upgrade</td><td>Upgrade all or specific packages</td><td>dnf update --security</td></tr>
+            <tr><td>search TERM</td><td>Search packages by name and description</td><td>dnf search tensorflow</td></tr>
+            <tr><td>info PKG</td><td>Show detailed package metadata</td><td>dnf info python3</td></tr>
+            <tr><td>provides FILE</td><td>Find package providing a file or binary</td><td>dnf provides '*/psql'</td></tr>
+            <tr class="cat"><td colspan="3">DNF-Specific Features</td></tr>
+            <tr><td>module list</td><td>List available module streams</td><td>dnf module list</td></tr>
+            <tr><td>module enable</td><td>Enable a module stream (e.g., python39)</td><td>dnf module enable python39</td></tr>
+            <tr><td>module install</td><td>Install a module profile</td><td>dnf module install nodejs:18/default</td></tr>
+            <tr><td>autoremove</td><td>Remove packages no longer needed</td><td>dnf autoremove</td></tr>
+            <tr><td>check-update</td><td>List packages with available updates</td><td>dnf check-update</td></tr>
+            <tr><td>repoquery</td><td>Query packages in repos (like rpm -q)</td><td>dnf repoquery --list nginx</td></tr>
+            <tr><td>history undo</td><td>Rollback a transaction</td><td>dnf history undo last</td></tr>
+            <tr class="cat"><td colspan="3">Key Flags</td></tr>
+            <tr><td>-y / --assumeyes</td><td>Non-interactive — assume yes</td><td>dnf install -y nginx</td></tr>
+            <tr><td>--allowerasing</td><td>Allow package replacement (resolves conflicts)</td><td>dnf install --allowerasing curl</td></tr>
+            <tr><td>--nobest</td><td>Don't fail if best candidate unavailable</td><td>dnf update --nobest</td></tr>
+            <tr><td>--security</td><td>Only apply security-relevant updates</td><td>dnf update --security</td></tr>
+            <tr><td>--repo=NAME</td><td>Use only specified repository</td><td>dnf install --repo=epel htop</td></tr>
+            <tr><td>--downloadonly</td><td>Download RPMs without installing</td><td>dnf install --downloadonly nginx</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--indigo)">4</span><span class="sec-title">Practical Examples</span></div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH</span></div>
+        <pre class="cb"><code><span class="c"># Install development tools (build Python/C++ from source)</span>
+<span class="cm">sudo dnf groupinstall</span> -y <span class="st">"Development Tools"</span>
+
+<span class="c"># DNF Modules — install specific Python version (RHEL 8+ key feature)</span>
+<span class="cm">dnf module list</span> python3          <span class="c"># See available streams</span>
+<span class="cm">sudo dnf module enable</span> -y python39
+<span class="cm">sudo dnf install</span> -y python39 python39-pip
+
+<span class="c"># Install Node.js 18 via module stream</span>
+<span class="cm">sudo dnf module install</span> -y nodejs:18/default
+
+<span class="c"># Apply ONLY security updates (production safety)</span>
+<span class="cm">sudo dnf update</span> --security -y
+
+<span class="c"># Find what provides a Python library</span>
+<span class="cm">dnf provides</span> <span class="st">'python3-psycopg2'</span>
+
+<span class="c"># Rollback the last transaction</span>
+<span class="cm">sudo dnf history undo</span> last
+
+<span class="c"># Query files in a package before installing</span>
+<span class="cm">dnf repoquery</span> --list nginx
+
+<span class="c"># Dockerfile: RHEL-based image pattern</span>
+<span class="k">RUN</span> <span class="cm">dnf install</span> -y --nodocs --setopt=install_weak_deps=False \
+        <span class="st">python3.11 python3.11-pip gcc gcc-c++</span> \
+    && <span class="cm">dnf clean all</span> \
+    && <span class="cm">rm -rf</span> /var/cache/dnf</code></pre>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--indigo)">6</span><span class="sec-title">Interview Questions &amp; Answers</span></div>
+      <div class="qa-stack">
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q1</span>What are DNF modules and how are they useful for a Data Engineer?</div>
+          <div class="qa-a"><span class="al">A:</span>DNF modules (Application Streams) allow multiple versions of a software stack to coexist in the same repository. For example, you can switch between Python 3.8, 3.9, and 3.11 on RHEL 8 without adding external repos. A Data Engineer can <code class="ic">dnf module enable python311</code> to get Python 3.11 on RHEL 8 which ships Python 3.8 by default. This is critical for reproducible ML environments on enterprise RHEL systems.</div>
+        </div>
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q2</span>How does dnf handle dependency conflicts better than yum?</div>
+          <div class="qa-a"><span class="al">A:</span>dnf uses <strong>libsolv</strong> — a SAT (satisfiability) solver for dependency resolution. This gives it mathematically optimal solutions to dependency conflicts and significantly faster resolution on complex dependency graphs. yum used its own resolver which could fail in complex situations or produce non-optimal solutions. dnf also has the <code class="ic">--allowerasing</code> flag to allow replacing conflicting packages, and <code class="ic">--nobest</code> to relax the "best version" requirement.</div>
+        </div>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--indigo)">7</span><span class="sec-title">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — Forgetting --nodocs and weak deps in containers</strong> For Red Hat UBI-based containers, add <code class="ic">--nodocs --setopt=install_weak_deps=False</code> to minimize image size. Also clean the dnf cache in the same layer: <code class="ic">dnf clean all && rm -rf /var/cache/dnf</code>.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Use dnf check-update in monitoring</strong> <code class="ic">dnf check-update --security</code> exits with code 100 if security updates are available. Use this in cron jobs or monitoring scripts to trigger alerts when servers need patching.</div></div>
+
+    </div>
+  </div><!-- /dnf -->
+
+
+  <!-- ══════════════════════════════════
+       5. RPM
+  ══════════════════════════════════ -->
+  <div class="cmd-card" id="rpm">
+    <div class="cmd-head head-rpm">
+      <div class="cmd-mono rpm-color">rpm</div>
+      <div class="cmd-meta">
+        <div class="cmd-label">Red Hat / All RPM-based distros</div>
+        <div class="cmd-tagline">RPM Package Manager — low-level package database and .rpm file operations</div>
+      </div>
+      <div class="distro-row" style="margin:0">
+        <span class="dbadge rhel">🔴 RHEL</span>
+        <span class="dbadge rhel">🔴 CentOS</span>
+        <span class="dbadge rhel">🔴 Fedora</span>
+        <span class="dbadge rhel">🔴 Rocky</span>
+        <span class="dbadge rhel">🔴 Amazon Linux</span>
+      </div>
+    </div>
+
+    <div class="cmd-body">
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--purple)">1</span><span class="sec-title">Command Overview</span></div>
+      <p class="desc"><code class="ic">rpm</code> (RPM Package Manager) is the <strong>low-level</strong> tool for working with RPM packages. Unlike <code class="ic">yum</code> or <code class="ic">dnf</code>, it does NOT resolve dependencies automatically — you must have all required packages available. It operates directly on the RPM database and <code class="ic">.rpm</code> files.</p>
+      <p class="desc">In production, <code class="ic">rpm</code> is used for: querying the installed package database (what's installed, what version, what files), verifying package integrity after installation, extracting files from .rpm packages without installing, and importing GPG keys for repository security.</p>
+      <div class="box orange"><span class="bi">⚠️</span><div><strong>Key Distinction</strong> <code class="ic">rpm</code> = low-level (no dep resolution). <code class="ic">yum</code>/<code class="ic">dnf</code> = high-level (auto dep resolution). In interviews, knowing when to use each is critical.</div></div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--purple)">2</span><span class="sec-title">Syntax</span></div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH</span></div>
+        <pre class="cb"><code><span class="cm">rpm</span> <span class="fl">[OPTIONS]</span> <span class="st">[package.rpm | package-name]</span>
+
+  Main modes:  -i (install)  -U (upgrade)  -e (erase/remove)  -q (query)  -V (verify)</code></pre>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--purple)">3</span><span class="sec-title">Commonly Used Options &amp; Flags</span></div>
+      <div class="tbl-wrap">
+        <table class="ft">
+          <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr class="cat"><td colspan="3">Install &amp; Upgrade</td></tr>
+            <tr><td>-i PKG.rpm</td><td>Install an RPM file</td><td>rpm -i package.rpm</td></tr>
+            <tr><td>-U PKG.rpm</td><td>Upgrade (or install if not present)</td><td>rpm -U package.rpm</td></tr>
+            <tr><td>-F PKG.rpm</td><td>Freshen — upgrade only if already installed</td><td>rpm -F package.rpm</td></tr>
+            <tr><td>-ivh</td><td>Install verbose with progress hash (#)</td><td>rpm -ivh package.rpm</td></tr>
+            <tr><td>-Uvh</td><td>Upgrade verbose with progress</td><td>rpm -Uvh package.rpm</td></tr>
+            <tr><td>--nodeps</td><td>Skip dependency checking (use carefully!)</td><td>rpm -ivh --nodeps pkg.rpm</td></tr>
+            <tr><td>--force</td><td>Force install/upgrade even if conflicts</td><td>rpm -Uvh --force pkg.rpm</td></tr>
+            <tr class="cat"><td colspan="3">Remove</td></tr>
+            <tr><td>-e PKG</td><td>Erase (remove) an installed package</td><td>rpm -e nginx</td></tr>
+            <tr><td>-e --nodeps</td><td>Remove ignoring dependency errors</td><td>rpm -e --nodeps nginx</td></tr>
+            <tr class="cat"><td colspan="3">Query (-q mode — most used in practice)</td></tr>
+            <tr><td>-qa</td><td>Query ALL installed packages</td><td>rpm -qa | grep python</td></tr>
+            <tr><td>-qi PKG</td><td>Query package information (version, desc)</td><td>rpm -qi nginx</td></tr>
+            <tr><td>-ql PKG</td><td>List all files installed by a package</td><td>rpm -ql nginx</td></tr>
+            <tr><td>-qf FILE</td><td>Find which package owns a file</td><td>rpm -qf /usr/bin/python3</td></tr>
+            <tr><td>-qd PKG</td><td>List documentation files</td><td>rpm -qd man-db</td></tr>
+            <tr><td>-qc PKG</td><td>List config files of a package</td><td>rpm -qc nginx</td></tr>
+            <tr><td>-qR PKG</td><td>List package dependencies (requires)</td><td>rpm -qR nginx</td></tr>
+            <tr><td>-qp PKG.rpm</td><td>Query an uninstalled .rpm file</td><td>rpm -qpi package.rpm</td></tr>
+            <tr class="cat"><td colspan="3">Verify &amp; Security</td></tr>
+            <tr><td>-V PKG</td><td>Verify installed package against original</td><td>rpm -V nginx</td></tr>
+            <tr><td>-Va</td><td>Verify ALL installed packages</td><td>rpm -Va 2>/dev/null | grep "^S"</td></tr>
+            <tr><td>--import KEY</td><td>Import a GPG key for package verification</td><td>rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release</td></tr>
+            <tr><td>--checksig</td><td>Check package signature validity</td><td>rpm --checksig package.rpm</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--purple)">4</span><span class="sec-title">Practical Examples</span></div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH</span></div>
+        <pre class="cb"><code><span class="c"># Find which package owns a file (critical for debugging)</span>
+<span class="cm">rpm -qf</span> /usr/bin/python3
+<span class="cm">rpm -qf</span> /etc/nginx/nginx.conf
+
+<span class="c"># List all files installed by a package</span>
+<span class="cm">rpm -ql</span> nginx | <span class="cm">head</span> -20
+
+<span class="c"># List all installed packages sorted by install date</span>
+<span class="cm">rpm -qa</span> --queryformat <span class="st">"%{INSTALLTIME:date} %{NAME}-%{VERSION}\n"</span> | <span class="cm">sort</span>
+
+<span class="c"># Check which packages are installed (all Python packages)</span>
+<span class="cm">rpm -qa</span> | <span class="cm">grep</span> python | <span class="cm">sort</span>
+
+<span class="c"># Inspect an .rpm file BEFORE installing</span>
+<span class="cm">rpm -qpi</span> /tmp/nginx-1.24.0-1.el9.x86_64.rpm   <span class="c"># info</span>
+<span class="cm">rpm -qpl</span> /tmp/nginx-1.24.0-1.el9.x86_64.rpm   <span class="c"># file list</span>
+
+<span class="c"># Verify package integrity (security audit)</span>
+<span class="cm">rpm -V</span> nginx
+<span class="c"># Output: S.5....T.  /usr/sbin/nginx  ← size/checksum/time changed!</span>
+<span class="c"># Silence = no changes (package is intact)</span>
+
+<span class="c"># Verify ALL packages (find tampered files — security scan)</span>
+<span class="cm">rpm -Va</span> 2>/dev/null | <span class="cm">grep</span> <span class="st">'^..5'</span>   <span class="c"># MD5 checksum changes</span>
+
+<span class="c"># Import GPG key (required before installing from a new repo)</span>
+<span class="cm">sudo rpm --import</span> https://packages.example.com/GPG-KEY.pub
+
+<span class="c"># Extract files from RPM without installing (using rpm2cpio)</span>
+<span class="cm">rpm2cpio</span> package.rpm | <span class="cm">cpio -idmv</span>
+
+<span class="c"># Custom query format — useful for scripting</span>
+<span class="cm">rpm -qa</span> --queryformat <span class="st">"%{NAME}\t%{VERSION}\t%{ARCH}\n"</span> | <span class="cm">column -t</span></code></pre>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--purple)">6</span><span class="sec-title">Interview Questions &amp; Answers</span></div>
+      <div class="qa-stack">
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q1</span>What is the difference between <code class="ic">rpm</code> and <code class="ic">yum</code>/<code class="ic">dnf</code>?</div>
+          <div class="qa-a"><span class="al">A:</span><code class="ic">rpm</code> is the LOW-LEVEL tool — it installs/removes/queries individual .rpm files but does NOT resolve or download dependencies automatically. If a package requires glibc-2.34 and it's not present, rpm fails. <code class="ic">yum</code>/<code class="ic">dnf</code> are HIGH-LEVEL tools that build on top of rpm — they resolve dependencies, download packages from repositories, and manage the installation order automatically. Think of rpm as a wrench and dnf as a full workshop.</div>
+        </div>
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q2</span>How do you find which package a file belongs to?</div>
+          <div class="qa-a"><span class="al">A:</span><code class="ic">rpm -qf /path/to/file</code> — the <code class="ic">-qf</code> (query file) flag queries the RPM database to find which installed package owns a given file. Example: <code class="ic">rpm -qf /usr/bin/git</code> returns <code class="ic">git-2.40.1-1.el9</code>. This is crucial for debugging — if a binary is corrupted or missing, this tells you which package to reinstall.</div>
+        </div>
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q3</span>Scenario: You suspect a binary was tampered with on a production server. How do you verify?</div>
+          <div class="qa-a"><span class="al">A:</span><strong>1.</strong> <code class="ic">rpm -V nginx</code> — verify the specific package. Output like <code class="ic">S.5....T.</code> means Size, MD5 checksum, and mTime changed — the binary was modified. <strong>2.</strong> <code class="ic">rpm -Va 2>/dev/null | grep "^..5"</code> — scan all packages for MD5 checksum changes (potential tampering). <strong>3.</strong> Compare with a known-good checksum from the vendor. This is a standard security incident response procedure on RHEL systems.</div>
+        </div>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--purple)">7</span><span class="sec-title">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — Using --nodeps carelessly</strong> <code class="ic">rpm -ivh --nodeps pkg.rpm</code> ignores dependency errors and can leave the system in a broken state where the installed package fails at runtime. Only use when you know all deps are already present from another source.</div></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — Using rpm -i instead of -U</strong> <code class="ic">-i</code> (install) fails if the package is already installed. <code class="ic">-U</code> (upgrade) installs OR upgrades — much safer as a default. Always prefer <code class="ic">-Uvh</code> over <code class="ic">-ivh</code> for individual RPM installation.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — rpm -Va for security audits</strong> Regular <code class="ic">rpm -Va</code> scans catch file system tampering — a key component of RHEL security hardening and CIS Benchmark compliance. Pipe to <code class="ic">grep "^..5"</code> to filter only MD5 mismatches.</div></div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--purple)">8</span><span class="sec-title">Advanced Insights</span></div>
+      <div class="sub">RPM Verification Output Legend</div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">TEXT — rpm -V output format</span></div>
+        <pre class="cb"><code><span class="c"># Each character position means:</span>
+<span class="fl">S</span>.5....T.  /usr/sbin/nginx
+
+Position 1: S = Size differs
+Position 2: M = Mode (permissions) differs
+Position 3: 5 = MD5 checksum differs  ← CRITICAL
+Position 4: D = Device major/minor number mismatch
+Position 5: L = readLink path differs
+Position 6: U = User ownership differs
+Position 7: G = Group ownership differs
+Position 8: T = mTime differs
+Position 9: P = capabilities differ
+
+<span class="c"># Silence (no output) = package is INTACT ✓</span>
+<span class="c"># Dots (.) in a position = that attribute is unchanged</span></code></pre>
+      </div>
+
+    </div>
+  </div><!-- /rpm -->
+
+
+  <!-- ══════════════════════════════════
+       6. DPKG
+  ══════════════════════════════════ -->
+  <div class="cmd-card" id="dpkg">
+    <div class="cmd-head head-dpkg">
+      <div class="cmd-mono dpkg-color">dpkg</div>
+      <div class="cmd-meta">
+        <div class="cmd-label">Debian / Ubuntu</div>
+        <div class="cmd-tagline">Debian Package Manager — low-level .deb package operations</div>
+      </div>
+      <div class="distro-row" style="margin:0">
+        <span class="dbadge deb">🐧 Ubuntu</span>
+        <span class="dbadge deb">🐧 Debian</span>
+        <span class="dbadge deb">🐧 Raspbian</span>
+      </div>
+    </div>
+
+    <div class="cmd-body">
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--red)">1</span><span class="sec-title">Command Overview</span></div>
+      <p class="desc"><code class="ic">dpkg</code> is the low-level Debian package manager — the equivalent of <code class="ic">rpm</code> for Debian-based systems. It installs, removes, and queries <code class="ic">.deb</code> packages directly without resolving dependencies from repositories. <code class="ic">apt-get</code> is a high-level wrapper built on top of <code class="ic">dpkg</code>.</p>
+      <p class="desc">In DevOps and AI/ML engineering, <code class="ic">dpkg</code> is used for: querying installed packages and their files, installing local <code class="ic">.deb</code> packages (like Google Chrome, VS Code, or custom ML tools), reconfiguring packages, and diagnosing broken package states.</p>
+
+      <div class="box info"><span class="bi">💡</span><div><strong>dpkg vs apt-get</strong> <code class="ic">dpkg</code> = low-level (no dep resolution, works with local .deb files). <code class="ic">apt-get</code> = high-level (dep resolution, downloads from repos). The relationship mirrors rpm vs yum/dnf.</div></div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--red)">2</span><span class="sec-title">Syntax</span></div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH</span></div>
+        <pre class="cb"><code><span class="cm">dpkg</span> <span class="fl">[OPTIONS]</span> <span class="st">[package.deb | package-name]</span>
+
+  Main modes:  -i (install)  -r (remove)  -P (purge)  -l (list)  -s (status)
+               -L (list files)  -S (search file)  --configure  --audit</code></pre>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--red)">3</span><span class="sec-title">Commonly Used Options &amp; Flags</span></div>
+      <div class="tbl-wrap">
+        <table class="ft">
+          <thead><tr><th>Flag</th><th>Description</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr class="cat"><td colspan="3">Install, Remove, Configure</td></tr>
+            <tr><td>-i PKG.deb</td><td>Install a local .deb package</td><td>dpkg -i google-chrome.deb</td></tr>
+            <tr><td>-r PKG</td><td>Remove package (keep config files)</td><td>dpkg -r nginx</td></tr>
+            <tr><td>-P PKG</td><td>Purge package AND config files</td><td>dpkg -P nginx</td></tr>
+            <tr><td>--configure PKG</td><td>Configure an unpacked package</td><td>dpkg --configure -a</td></tr>
+            <tr><td>--unpack PKG.deb</td><td>Unpack .deb without configuring</td><td>dpkg --unpack pkg.deb</td></tr>
+            <tr class="cat"><td colspan="3">Query (-q mode — most used)</td></tr>
+            <tr><td>-l [pattern]</td><td>List installed packages (with status)</td><td>dpkg -l | grep python</td></tr>
+            <tr><td>-l PKG</td><td>Show status of specific package</td><td>dpkg -l nginx</td></tr>
+            <tr><td>-s PKG</td><td>Show detailed status of installed package</td><td>dpkg -s nginx</td></tr>
+            <tr><td>-L PKG</td><td>List all files installed by a package</td><td>dpkg -L nginx</td></tr>
+            <tr><td>-S FILE</td><td>Find which package a file belongs to</td><td>dpkg -S /usr/bin/python3</td></tr>
+            <tr><td>--get-selections</td><td>Get package selections (useful for backup)</td><td>dpkg --get-selections > pkglist.txt</td></tr>
+            <tr><td>--set-selections</td><td>Restore package selections from file</td><td>dpkg --set-selections < pkglist.txt</td></tr>
+            <tr class="cat"><td colspan="3">Diagnostics</td></tr>
+            <tr><td>--audit</td><td>Check for partially installed packages</td><td>dpkg --audit</td></tr>
+            <tr><td>--configure -a</td><td>Configure all unpacked but unconfigured packages</td><td>sudo dpkg --configure -a</td></tr>
+            <tr><td>--print-architecture</td><td>Print system architecture</td><td>dpkg --print-architecture</td></tr>
+            <tr><td>-c PKG.deb</td><td>List contents of a .deb file without installing</td><td>dpkg -c package.deb</td></tr>
+            <tr><td>-I PKG.deb</td><td>Show .deb file information</td><td>dpkg -I package.deb</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--red)">4</span><span class="sec-title">Practical Examples</span></div>
+      <div class="code-wrap">
+        <div class="code-top"><span class="lang">BASH</span></div>
+        <pre class="cb"><code><span class="c"># Install a downloaded .deb package (e.g., VS Code, Chrome, Slack)</span>
+<span class="cm">sudo dpkg -i</span> google-chrome-stable_current_amd64.deb
+<span class="c"># If dependency errors: fix with apt-get after dpkg</span>
+<span class="cm">sudo apt-get install</span> -f
+
+<span class="c"># List ALL installed packages</span>
+<span class="cm">dpkg -l</span>                           <span class="c"># Status ii = installed</span>
+<span class="cm">dpkg -l</span> | <span class="cm">grep</span> <span class="st">"^ii"</span>             <span class="c"># Only fully installed</span>
+<span class="cm">dpkg -l</span> | <span class="cm">grep</span> python             <span class="c"># Filter for Python packages</span>
+<span class="cm">dpkg -l</span> | <span class="cm">wc -l</span>                  <span class="c"># Count installed packages</span>
+
+<span class="c"># Find which package owns a file</span>
+<span class="cm">dpkg -S</span> /usr/bin/python3
+<span class="cm">dpkg -S</span> /etc/nginx/nginx.conf
+
+<span class="c"># List all files installed by a package</span>
+<span class="cm">dpkg -L</span> nginx | <span class="cm">head</span> -20
+
+<span class="c"># Inspect a .deb file BEFORE installing</span>
+<span class="cm">dpkg -I</span> package.deb              <span class="c"># Metadata (version, deps, desc)</span>
+<span class="cm">dpkg -c</span> package.deb              <span class="c"># File contents list</span>
+
+<span class="c"># Fix broken install state (CRITICAL troubleshooting)</span>
+<span class="cm">sudo dpkg --configure</span> -a
+<span class="cm">sudo apt-get install</span> -f
+
+<span class="c"># Backup and restore package list (server migration)</span>
+<span class="cm">dpkg --get-selections</span> > packages_backup.txt
+<span class="cm">sudo dpkg --set-selections</span> < packages_backup.txt
+<span class="cm">sudo apt-get dselect-upgrade</span>
+
+<span class="c"># Check package status codes</span>
+<span class="cm">dpkg -l nginx</span>
+<span class="c"># ii = installed normally
+# rc = removed but config files remain (use purge to clean)
+# iU = unpacked but not configured</span>
+
+<span class="c"># Extract files from .deb without installing</span>
+<span class="cm">dpkg-deb --extract</span> package.deb /tmp/extracted/</code></pre>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--red)">5</span><span class="sec-title">Real-World Use Cases</span></div>
+      <ul class="bl">
+        <li><strong>Installing vendor .deb packages:</strong> Google Chrome, VS Code, Slack, Zoom, and many ML vendor tools (NVIDIA drivers, CUDA toolkit) are distributed as .deb files — installed with <code class="ic">dpkg -i</code>.</li>
+        <li><strong>CI/CD pipeline diagnostics:</strong> <code class="ic">dpkg -l | grep python</code> quickly shows which Python versions are installed on a build agent — useful for debugging version mismatches.</li>
+        <li><strong>Server migration:</strong> <code class="ic">dpkg --get-selections</code> backs up the full package list; <code class="ic">dpkg --set-selections + apt-get dselect-upgrade</code> restores it on a new server.</li>
+        <li><strong>Broken package recovery:</strong> <code class="ic">sudo dpkg --configure -a && sudo apt-get install -f</code> is the standard fix for interrupted package installations — a common CI/CD failure mode.</li>
+      </ul>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--red)">6</span><span class="sec-title">Interview Questions &amp; Answers</span></div>
+      <div class="qa-stack">
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q1</span>What is the difference between <code class="ic">dpkg -r</code> and <code class="ic">dpkg -P</code>?</div>
+          <div class="qa-a"><span class="al">A:</span><code class="ic">-r</code> (remove) uninstalls the package binaries and data files but leaves the configuration files (in <code class="ic">/etc/</code>) intact — useful if you plan to reinstall and want to preserve settings. <code class="ic">-P</code> (purge) removes everything including configuration files — used for a completely clean removal. You can check packages with orphaned configs using <code class="ic">dpkg -l | grep "^rc"</code> and clean them with <code class="ic">apt-get purge</code>.</div>
+        </div>
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q2</span>Scenario: You installed a .deb package with dpkg and got dependency errors. How do you fix it?</div>
+          <div class="qa-a"><span class="al">A:</span><code class="ic">dpkg -i pkg.deb</code> may fail with "dependency problems" because dpkg doesn't auto-download deps. The fix is: <code class="ic">sudo apt-get install -f</code> (or <code class="ic">sudo apt-get --fix-broken install</code>). This tells APT to examine the broken state and automatically install all missing dependencies. Then the originally attempted dpkg install can proceed. This pattern is standard for all vendor .deb installations.</div>
+        </div>
+        <div class="qa">
+          <div class="qa-q"><span class="qb">Q3</span>What does <code class="ic">dpkg -l</code> status code <code class="ic">rc</code> mean?</div>
+          <div class="qa-a"><span class="al">A:</span><code class="ic">rc</code> means the package was Removed but Config files remain. The first letter is the desired state (r = removed) and the second is the current status (c = config files present). These are ghost entries that can accumulate over time. Clean them with: <code class="ic">dpkg -l | grep "^rc" | awk '{print $2}' | sudo xargs dpkg -P</code> — this purges all orphaned config files.</div>
+        </div>
+      </div>
+
+      <div class="sec-label"><span class="sec-num" style="background:var(--red)">7</span><span class="sec-title">Common Mistakes &amp; Pro Tips</span></div>
+      <div class="box danger"><span class="bi">❌</span><div><strong>Mistake — Not following up dpkg -i with apt-get -f</strong> When dpkg fails due to missing dependencies, it leaves the package in a "half-installed" state. Always run <code class="ic">sudo apt-get install -f</code> immediately after any dpkg dependency failure to clean up the broken state.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — dpkg -l status codes</strong> Know the two-character status codes: <code class="ic">ii</code> = fully installed, <code class="ic">rc</code> = removed with configs, <code class="ic">iU</code> = unpacked not configured, <code class="ic">iF</code> = half-configured (broken). Filter with <code class="ic">dpkg -l | grep "^rc"</code> to find cleanup candidates.</div></div>
+      <div class="box tip"><span class="bi">✅</span><div><strong>Pro Tip — Inspect before installing</strong> Always run <code class="ic">dpkg -I package.deb</code> and <code class="ic">dpkg -c package.deb</code> before installing third-party .deb files to audit dependencies and see exactly what files will be placed on your system.</div></div>
+
+    </div>
+  </div><!-- /dpkg -->
+
+
+  <!-- ══════════════════════════════════
+       COMPARISON TABLE
+  ══════════════════════════════════ -->
+  <div class="cmd-card">
+    <div class="cmd-head" style="background: linear-gradient(135deg, #0B1F3A, #1A3D6B);">
+      <div class="cmd-mono" style="color:#E0E0E0;">apt vs yum vs dnf vs rpm vs dpkg</div>
+      <div class="cmd-meta">
+        <div class="cmd-tagline">Package Manager Feature Comparison — Essential for Interview Readiness</div>
+      </div>
+    </div>
+    <div class="cmd-body">
+      <div class="cmp-wrap">
+        <table class="cmp">
+          <thead><tr><th>Feature</th><th>apt-get</th><th>yum</th><th>dnf</th><th>rpm</th><th>dpkg</th></tr></thead>
+          <tbody>
+            <tr><td>Base Distro</td><td>Debian/Ubuntu</td><td>RHEL 7/CentOS 7</td><td>RHEL 8+/Fedora</td><td>All RPM distros</td><td>All Debian distros</td></tr>
+            <tr><td>Dep Resolution</td><td class="yes">✓ Automatic</td><td class="yes">✓ Automatic</td><td class="yes">✓ Automatic (libsolv)</td><td class="no">✗ Manual</td><td class="no">✗ Manual</td></tr>
+            <tr><td>Remote Repos</td><td class="yes">✓ Yes</td><td class="yes">✓ Yes</td><td class="yes">✓ Yes</td><td class="no">✗ No</td><td class="no">✗ No</td></tr>
+            <tr><td>Local Package File</td><td class="par">Via dpkg</td><td class="par">Via rpm</td><td class="par">Via rpm</td><td class="yes">✓ .rpm files</td><td class="yes">✓ .deb files</td></tr>
+            <tr><td>Transaction Rollback</td><td class="no">✗ No</td><td class="yes">✓ history undo</td><td class="yes">✓ history undo</td><td class="no">✗ No</td><td class="no">✗ No</td></tr>
+            <tr><td>Package Verification</td><td class="par">Via debsums</td><td class="par">Via rpm -V</td><td class="par">Via rpm -V</td><td class="yes">✓ rpm -V / -Va</td><td class="par">Via debsums</td></tr>
+            <tr><td>Module Streams</td><td class="no">✗ No</td><td class="no">✗ No</td><td class="yes">✓ dnf module</td><td class="no">✗ No</td><td class="no">✗ No</td></tr>
+            <tr><td>File-to-Package Query</td><td class="par">Via dpkg -S</td><td>yum provides</td><td>dnf provides</td><td class="yes">✓ rpm -qf</td><td class="yes">✓ dpkg -S</td></tr>
+            <tr><td>Security Audit</td><td class="par">Limited</td><td class="par">Via rpm</td><td class="par">Via rpm</td><td class="yes">✓ rpm -Va</td><td class="par">Via debsums</td></tr>
+            <tr><td>Recommended Use</td><td>Ubuntu/Debian production</td><td>Legacy RHEL/Amazon Linux</td><td>Modern RHEL/Fedora</td><td>Low-level RPM ops</td><td>Low-level .deb ops</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       CHEAT SHEET
+  ══════════════════════════════════ -->
+  <div class="cheat" id="cheatsheet">
+    <div class="cheat-head">
+      <h2>📋 Quick Reference Cheat Sheet — Section 8: Package Management</h2>
+      <p>The most important commands across all package managers — memorize before your interview</p>
+    </div>
+    <table class="ct">
+      <tbody>
+        <tr class="ct-section"><td colspan="2">APT-GET — Debian / Ubuntu</td></tr>
+        <tr><td>apt-get update</td><td>Refresh package index (always first!)</td></tr>
+        <tr><td>apt-get install -y nginx</td><td>Install package non-interactively</td></tr>
+        <tr><td>apt-get install --no-install-recommends PKG</td><td>Minimal install (Docker best practice)</td></tr>
+        <tr><td>apt-get upgrade -y</td><td>Upgrade all installed packages</td></tr>
+        <tr><td>apt-get dist-upgrade -y</td><td>Smart upgrade with dep changes</td></tr>
+        <tr><td>apt-get remove PKG</td><td>Remove (keep configs)</td></tr>
+        <tr><td>apt-get purge PKG</td><td>Remove + delete config files</td></tr>
+        <tr><td>apt-get autoremove -y</td><td>Remove orphaned dependencies</td></tr>
+        <tr><td>apt-get clean</td><td>Clear all cached package files</td></tr>
+        <tr><td>apt-get --fix-broken install</td><td>Fix broken dependency state</td></tr>
+        <tr><td>apt-mark hold PKG</td><td>Pin package — prevent auto-upgrade</td></tr>
+        <tr class="ct-section"><td colspan="2">APT-CACHE — Debian / Ubuntu</td></tr>
+        <tr><td>apt-cache search keyword</td><td>Search packages by keyword</td></tr>
+        <tr><td>apt-cache show PKG</td><td>Show full package metadata</td></tr>
+        <tr><td>apt-cache policy PKG</td><td>Show installed/candidate versions + repo priorities</td></tr>
+        <tr><td>apt-cache depends PKG</td><td>Show package dependencies</td></tr>
+        <tr class="ct-section"><td colspan="2">YUM — RHEL 7 / CentOS 7 / Amazon Linux 2</td></tr>
+        <tr><td>yum install -y nginx</td><td>Install package</td></tr>
+        <tr><td>yum update -y</td><td>Update all packages</td></tr>
+        <tr><td>yum remove nginx</td><td>Remove package</td></tr>
+        <tr><td>yum search term</td><td>Search packages</td></tr>
+        <tr><td>yum info PKG</td><td>Package details</td></tr>
+        <tr><td>yum provides '*/netstat'</td><td>Find which package provides a file</td></tr>
+        <tr><td>yum history list</td><td>Show transaction history</td></tr>
+        <tr><td>yum history undo LAST</td><td>Rollback last transaction</td></tr>
+        <tr><td>yum clean all</td><td>Clear all cached data</td></tr>
+        <tr><td>yum groupinstall "Dev Tools"</td><td>Install package group</td></tr>
+        <tr class="ct-section"><td colspan="2">DNF — RHEL 8+ / Fedora / Rocky / Alma</td></tr>
+        <tr><td>dnf install -y nginx</td><td>Install package</td></tr>
+        <tr><td>dnf update --security -y</td><td>Apply only security updates</td></tr>
+        <tr><td>dnf module list</td><td>List available module streams</td></tr>
+        <tr><td>dnf module enable python39</td><td>Enable Python 3.9 module stream</td></tr>
+        <tr><td>dnf module install nodejs:18/default</td><td>Install Node.js 18 via module</td></tr>
+        <tr><td>dnf check-update --security</td><td>Exit 100 if security updates available</td></tr>
+        <tr><td>dnf history undo last</td><td>Rollback last transaction</td></tr>
+        <tr><td>dnf clean all && rm -rf /var/cache/dnf</td><td>Clean cache (Dockerfile pattern)</td></tr>
+        <tr class="ct-section"><td colspan="2">RPM — All RPM Distros (low-level)</td></tr>
+        <tr><td>rpm -ivh package.rpm</td><td>Install RPM with verbose + progress</td></tr>
+        <tr><td>rpm -Uvh package.rpm</td><td>Upgrade (or install) RPM</td></tr>
+        <tr><td>rpm -e nginx</td><td>Erase (remove) package</td></tr>
+        <tr><td>rpm -qa | grep python</td><td>List all installed Python packages</td></tr>
+        <tr><td>rpm -qi nginx</td><td>Package information (version, size)</td></tr>
+        <tr><td>rpm -ql nginx</td><td>List files installed by package</td></tr>
+        <tr><td>rpm -qf /usr/bin/python3</td><td>Find which package owns a file</td></tr>
+        <tr><td>rpm -qR nginx</td><td>List package dependencies</td></tr>
+        <tr><td>rpm -V nginx</td><td>Verify package integrity</td></tr>
+        <tr><td>rpm -Va 2>/dev/null | grep "^..5"</td><td>Find all tampered files (MD5 check)</td></tr>
+        <tr class="ct-section"><td colspan="2">DPKG — Debian / Ubuntu (low-level)</td></tr>
+        <tr><td>dpkg -i package.deb</td><td>Install local .deb file</td></tr>
+        <tr><td>dpkg -r nginx</td><td>Remove package (keep configs)</td></tr>
+        <tr><td>dpkg -P nginx</td><td>Purge package + configs</td></tr>
+        <tr><td>dpkg -l | grep python</td><td>List installed Python packages</td></tr>
+        <tr><td>dpkg -s nginx</td><td>Show package status/details</td></tr>
+        <tr><td>dpkg -L nginx</td><td>List files installed by package</td></tr>
+        <tr><td>dpkg -S /usr/bin/python3</td><td>Find which package owns a file</td></tr>
+        <tr><td>dpkg --configure -a</td><td>Fix unconfigured packages (broken state)</td></tr>
+        <tr><td>dpkg --get-selections > list.txt</td><td>Backup all installed packages</td></tr>
+        <tr><td>dpkg -l | grep "^rc"</td><td>Find packages with orphaned configs</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Final Tip -->
+  <div class="final-tip">
+    <span class="ti">🎓</span>
+    <div>
+      <h3>Final Interview Tips — Package Management</h3>
+      <p>
+        <strong>Most common question:</strong> <em>"Walk me through how you would set up a fresh Ubuntu server for a Python ML workload."</em> Answer: <code class="ic">apt-get update</code> → <code class="ic">apt-get install -y --no-install-recommends python3.11 python3.11-pip build-essential libpq-dev</code> → <code class="ic">apt-get clean && rm -rf /var/lib/apt/lists/*</code>.<br><br>
+        <strong>Distinguish yourself:</strong> Mention version pinning (<code class="ic">apt-get install nginx=1.24.0-1~jammy</code>), GPG key management for custom repos, <code class="ic">DEBIAN_FRONTEND=noninteractive</code> for Docker, and yum/dnf transaction rollback for RHEL. These details signal real production experience.
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <strong>Linux Commands Interview Guide</strong> &nbsp;|&nbsp; Section 8: Package Management &nbsp;|&nbsp; DevOps · Data Engineering · AI-ML Engineering
+</footer>
+
+</body>
+</html>

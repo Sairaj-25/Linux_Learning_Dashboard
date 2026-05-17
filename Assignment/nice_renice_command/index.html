@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux Process Priority: nice & renice - Master Notes</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --container-bg: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #f0883e;
+            --accent-purple: #bc8cff;
+            --accent-red: #f85149;
+            --accent-cyan: #39d353;
+            --border-color: #30363d;
+            --code-bg: #0d1117;
+            --card-bg: #21262d;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color); color: var(--text-primary);
+            line-height: 1.6; -webkit-font-smoothing: antialiased;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        header {
+            background: linear-gradient(135deg, #161b22 0%, #1a2332 100%);
+            border-bottom: 3px solid var(--accent-orange); padding: 2rem 1rem;
+            text-align: center; border-radius: 0 0 15px 15px; margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        header h1 { color: var(--accent-orange); font-family: 'Courier New', Courier, monospace; font-size: 2.2rem; margin-bottom: 1rem; }
+        nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        nav a {
+            background-color: var(--card-bg); color: var(--accent-blue);
+            padding: 8px 15px; border-radius: 20px; text-decoration: none;
+            font-size: 0.85rem; font-weight: bold; border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        nav a:hover { background-color: var(--accent-blue); color: var(--bg-color); transform: translateY(-2px); }
+        section {
+            background-color: var(--container-bg); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 25px; margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        h2 {
+            color: var(--accent-blue); font-size: 1.8rem;
+            border-bottom: 2px solid var(--border-color); padding-bottom: 10px;
+            margin-bottom: 20px; font-family: 'Courier New', Courier, monospace;
+        }
+        h3 {
+            color: var(--accent-purple); font-size: 1.3rem; margin-top: 25px;
+            margin-bottom: 15px; padding-left: 10px; border-left: 4px solid var(--accent-purple);
+        }
+        .step-card, .command-card {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 15px; margin-bottom: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .step-card:hover, .command-card:hover {
+            transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-color: var(--accent-blue);
+        }
+        .step-card h3 { color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 0; }
+        .rationale { font-size: 0.9rem; color: var(--text-secondary); margin-top: 10px; font-style: italic; }
+        .rationale strong { color: var(--accent-orange); }
+        code {
+            font-family: 'Courier New', Courier, monospace; background-color: var(--code-bg);
+            padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: var(--accent-orange);
+        }
+        pre {
+            background-color: var(--code-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 12px; overflow-x: auto; margin: 10px 0;
+            font-family: 'Courier New', Courier, monospace; color: var(--accent-green); font-size: 0.9em;
+        }
+        details {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; margin-bottom: 8px; overflow: hidden;
+        }
+        summary {
+            padding: 12px 15px; font-weight: bold; color: var(--accent-blue);
+            cursor: pointer; list-style: none; display: flex; justify-content: space-between;
+            align-items: center; transition: background-color 0.2s;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: '►'; color: var(--text-secondary); font-size: 0.8rem; transition: transform 0.2s; }
+        details[open] summary::after { transform: rotate(90deg); }
+        details[open] summary { background-color: rgba(88, 166, 255, 0.1); border-bottom: 1px solid var(--border-color); }
+        .answer-content { padding: 15px; color: var(--text-primary); }
+        .answer-content ul { margin-left: 20px; margin-top: 10px; }
+        .answer-content li { margin-bottom: 5px; }
+        .table-container { overflow-x: auto; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background-color: var(--code-bg); color: var(--accent-purple); font-family: 'Courier New', Courier, monospace; font-weight: bold; }
+        tr:hover { background-color: rgba(255, 255, 255, 0.03); }
+        .highlight { color: var(--accent-red); font-weight: bold; }
+        .badge {
+            display: inline-block; padding: 3px 8px; border-radius: 12px;
+            font-size: 0.75rem; font-weight: bold; text-transform: uppercase;
+        }
+        .badge-danger { background-color: var(--accent-red); color: white; }
+        .badge-tip { background-color: var(--accent-green); color: black; }
+        .badge-root { background-color: var(--accent-purple); color: white; }
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            header h1 { font-size: 1.5rem; }
+            nav a { font-size: 0.75rem; padding: 6px 10px; }
+            section { padding: 15px; }
+            h2 { font-size: 1.4rem; }
+            pre { font-size: 0.8rem; }
+            th, td { padding: 8px 10px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>⚡ LINUX PROCESS PRIORITY: nice & renice</h1>
+        <nav>
+            <a href="#part1">Part I: Procedure</a>
+            <a href="#part2">Part II: Commands</a>
+            <a href="#part3">Part III: Alternatives</a>
+            <a href="#part4">Part IV: Assignment Q&A</a>
+            <a href="#part5">Part V: Interview</a>
+        </nav>
+    </header>
+    <div class="container">
+
+        <!-- PART I -->
+        <section id="part1">
+            <h2>PART I: STEP-BY-STEP PROCEDURE - MANAGING PROCESS PRIORITY</h2>
+            
+            <div class="step-card">
+                <h3>STEP 1: Identify the Process Constraint</h3>
+                <p>Use <code>top</code> or <code>htop</code> to identify CPU-hogging processes. Look at the <code>%CPU</code> and <code>NI</code> (Nice) columns.</p>
+                <p class="rationale"><strong>Rationale:</strong> Before adjusting priorities, you must identify which process is starving other critical services of CPU time.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 2: Starting New Processes with <code>nice</code></h3>
+                <p>When launching a non-urgent, resource-intensive task (like a backup or compilation), start it with a higher nice value (e.g., 10 or 19): <code>nice -n 10 ./backup.sh</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> By making the process "nicer" to others, the Linux scheduler will only allocate CPU time to it when no other normal-priority processes need it, keeping the system responsive.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 3: Adjusting Running Processes with <code>renice</code></h3>
+                <p>If a running process is causing lag, alter its priority on the fly using its PID: <code>renice -n 5 -p 1234</code>. For critical DBs needing a boost (as root): <code>renice -n -5 -p 5678</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> It avoids the downtime of stopping and restarting a long-running service just to change its priority.</p>
+            </div>
+
+            <div class="step-card">
+                <h3>STEP 4: Verification</h3>
+                <p>Verify the changes by checking the <code>NI</code> column in <code>top</code> or using <code>ps -o pid,ni,cmd -p &lt;PID&gt;</code>.</p>
+                <p class="rationale"><strong>Rationale:</strong> Ensures the scheduling adjustment was successfully applied by the kernel.</p>
+            </div>
+        </section>
+
+        <!-- PART II -->
+        <section id="part2">
+            <h2>PART II: COMMANDS AND EXPLANATIONS</h2>
+
+            <div class="command-card">
+                <h3><code>nice</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>nice -n <value> <command></code></p>
+                <p><strong>Purpose:</strong> Launches a new process with a specified niceness (scheduling priority). Default is 0 if omitted. Higher values = lower priority.</p>
+                <p><span class="example">Example:</span> <code>nice -n 10 tar -czf backup.tar.gz /data</code> (Starts tar with low priority)</p>
+            </div>
+
+            <div class="command-card">
+                <h3><code>renice</code></h3>
+                <p><span class="syntax">Syntax:</span> <code>renice -n <value> -p <PID></code></p>
+                <p><strong>Purpose:</strong> Changes the nice value of an already running process.</p>
+                <p><span class="example">Example:</span> <code>renice -n -5 -p 1234</code> (Increases priority of PID 1234. Requires root.)</p>
+            </div>
+
+            <div class="command-card">
+                <h3>Viewing Priority</h3>
+                <p><span class="syntax">Syntax:</span> <code>ps -eo pid,ni,cmd</code> or <code>top</code></p>
+                <p><strong>Purpose:</strong> Displays the NI (Nice) value alongside process IDs and commands. In <code>top</code>, look for columns <code>NI</code> (Nice) and <code>PR</code> (Priority).</p>
+            </div>
+        </section>
+
+        <!-- PART III -->
+        <section id="part3">
+            <h2>PART III: ALTERNATIVE COMMANDS & METHODS</h2>
+
+            <details><summary>1. <code>htop</code> for Interactive Priority Management</summary><div class="answer-content">
+                <p>While <code>renice</code> is CLI-based, <code>htop</code> provides a visual way. You can press <code>F7</code> (Nice -) to increase priority and <code>F8</code> (Nice +) to decrease priority on the selected process. This is much more user-friendly for system administrators monitoring systems in real-time.</p>
+            </div></details>
+
+            <details><summary>2. <code>ionice</code> vs <code>nice</code></summary><div class="answer-content">
+                <p><code>nice</code> only affects <strong>CPU scheduling</strong>. A process with a high nice value can still freeze the system if it hogs Disk I/O. <code>ionice</code> adjusts the <strong>I/O scheduling</strong> priority. For heavy backup jobs, it's best practice to combine both: <code>nice -n 19 ionice -c2 -n7 rsync -a /src /dest</code>. This makes the process polite to both the CPU and the hard drive.</p>
+            </div></details>
+
+            <details><summary>3. <code>chrt</code> (Advanced Scheduling)</summary><div class="answer-content">
+                <p><code>nice</code> modifies processes in the default scheduling policy (SCHED_OTHER). <code>chrt</code> allows you to change the scheduling policy entirely (e.g., to Real-Time policies like SCHED_FIFO or SCHED_RR). This is for highly specialized, latency-sensitive applications and is dangerous if misused.</p>
+            </div></details>
+        </section>
+
+        <!-- PART IV -->
+        <section id="part4">
+            <h2>PART IV: ASSIGNMENT SOLUTIONS</h2>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan);">Section A: Multiple Choice Questions</h3>
+            <details><summary>1. Which command is used to start a process with a specific priority?</summary><div class="answer-content"><p><strong>c) nice</strong></p></div></details>
+            <details><summary>2. Which command changes the priority of a running process?</summary><div class="answer-content"><p><strong>a) renice</strong></p></div></details>
+            <details><summary>3. What is the default nice value in Linux?</summary><div class="answer-content"><p><strong>b) 0</strong></p></div></details>
+            <details><summary>4. Which nice value gives the highest priority?</summary><div class="answer-content"><p><strong>d) -20</strong></p></div></details>
+            <details><summary>5. Which user can assign negative nice values?</summary><div class="answer-content"><p><strong>c) Root user</strong></p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section B: Fill in the Blanks</h3>
+            <details><summary>1. The __________ command starts a process with a custom priority.</summary><div class="answer-content"><p><strong>nice</strong></p></div></details>
+            <details><summary>2. The __________ command changes priority of a running process.</summary><div class="answer-content"><p><strong>renice</strong></p></div></details>
+            <details><summary>3. Lower nice value means __________ priority.</summary><div class="answer-content"><p><strong>Higher</strong> (Note: A lower number like -20 gives higher CPU priority)</p></div></details>
+            <details><summary>4. Higher nice value means __________ priority.</summary><div class="answer-content"><p><strong>Lower</strong> (Note: A higher number like 19 gives lower CPU priority)</p></div></details>
+            <details><summary>5. The nice value range in Linux is from __________ to __________.</summary><div class="answer-content"><p><strong>-20</strong> to <strong>19</strong></p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section C: True or False</h3>
+            <details><summary>1. nice is used for new processes only.</summary><div class="answer-content"><p><strong>True.</strong> <code>nice</code> launches a new command. To change existing ones, use <code>renice</code>.</p></div></details>
+            <details><summary>2. renice works on already running processes.</summary><div class="answer-content"><p><strong>True.</strong></p></div></details>
+            <details><summary>3. A nice value of 19 gives highest priority.</summary><div class="answer-content"><p><strong>False.</strong> 19 gives the <em>lowest</em> priority. -20 gives the highest.</p></div></details>
+            <details><summary>4. Only root user can use negative nice values.</summary><div class="answer-content"><p><strong>True.</strong> Normal users can only increase the nice value (make processes nicer/lower priority) of their own processes.</p></div></details>
+            <details><summary>5. top command can display process priority.</summary><div class="answer-content"><p><strong>True.</strong> The <code>NI</code> column shows the nice value.</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section D: Short Answer Questions</h3>
+            <details><summary>1. What is process priority in Linux?</summary><div class="answer-content"><p>It is a numeric value the kernel uses to determine how much CPU time a process receives relative to other processes. In user space, this is managed via "Nice" values, where a lower number means higher priority for CPU allocation.</p></div></details>
+            <details><summary>2. Explain the purpose of the nice command.</summary><div class="answer-content"><p>The <code>nice</code> command is used to launch a program with a modified scheduling priority. It allows administrators to start non-urgent background tasks (like backups) so they don't consume CPU time needed by critical foreground services.</p></div></details>
+            <details><summary>3. Explain the purpose of the renice command.</summary><div class="answer-content"><p>The <code>renice</code> command alters the scheduling priority of an already running process. This is useful for deprioritizing a runaway process that is consuming too many resources, or boosting the priority of a critical database process, without needing to restart them.</p></div></details>
+            <details><summary>4. What is the default nice value?</summary><div class="answer-content"><p>0. Processes inherit the nice value of their parent, and standard terminal sessions start with a nice value of 0.</p></div></details>
+            <details><summary>5. Why are negative nice values restricted to root user?</summary><div class="answer-content"><p>If normal users could assign negative nice values (high priority), they could monopolize the CPU, making the system unresponsive for other users and essential system processes. Restricting this to root ensures system stability.</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section E: Command Writing</h3>
+            <details><summary>1. Write a command to start Firefox with nice value 5.</summary><div class="answer-content"><pre>nice -n 5 firefox</pre></div></details>
+            <details><summary>2. Write a command to start a backup process with lowest priority.</summary><div class="answer-content"><pre>nice -n 19 /path/to/backup_script.sh</pre></div></details>
+            <details><summary>3. Write a command to change PID 1234 priority to 10.</summary><div class="answer-content"><pre>renice -n 10 -p 1234</pre></div></details>
+            <details><summary>4. Write a command to increase priority of PID 1234 using negative nice value.</summary><div class="answer-content"><pre>sudo renice -n -5 -p 1234</pre><p><em>Note: Requires root privileges.</em></p></div></details>
+            <details><summary>5. Write a command to display process priority using ps.</summary><div class="answer-content"><pre>ps -eo pid,ni,cmd
+# OR specifically for a PID:
+ps -o pid,ni,cmd -p 1234</pre></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section F: Scenario-Based Questions</h3>
+            <details><summary>1. A backup job should not affect system performance. Which command should be used?</summary><div class="answer-content"><p>Start the backup with <code>nice -n 19</code> to give it the lowest CPU priority. Also consider <code>ionice -c2 -n7</code> to prevent disk I/O starvation.</p></div></details>
+            <details><summary>2. A database process needs more CPU priority. Which command is suitable?</summary><div class="answer-content"><p>Use <code>sudo renice -n -5 -p &lt;PID_of_DB&gt;</code> to give it a negative nice value, increasing its CPU share over standard processes.</p></div></details>
+            <details><summary>3. A heavy process is slowing down the system. How can its priority be reduced?</summary><div class="answer-content"><p>Find its PID using <code>top</code>, then use <code>renice -n 19 -p &lt;PID&gt;</code>. As a normal user, you can only renice your own processes to higher values.</p></div></details>
+            <details><summary>4. Why should administrators avoid assigning very high priority to many processes?</summary><div class="answer-content"><p>Priorities are relative. If every process is given the highest priority (e.g., -20), then they all compete equally for CPU, effectively reverting to the default state. Worse, high-priority user processes can starve essential kernel threads, causing system hangs.</p></div></details>
+            <details><summary>5. Which command helps monitor priority values in real time?</summary><div class="answer-content"><p><code>top</code> or <code>htop</code>.</p></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section G: Practical Questions</h3>
+            <details><summary>1. Start a process with nice value 15.</summary><div class="answer-content"><pre>nice -n 15 sleep 1000</pre></div></details>
+            <details><summary>2. Change the priority of a running process.</summary><div class="answer-content"><pre># Assuming PID is 8453
+renice -n 5 -p 8453</pre></div></details>
+            <details><summary>3. View process priority using top.</summary><div class="answer-content"><pre>top
+# Look at the 'NI' column in the output</pre></div></details>
+            <details><summary>4. Display nice values using ps -el.</summary><div class="answer-content"><pre>ps -el
+# The 'NI' column shows the nice value</pre></div></details>
+            <details><summary>5. Start a background process with lowest CPU priority.</summary><div class="answer-content"><pre>nice -n 19 tar -czf /tmp/backup.tar.gz /home &</pre></div></details>
+
+            <h3 style="color: var(--accent-cyan); border-left: 4px solid var(--accent-cyan); margin-top: 30px;">Section H: Long Answer Questions</h3>
+            <details><summary>1. Explain the nice command with examples.</summary><div class="answer-content"><p>The <code>nice</code> command launches a process with a custom scheduling priority (nice value), allowing administrators to control how much CPU time a new process gets relative to others. The range is -20 (highest priority) to 19 (lowest priority). Default is 0. Normal users can only set values 1-19, while root can set -20 to 19.<br><strong>Examples:</strong><br>1. Start a low-priority compilation: <code>nice -n 10 make</code><br>2. Start an urgent data crunching task (as root): <code>nice -n -15 ./data_crunch.bin</code></p></div></details>
+            <details><summary>2. Explain the renice command with examples.</summary><div class="answer-content"><p>The <code>renice</code> command alters the priority of an already running process. This is essential for system tuning without service interruption. It uses the <code>-p</code> flag for PIDs, <code>-u</code> for users, and <code>-g</code> for groups.<br><strong>Examples:</strong><br>1. Lower priority of PID 1234: <code>renice -n 15 -p 1234</code><br>2. Increase priority of PID 5678 (as root): <code>renice -n -10 -p 5678</code><br>3. Change priority of all processes owned by user 'admin': <code>renice -n 5 -u admin</code></p></div></details>
+            <details><summary>3. Differentiate between nice and renice.</summary><div class="answer-content"><div class="table-container"><table><tr><th>Feature</th><th>nice</th><th>renice</th></tr><tr><td>Purpose</td><td>Start a NEW process with priority</td><td>Change priority of RUNNING process</td></tr><tr><td>Target</td><td>Command/Script</td><td>PID, User, or Group</td></tr><tr><td>Service Impact</td><td>Requires stopping/starting the service</td><td>No downtime; applied dynamically</td></tr><tr><td>Syntax Example</td><td>nice -n 10 ./script.sh</td><td>renice -n 10 -p 1234</td></tr></table></div></div></details>
+            <details><summary>4. Explain how Linux process scheduling uses nice values.</summary><div class="answer-content"><p>Linux uses the Completely Fair Scheduler (CFS). Instead of allocating fixed time slices, CFS assigns a proportion of CPU time. The "nice" value acts as a weight. Every +1 increment in nice value decreases the CPU proportion by roughly 10%, and every -1 increment increases it. For example, a process with a nice value of 0 gets significantly more CPU time than a process with a nice value of 19. CFS ensures that even the lowest priority process will eventually get some CPU time (no starvation), unless higher-priority real-time processes are continuously runnable.</p></div></details>
+        </section>
+
+        <!-- PART V -->
+        <section id="part5">
+            <h2>PART V: INTERVIEW QUESTIONS AND ANSWERS</h2>
+
+            <details><summary>Q1: What is the difference between the PR and NI columns in the top command?</summary><div class="answer-content"><p><strong>NI (Nice):</strong> The user-space priority value (-20 to 19) set by the user via <code>nice</code> or <code>renice</code>.<br><strong>PR (Priority):</strong> The kernel-space scheduling priority. For standard processes (SCHED_OTHER), the formula is <code>PR = 20 + NI</code>. Therefore, a nice value of -20 equals PR 0 (highest), and a nice value of 19 equals PR 39 (lowest). Real-time processes will show PR values like 'rt'.</p></div></details>
+
+            <details><summary>Q2: Can a normal user renice their own process from 5 to 0? Why or why not?</summary><div class="answer-content"><p><strong>No.</strong> A normal user can only <em>increase</em> the nice value (make the process "nicer" / lower priority). Moving from 5 to 0 is decreasing the nice value (increasing priority), which is strictly a root-only operation. This prevents users from gaming the scheduler to the detriment of others.</p></div></details>
+
+            <details><summary>Q3: If you renice a multi-threaded process, does it affect all threads?</summary><div class="answer-content"><p>Yes. In modern Linux, if you change the nice value of a process (via its main PID), all threads within that process (visible via <code>ps -L</code> or <code>top -H</code>) inherit the new nice value. You can theoretically set different nice values for individual threads, but this is rarely done and requires targeting specific Thread IDs (TIDs).</p></div></details>
+
+            <details><summary>Q4: What happens if two processes with nice values of -20 are fighting for the CPU?</summary><div class="answer-content"><p>Since both have the highest possible user-space priority, the CFS scheduler will split the CPU time exactly 50/50 between them. The nice value determines the *ratio* of CPU allocation, not absolute exclusivity. They will still starve normal (nice 0) processes, however.</p></div></details>
+
+            <details><summary>Q5: Why is it generally recommended to use <code>ionice</code> alongside <code>nice</code> for backup jobs?</summary><div class="answer-content"><p><code>nice</code> only makes the process polite about <strong>CPU</strong> time. A backup job that is CPU-nice (nice 19) might still aggressively read from the disk, causing the disk controller to starve interactive processes (like a web server or desktop UI) of <strong>I/O</strong>. <code>ionice</code> sets the I/O priority (Best-effort, Real-time, Idle), ensuring the backup does not saturate the disk bandwidth.</p></div></details>
+        </section>
+
+    </div>
+    <footer style="text-align: center; padding: 20px; color: var(--text-secondary); border-top: 1px solid var(--border-color); margin-top: 30px;">
+        Linux Process Priority &copy; 2023 | Advanced Administration Notes
+    </footer>
+</body>
+</html>
