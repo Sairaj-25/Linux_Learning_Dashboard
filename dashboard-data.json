@@ -150,6 +150,11 @@
           "title": "Bash for Loop - Comprehensive Linux Notes",
           "href": "Assignment/Bash_scripting/for_loops/index.html",
           "tags": ["bash", "loops", "for"]
+        },
+        {
+          "title": "Bash Practise-Guide",
+          "href": "Assignment/Bash_scripting/scenario_based_scripts/index.html",
+          "tags": ["bash", "practise", "scripting", "script"]
         }
       ]
     },

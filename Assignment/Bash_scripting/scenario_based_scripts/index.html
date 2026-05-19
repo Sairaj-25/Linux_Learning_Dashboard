@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>50 Bash Scripting Interview Problems - Master Notes</title>
+    <style>
+        :root {
+            --bg-color: #0d1117; --container-bg: #161b22; --text-primary: #c9d1d9;
+            --text-secondary: #8b949e; --accent-blue: #58a6ff; --accent-green: #3fb950;
+            --accent-orange: #f0883e; --accent-purple: #bc8cff; --accent-red: #f85149;
+            --accent-cyan: #39d353; --border-color: #30363d; --code-bg: #0d1117; --card-bg: #21262d;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        header { background: linear-gradient(135deg, #161b22 0%, #1a2332 100%); border-bottom: 3px solid var(--accent-purple); padding: 2rem 1rem; text-align: center; border-radius: 0 0 15px 15px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        header h1 { color: var(--accent-purple); font-family: 'Courier New', Courier, monospace; font-size: 2.2rem; margin-bottom: 1rem; }
+        nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        nav a { background-color: var(--card-bg); color: var(--accent-blue); padding: 8px 15px; border-radius: 20px; text-decoration: none; font-size: 0.85rem; font-weight: bold; border: 1px solid var(--border-color); transition: all 0.3s ease; }
+        nav a:hover { background-color: var(--accent-blue); color: var(--bg-color); transform: translateY(-2px); }
+        section { background-color: var(--container-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 25px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        h2 { color: var(--accent-blue); font-size: 1.8rem; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px; font-family: 'Courier New', Courier, monospace; }
+        h3 { color: var(--accent-purple); font-size: 1.3rem; margin-top: 25px; margin-bottom: 15px; padding-left: 10px; border-left: 4px solid var(--accent-purple); }
+        code { font-family: 'Courier New', Courier, monospace; background-color: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: var(--accent-orange); }
+        pre { background-color: var(--code-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; overflow-x: auto; margin: 10px 0; font-family: 'Courier New', Courier, monospace; color: var(--accent-green); font-size: 0.85em; }
+        details { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 8px; overflow: hidden; }
+        summary { padding: 12px 15px; font-weight: bold; color: var(--accent-blue); cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s; }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: '►'; color: var(--text-secondary); font-size: 0.8rem; transition: transform 0.2s; }
+        details[open] summary::after { transform: rotate(90deg); }
+        details[open] summary { background-color: rgba(88, 166, 255, 0.1); border-bottom: 1px solid var(--border-color); }
+        .answer-content { padding: 15px; color: var(--text-primary); }
+        .rationale { font-size: 0.9rem; color: var(--text-secondary); margin-top: 10px; font-style: italic; }
+        .rationale strong { color: var(--accent-orange); }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .badge-tip { background-color: var(--accent-green); color: black; }
+        .badge-warn { background-color: var(--accent-orange); color: black; }
+        .alt-cmd { color: var(--accent-cyan); font-size: 0.9em; }
+        @media (max-width: 768px) { .container { padding: 10px; } header h1 { font-size: 1.5rem; } nav a { font-size: 0.75rem; padding: 6px 10px; } section { padding: 15px; } h2 { font-size: 1.4rem; } pre { font-size: 0.8rem; } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🖥️ 50 BASH SCRIPTING PROBLEMS</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Beginner to Advanced Solutions & Explanations</p>
+        <nav>
+            <a href="#beg">Beginner (1-10)</a>
+            <a href="#begint">Beg-Int (11-20)</a>
+            <a href="#int">Intermediate (21-30)</a>
+            <a href="#intadv">Int-Adv (31-40)</a>
+            <a href="#adv">Advanced (41-50)</a>
+            <a href="#interview">Interview Q&A</a>
+        </nav>
+    </header>
+    <div class="container">
+
+        <!-- BEGINNER -->
+        <section id="beg">
+            <h2>BEGINNER LEVEL (1-10)</h3>
+            <details><summary>1. Check File Existence</summary><div class="answer-content"><pre>#!/bin/bash
+read -p "Enter filename: " file
+if [ -f "$file" ]; then echo "Regular file."
+elif [ -d "$file" ]; then echo "Directory."
+else echo "Missing." fi</pre><p class="rationale"><strong>Flow:</strong> Use test operators <code>-f</code> (file) and <code>-d</code> (directory) to determine type. <strong>Alt:</strong> <code>test -e</code> or <code>[[ -f $file ]]</code>.</p></div></details>
+            <details><summary>2. Count Lines in a File</summary><div class="answer-content"><pre>#!/bin/bash
+read -p "Enter filename: " file
+[ ! -r "$file" ] && echo "File missing/unreadable" && exit 1
+wc -l < "$file"</pre><p class="rationale"><strong>Flow:</strong> Validate readability with <code>-r</code>, then <code>wc -l</code>. <strong>Alt:</strong> <code>cat -n "$file" | tail -1 | awk '{print $1}'</code>.</p></div></details>
+            <details><summary>3. Count Words in a File</summary><div class="answer-content"><pre>#!/bin/bash
+read -p "Enter filename: " file
+[ ! -r "$file" ] && echo "File missing/unreadable" && exit 1
+wc -w < "$file"</pre><p class="rationale"><strong>Flow:</strong> <code>wc -w</code> counts words. <strong>Alt:</strong> <code>tr ' ' '\n' < "$file" | wc -l</code>.</p></div></details>
+            <details><summary>4. Rename Files by Extension</summary><div class="answer-content"><pre>#!/bin/bash
+for f in *.txt; do
+  [ -f "$f" ] && mv "$f" "$f.bak"
+done</pre><p class="rationale"><strong>Flow:</strong> Glob <code>*.txt</code> and loop. <strong>Alt:</strong> <code>rename '.txt' '.txt.bak' *.txt</code>.</p></div></details>
+            <details><summary>5. Display First N Lines</summary><div class="answer-content"><pre>#!/bin/bash
+[ $# -ne 2 ] && echo "Usage: $0 file N" && exit 1
+head -n "$2" "$1"</pre><p class="rationale"><strong>Flow:</strong> Validate args, use <code>head</code>. <strong>Alt:</strong> <code>sed -n "1,$2p" "$1"</code>.</p></div></details>
+            <details><summary>6. Display Last N Lines</summary><div class="answer-content"><pre>#!/bin/bash
+[ $# -ne 2 ] && echo "Usage: $0 file N" && exit 1
+tail -n "$2" "$1"</pre><p class="rationale"><strong>Flow:</strong> Use <code>tail</code>. <strong>Alt:</strong> <code>sed -n "$(($(wc -l < $1)-$2+1),\$p" "$1"</code>.</p></div></details>
+            <details><summary>7. Check Even or Odd Number</summary><div class="answer-content"><pre>#!/bin/bash
+read -p "Enter number: " num
+[[ ! $num =~ ^[0-9]+$ ]] && echo "Invalid" && exit 1
+[ $((num % 2)) -eq 0 ] && echo "Even" || echo "Odd"</pre><p class="rationale"><strong>Flow:</strong> Regex validation, modulo operator <code>%</code>. <strong>Alt:</strong> <code>if (( num % 2 ))</code>.</p></div></details>
+            <details><summary>8. Find the Largest of Three Numbers</summary><div class="answer-content"><pre>#!/bin/bash
+read -p "Enter 3 nums: " a b c
+largest=$a
+[ $b -gt $largest ] && largest=$b
+[ $c -gt $largest ] && largest=$c
+echo "Largest: $largest"</pre><p class="rationale"><strong>Flow:</strong> Sequential comparison. <strong>Alt:</strong> <code>echo -e "$a\n$b\n$c" | sort -n | tail -1</code>.</p></div></details>
+            <details><summary>9. Print Multiplication Table</summary><div class="answer-content"><pre>#!/bin/bash
+read -p "Enter number: " n
+[[ ! $n =~ ^[1-9][0-9]*$ ]] && echo "Invalid" && exit 1
+for i in {1..10}; do echo "$n x $i = $((n*i))"; done</pre><p class="rationale"><strong>Flow:</strong> Loop 1-10, validate positive integer. <strong>Alt:</strong> <code>seq 1 10 | xargs -I{} echo "$n x {} = $((n*{}))"</code>.</p></div></details>
+            <details><summary>10. Check Prime Number</summary><div class="answer-content"><pre>#!/bin/bash
+read -p "Enter number: " n
+[ $n -le 1 ] && echo "Not Prime" && exit 0
+for ((i=2; i<=n/2; i++)); do [ $((n%i)) -eq 0 ] && echo "Not Prime" && exit 0; done
+echo "Prime"</pre><p class="rationale"><strong>Flow:</strong> Check divisibility up to n/2. <strong>Alt:</strong> <code>factor $n | awk '{print NF==2 ? "Prime" : "Not Prime"}'</code>.</p></div></details>
+        </section>
+
+        <!-- BEGINNER TO INTERMEDIATE -->
+        <section id="begint">
+            <h2>BEGINNER TO INTERMEDIATE (11-20)</h2>
+            <details><summary>11. Create Multiple Directories</summary><div class="answer-content"><pre>#!/bin/bash
+read -p "Prefix & Count: " prefix count
+for ((i=1; i<=count; i++)); do
+  [ -d "${prefix}_${i}" ] && continue
+  mkdir "${prefix}_${i}"
+done</pre><p class="rationale"><strong>Flow:</strong> Loop and check existence. <strong>Alt:</strong> <code>mkdir ${prefix}_{1..$count}</code> (Brace expansion eval required).</p></div></details>
+            <details><summary>12. Backup a File</summary><div class="answer-content"><pre>#!/bin/bash
+[ -z "$1" ] && echo "Need file" && exit 1
+cp "$1" "${1}_$(date +%Y%m%d_%H%M%S).bak"</pre><p class="rationale"><strong>Flow:</strong> Timestamp via <code>date</code>. <strong>Alt:</strong> <code>cp $1 backup/${1##*/}.bak</code>.</p></div></details>
+            <details><summary>13. Delete Empty Files</summary><div class="answer-content"><pre>#!/bin/bash
+dir=${1:-.}
+find "$dir" -maxdepth 1 -type f -empty -print -delete</pre><p class="rationale"><strong>Flow:</strong> <code>find -empty -delete</code>. <strong>Alt:</strong> <code>for f in *; do [ ! -s "$f" ] && rm "$f"; done</code>.</p></div></details>
+            <details><summary>14. Find Files Larger Than Given Size</summary><div class="answer-content"><pre>#!/bin/bash
+[ $# -ne 2 ] && echo "Usage: $0 Dir MB" && exit 1
+[ ! -d "$1" ] && echo "Dir missing" && exit 1
+find "$1" -type f -size +"${2}M"</pre><p class="rationale"><strong>Flow:</strong> <code>find -size</code>. <strong>Alt:</strong> <code>du -ah "$1" | awk '$1 > $2"MB"'</code>.</p></div></details>
+            <details><summary>15. Count Files by Extension</summary><div class="answer-content"><pre>#!/bin/bash
+[ $# -ne 2 ] && echo "Usage: $0 Dir Ext" && exit 1
+find "$1" -maxdepth 1 -type f -name "*.$2" | wc -l</pre><p class="rationale"><strong>Flow:</strong> <code>find -name</code> limit depth 1. <strong>Alt:</strong> <code>ls -1 *.$2 2>/dev/null | wc -l</code>.</p></div></details>
+            <details><summary>16. Find Duplicate Lines in a File</summary><div class="answer-content"><pre>#!/bin/bash
+[ ! -f "$1" ] && exit 1
+grep -v '^$' "$1" | sort | uniq -d</pre><p class="rationale"><strong>Flow:</strong> <code>sort</code> then <code>uniq -d</code>. <strong>Alt:</strong> <code>awk '{count[$0]++} count[$0]==2{print}' "$1"</code>.</p></div></details>
+            <details><summary>17. Remove Blank Lines from a File</summary><div class="answer-content"><pre>#!/bin/bash
+grep -v '^$' "$1" > "${1}.cleaned"</pre><p class="rationale"><strong>Flow:</strong> <code>grep -v</code> inverse match blank. <strong>Alt:</strong> <code>sed '/^$/d' "$1" > out</code>.</p></div></details>
+            <details><summary>18. Search Word in File</summary><div class="answer-content"><pre>#!/bin/bash
+[ $# -ne 2 ] && exit 1
+grep -c "$1" "$2"</pre><p class="rationale"><strong>Flow:</strong> <code>grep -c</code> counts. <strong>Alt:</strong> <code>awk '/word/{c++} END{print c}'</code>.</p></div></details>
+            <details><summary>19. Case-Insensitive Word Search</summary><div class="answer-content"><pre>#!/bin/bash
+[ $# -ne 2 ] && exit 1
+grep -in "$1" "$2"</pre><p class="rationale"><strong>Flow:</strong> <code>-i</code> ignore case, <code>-n</code> line numbers. <strong>Alt:</strong> <code>awk 'BEGIN{IGNORECASE=1} /word/{print NR": "$0}'</code>.</p></div></details>
+            <details><summary>20. Replace Word in File</summary><div class="answer-content"><pre>#!/bin/bash
+[ $# -ne 3 ] && exit 1
+sed "s/$1/$2/g" "$3" > "${3}.mod"</pre><p class="rationale"><strong>Flow:</strong> <code>sed s///g</code>. <strong>Alt:</strong> <code>awk '{gsub(a,b); print}' a="$1" b="$2" "$3" > out</code>.</p></div></details>
+        </section>
+
+        <!-- INTERMEDIATE -->
+        <section id="int">
+            <h2>INTERMEDIATE LEVEL (21-30)</h2>
+            <details><summary>21. Parse CSV and Print Specific Column</summary><div class="answer-content"><pre>#!/bin/bash
+[ $# -ne 2 ] && exit 1
+awk -F, -v col="$2" '{print $col}' "$1"</pre><p class="rationale"><strong>Flow:</strong> <code>awk -F,</code> sets comma delimiter. <strong>Alt:</strong> <code>cut -d, -f$2 "$1"</code>.</p></div></details>
+            <details><summary>22. Sum Amounts from CSV by Username</summary><div class="answer-content"><pre>#!/bin/bash
+[ $# -ne 2 ] && exit 1
+awk -F, -v user="$1" 'NR>1 && $1==user{sum+=$2} END{print sum}' "$2"</pre><p class="rationale"><strong>Flow:</strong> Skip header <code>NR>1</code>, match user, sum. <strong>Alt:</strong> <code>grep "$1" "$2" | tail -n +2 | awk -F, '{sum+=$2} END{print sum}'</code>.</p></div></details>
+            <details><summary>23. Validate Email Format</summary><div class="answer-content"><pre>#!/bin/bash
+read -p "Email: " email
+regex="^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+[[ $email =~ $regex ]] && echo "Valid" || echo "Invalid"</pre><p class="rationale"><strong>Flow:</strong> Bash regex <code>[[ =~ ]]</code>. <strong>Alt:</strong> <code>grep -qE 'regex' <<< "$email"</code>.</p></div></details>
+            <details><summary>24. Validate Password Strength</summary><div class="answer-content"><pre>#!/bin/bash
+read -s -p "Password: " pass
+[[ ${#pass} -lt 8 ]] && echo "Need 8 chars" && exit 1
+[[ ! "$pass" =~ [A-Z] ]] && echo "Need Uppercase" && exit 1
+[[ ! "$pass" =~ [a-z] ]] && echo "Need Lowercase" && exit 1
+[[ ! "$pass" =~ [0-9] ]] && echo "Need Digit" && exit 1
+[[ ! "$pass" =~ [^a-zA-Z0-9] ]] && echo "Need Special" && exit 1
+echo "Strong"</pre><p class="rationale"><strong>Flow:</strong> Check length, then regex for char classes. <strong>Alt:</strong> <code>cracklib-check</code> or <code>pwscore</code>.</p></div></details>
+            <details><summary>25. Monitor Disk Usage</summary><div class="answer-content"><pre>#!/bin/bash
+usage=$(df -h / | awk 'NR==2{print $5}' | tr -d '%')
+[ "$usage" -gt 80 ] && echo "ALERT: / is ${usage}% full"</pre><p class="rationale"><strong>Flow:</strong> Parse <code>df</code>, strip <code>%</code>, compare. <strong>Alt:</strong> <code>stat -f /</code>.</p></div></details>
+            <details><summary>26. Check Service Status</summary><div class="answer-content"><pre>#!/bin/bash
+[ -z "$1" ] && exit 1
+systemctl is-active --quiet "$1" && echo "$1 Active" || echo "$1 Inactive"</pre><p class="rationale"><strong>Flow:</strong> <code>systemctl is-active</code>. <strong>Alt:</strong> <code>service "$1" status</code>.</p></div></details>
+            <details><summary>27. Restart Failed Service</summary><div class="answer-content"><pre>#!/bin/bash
+svc="$1"
+! systemctl is-active --quiet "$svc" && systemctl restart "$svc" && echo "$(date): Restarted $svc" >> /var/log/svc_monitor.log</pre><p class="rationale"><strong>Flow:</strong> Check, restart, log with timestamp. <strong>Alt:</strong> <code>/etc/init.d/$1 restart</code>.</p></div></details>
+            <details><summary>28. Check Process by Name</summary><div class="answer-content"><pre>#!/bin/bash
+[ -z "$1" ] && exit 1
+pid=$(pgrep -x "$1")
+[ -n "$pid" ] && echo "Running PID: $pid" || echo "Not running"</pre><p class="rationale"><strong>Flow:</strong> <code>pgrep -x</code> exact match. <strong>Alt:</strong> <code>ps -C "$1" -o pid=</code>.</p></div></details>
+            <details><summary>29. Kill Process by Name</summary><div class="answer-content"><pre>#!/bin/bash
+pids=$(pgrep "$1")
+[ -z "$pids" ] && echo "Not found" && exit 0
+echo "Found: $pids. Kill? (y/n)"; read ans
+[[ $ans == "y" ]] && kill -9 $pids</pre><p class="rationale"><strong>Flow:</strong> <code>pgrep</code>, confirm, <code>kill -9</code>. <strong>Alt:</strong> <code>pkill -i "$1"</code>.</p></div></details>
+            <details><summary>30. Show Top Memory-Consuming Processes</summary><div class="answer-content"><pre>#!/bin/bash
+ps -eo pid,user,%mem,comm --sort=-%mem | head -n 6</pre><p class="rationale"><strong>Flow:</strong> <code>ps --sort</code>, limit 6 (header + 5). <strong>Alt:</strong> <code>top -b -o +%MEM | head -n 12</code>.</p></div></details>
+        </section>
+
+        <!-- INTERMEDIATE TO ADVANCED -->
+        <section id="intadv">
+            <h2>INTERMEDIATE TO ADVANCED (31-40)</h2>
+            <details><summary>31. Log File Analyzer</summary><div class="answer-content"><pre>#!/bin/bash
+echo "ERROR: $(grep -c 'ERROR' $1)"
+echo "WARN: $(grep -c 'WARNING' $1)"
+echo "INFO: $(grep -c 'INFO' $1)"</pre><p class="rationale"><strong>Flow:</strong> <code>grep -c</code> for counts. <strong>Alt:</strong> <code>awk '/ERROR/{e++} /WARNING/{w++} /INFO/{i++} END{print e,w,i}' $1</code>.</p></div></details>
+            <details><summary>32. Extract IP Addresses from Logs</summary><div class="answer-content"><pre>#!/bin/bash
+grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' "$1" | sort -u</pre><p class="rationale"><strong>Flow:</strong> <code>grep -oE</code> extracts matching pattern. <strong>Alt:</strong> <code>awk '{for(i=1;i<=NF;i++) if($i~/^([0-9]+\.){3}[0-9]+/) print $i}' $1 | sort -u</code>.</p></div></details>
+            <details><summary>33. Count Requests Per IP</summary><div class="answer-content"><pre>#!/bin/bash
+awk '{print $1}' "$1" | sort | uniq -c | sort -nr</pre><p class="rationale"><strong>Flow:</strong> Extract IP (field 1 usually), sort, uniq count. <strong>Alt:</strong> <code>cat "$1" | cut -d' ' -f1 | sort | uniq -c | sort -nr</code>.</p></div></details>
+            <details><summary>34. Find Failed Login Attempts</summary><div class="answer-content"><pre>#!/bin/bash
+grep "Failed password" /var/log/auth.log | awk '{print $(NF-3)}' | sort | uniq -c | sort -nr</pre><p class="rationale"><strong>Flow:</strong> Grep auth log, extract IP field, aggregate. <strong>Alt:</strong> <code>journalctl _SYSTEMD_UNIT=sshd.service | grep Failed | ...</code>.</p></div></details>
+            <details><summary>35. Archive Old Files</summary><div class="answer-content"><pre>#!/bin/bash
+dir=$1; archive="$2"
+mkdir -p "$archive"
+find "$dir" -maxdepth 1 -type f -mtime +30 -exec mv {} "$archive" \;</pre><p class="rationale"><strong>Flow:</strong> <code>find -mtime +30</code>. <strong>Alt:</strong> <code>for f in $(find ...); do mv $f $archive; done</code>.</p></div></details>
+            <details><summary>36. Compress Log Files</summary><div class="answer-content"><pre>#!/bin/bash
+find "$1" -name "*.log" -mtime +7 ! -name "*.gz" -exec gzip {} \;</pre><p class="rationale"><strong>Flow:</strong> Find logs >7 days, exclude .gz, compress. <strong>Alt:</strong> <code>logrotate</code> is the enterprise solution.</p></div></details>
+            <details><summary>37. Menu-Driven File Utility</summary><div class="answer-content"><pre>#!/bin/bash
+while true; do
+  read -p "1.Create 2.Rename 3.Delete 4.View 5.Exit: " ch
+  case $ch in
+    1) read -p "File: " f; touch "$f";;
+    2) read -p "Old New: " o n; mv "$o" "$n";;
+    3) read -p "File: " f; rm "$f";;
+    4) read -p "File: " f; cat "$f";;
+    5) exit 0;;
+  esac
+done</pre><p class="rationale"><strong>Flow:</strong> Infinite loop + case. <strong>Alt:</strong> <code>select opt in Create Rename Delete View Exit; do ... done</code>.</p></div></details>
+            <details><summary>38. User Account Existence Check</summary><div class="answer-content"><pre>#!/bin/bash
+id "$1" &>/dev/null && echo "Exists" || echo "Not Found"</pre><p class="rationale"><strong>Flow:</strong> <code>id</code> queries system DB. <strong>Alt:</strong> <code>getent passwd "$1"</code>.</p></div></details>
+            <details><summary>39. Create Users from File</summary><div class="answer-content"><pre>#!/bin/bash
+while read user; do
+  id "$user" &>/dev/null && echo "Skipped $user" || { useradd "$user" && echo "Created $user"; }
+done < "$1"</pre><p class="rationale"><strong>Flow:</strong> Read file, check existence, create. <strong>Alt:</strong> <code>newusers</code> command for bulk creation.</p></div></details>
+            <details><summary>40. Check File Permissions</summary><div class="answer-content"><pre>#!/bin/bash
+[ -r "$1" ] && echo "Read: Yes" || echo "Read: No"
+[ -w "$1" ] && echo "Write: Yes" || echo "Write: No"
+[ -x "$1" ] && echo "Exec: Yes" || echo "Exec: No"</pre><p class="rationale"><strong>Flow:</strong> Test operators. <strong>Alt:</strong> <code>stat -c "%A" $1 | cut -c2-4</code>.</p></div></details>
+        </section>
+
+        <!-- ADVANCED -->
+        <section id="adv">
+            <h2>ADVANCED LEVEL (41-50)</h2>
+            <details><summary>41. Recursive File Statistics</summary><div class="answer-content"><pre>#!/bin/bash
+dir=$1
+f=$(find "$dir" -type f | wc -l)
+d=$(find "$dir" -type d | wc -l)
+e=$(find "$dir" -type f -empty | wc -l)
+x=$(find "$dir" -type f -executable | wc -l)
+echo -e "Files: $f\nDirs: $d\nEmpty: $e\nExec: $x"</pre><p class="rationale"><strong>Flow:</strong> Separate <code>find</code> commands. <strong>Alt:</strong> Single <code>find</code> + <code>awk</code> counter script.</p></div></details>
+            <details><summary>42. Directory Size Report</summary><div class="answer-content"><pre>#!/bin/bash
+du -sh "$1"/*/ 2>/dev/null | sort -hr</pre><p class="rationale"><strong>Flow:</strong> <code>du -sh</code> on subdirs, sort. <strong>Alt:</strong> <code>find "$1" -maxdepth 1 -type d -exec du -sh {} \; | sort -hr</code>.</p></div></details>
+            <details><summary>43. Safe File Cleanup Script</summary><div class="answer-content"><pre>#!/bin/bash
+ext=$1; dir=$2; dry=$3
+[ "$dry" = "--dry-run" ] && act="echo rm" || act="rm"
+find "$dir" -type f -name "*.$ext" -exec $act {} \;</pre><p class="rationale"><strong>Flow:</strong> Dry-run echoes instead of removing. <strong>Alt:</strong> <code>find -ok rm {} \;</code> prompts per file.</p></div></details>
+            <details><summary>44. Retry Failed Command</summary><div class="answer-content"><pre>#!/bin/bash
+cmd="$@"
+for i in {1..5}; do
+  $cmd && exit 0
+  echo "Retry $i..."
+  sleep 2
+done
+echo "Failed after 5 retries"; exit 1</pre><p class="rationale"><strong>Flow:</strong> Loop 1-5, execute, break on success. <strong>Alt:</strong> <code>while ! $cmd; do ... done</code>.</p></div></details>
+            <details><summary>45. Lock File to Prevent Duplicate Script Runs</summary><div class="answer-content"><pre>#!/bin/bash
+LOCK=/tmp/myscript.lock
+[ -f "$LOCK" ] && exit 1
+touch "$LOCK"
+trap 'rm -f "$LOCK"; exit' EXIT
+# Script logic here
+sleep 10</pre><p class="rationale"><strong>Flow:</strong> Check lock, create, trap for cleanup. <strong>Alt:</strong> <code>flock -n "$LOCK" ./script.sh</code>.</p></div></details>
+            <details><summary>46. Trap Script Interruptions</summary><div class="answer-content"><pre>#!/bin/bash
+TMP=/tmp/mytemp_$$ touch "$TMP"
+trap 'rm -f "$TMP"; echo "Cleaned"; exit' SIGINT SIGTERM
+echo "Running... CTRL+C to test"
+sleep 100</pre><p class="rationale"><strong>Flow:</strong> <code>trap</code> handles signals. <strong>Alt:</strong> Trap <code>EXIT</code> signal which catches all exits.</p></div></details>
+            <details><summary>47. Validate Script Arguments</summary><div class="answer-content"><pre>#!/bin/bash
+[ $# -ne 3 ] && echo "Usage: $0 src_dir dest_dir extension" && exit 1
+[ ! -d "$1" ] || [ ! -d "$2" ] && echo "Dirs invalid" && exit 1</pre><p class="rationale"><strong>Flow:</strong> Check count and directory validity. <strong>Alt:</strong> <code>getopts</code> for flags.</p></div></details>
+            <details><summary>48. Incremental Backup Script</summary><div class="answer-content"><pre>#!/bin/bash
+rsync -av --delete "$1/" "$2/"</pre><p class="rationale"><strong>Flow:</strong> <code>rsync -a</code> preserves structure, updates only changed. <strong>Alt:</strong> <code>find -newer</code> + <code>cp</code> (complex, rsync is standard).</p></div></details>
+            <details><summary>49. Monitor CPU Usage Continuously</summary><div class="answer-content"><pre>#!/bin/bash
+while true; do
+  idle=$(top -bn1 | grep "Cpu(s)" | awk '{print $8}')
+  usage=$(echo "100 - $idle" | bc)
+  [ ${usage%.*} -gt 80 ] && echo "ALERT: CPU ${usage}%"
+  sleep 5
+done</pre><p class="rationale"><strong>Flow:</strong> Parse top, compare. <strong>Alt:</strong> <code>mpstat 5 1 | awk '/Average/{print 100-$NF}'</code>.</p></div></details>
+            <details><summary>50. Generate System Health Report</summary><div class="answer-content"><pre>#!/bin/bash
+REPORT
