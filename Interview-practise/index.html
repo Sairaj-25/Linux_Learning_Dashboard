@@ -1284,6 +1284,1891 @@ EOF</code></pre></div>
 
 </div><!-- /ch5 -->
 
+<!-- ══════════════════════════════════════════
+     CHAPTER 6: SYSTEM SERVICES & DAEMONS
+══════════════════════════════════════════ -->
+<div id="ch6">
+  <div class="chap-head ch6">
+    <div>
+      <span class="chap-num">Chapter 6</span>
+      <div class="chap-title">⚙ System Services &amp; Daemons (systemctl)</div>
+      <div class="chap-sub">systemctl · journalctl · service · unit files · boot targets</div>
+    </div>
+    <div class="q-count">6 Questions</div>
+  </div>
+ 
+  <!-- Q6.1 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 6.1</span><span class="q-level lv-b">Beginner</span>
+      <div><div class="q-title">Nginx fails to start after deployment — diagnose and fix the service failure</div>
+      <div class="q-tags"><span class="tag">systemctl</span><span class="tag">journalctl</span><span class="tag">nginx</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>After deploying a new nginx config, the web server is not responding. The deployment pipeline shows "nginx failed to reload." Users are reporting 502 errors.</p>
+      </div>
+      <div class="problem"><div class="plabel">❓ Problem Statement</div>
+        <p>Diagnose why nginx failed, identify the config error, fix it, and restore the service without downtime.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Check service status immediately</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo systemctl status</span> nginx
+<span class="out"># ● nginx.service - A high performance web server
+#    Loaded: loaded (/lib/systemd/system/nginx.service)
+#    Active: failed (Result: exit-code) since Mon 2024-01-15 09:00:01 UTC
+#   Process: 12345 ExecStartPre=/usr/sbin/nginx -t (code=exited, status=1/FAILURE)
+#  Main PID: 12345 (code=exited, status=1/FAILURE)</span></code></pre></div>
+        </div></div>
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Get full error details with journalctl</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo journalctl</span> <span class="fl">-u nginx -n 50 --no-pager</span>
+<span class="co"># -u: filter by unit (nginx)</span>
+<span class="co"># -n 50: last 50 lines</span>
+<span class="co"># --no-pager: don't paginate</span>
+<span class="out"># Jan 15 09:00:01 web01 nginx[12345]: nginx: [emerg] unexpected "}" in /etc/nginx/sites-enabled/app.conf:42
+# Jan 15 09:00:01 web01 nginx[12345]: nginx: configuration file /etc/nginx/nginx.conf test failed</span></code></pre></div>
+        </div></div>
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Test nginx config manually</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo nginx -t</span>
+<span class="out"># nginx: [emerg] unexpected "}" in /etc/nginx/sites-enabled/app.conf:42
+# nginx: configuration file /etc/nginx/nginx.conf test failed</span>
+ 
+<span class="co"># Rollback to last known-good config</span>
+<span class="cm">sudo cp</span> /etc/nginx/sites-enabled/app.conf.bak /etc/nginx/sites-enabled/app.conf
+ 
+<span class="co"># Test again</span>
+<span class="cm">sudo nginx -t</span>
+<span class="out"># nginx: configuration file /etc/nginx/nginx.conf test is successful</span></code></pre></div>
+        </div></div>
+        <div class="step"><span class="step-num">4</span><div class="step-body">
+          <div class="step-desc"><strong>Start the service and verify</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo systemctl start</span> nginx
+<span class="cm">sudo systemctl status</span> nginx
+<span class="cm">sudo systemctl is-active</span> nginx   <span class="co"># Returns: active</span></code></pre></div>
+        </div></div>
+      </div>
+      <div class="alt"><div class="alt-label">🔄 Alternative Solutions</div>
+        <ul>
+          <li>Use <span class="ic2">journalctl -u nginx --since "5 minutes ago"</span> for time-filtered logs</li>
+          <li>For real-time logs: <span class="ic2">journalctl -fu nginx</span> (follow mode)</li>
+          <li>Check /var/log/nginx/error.log directly: <span class="ic2">tail -f /var/log/nginx/error.log</span></li>
+        </ul>
+      </div>
+      <div class="mistakes"><div class="mis-label">⚠️ Common Mistakes</div>
+        <ul>
+          <li>Using systemctl reload without testing config first — can break a running service</li>
+          <li>Not checking journalctl — only reading systemctl status (which shows truncated output)</li>
+        </ul>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>The diagnostic flow: systemctl status → journalctl -u service → fix → test → restart</li>
+          <li>Mention: <span class="ic2">systemctl reload</span> (graceful, zero-downtime) vs <span class="ic2">systemctl restart</span> (drops connections)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q6.2 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 6.2</span><span class="q-level lv-i">Intermediate</span>
+      <div><div class="q-title">Create a custom systemd service for a Python ML inference server that restarts on failure</div>
+      <div class="q-tags"><span class="tag">systemd unit</span><span class="tag">ExecStart</span><span class="tag">Restart</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>You have a Python FastAPI ML inference server at <span class="ic2">/opt/mlapp/serve.py</span> that needs to run as a system service, start on boot, restart automatically if it crashes, and log to journalctl.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Create the unit file</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH — /etc/systemd/system/mlserver.service</span></div>
+          <pre class="p"><code><span class="cm">sudo nano</span> /etc/systemd/system/mlserver.service</code></pre></div>
+          <div class="cw"><div class="ct"><span class="lang">INI — Unit File Content</span></div>
+          <pre class="p"><code><span class="fl">[Unit]</span>
+<span class="va">Description</span>=ML Inference Server (FastAPI)
+<span class="va">After</span>=network.target
+<span class="va">Wants</span>=network.target
+ 
+<span class="fl">[Service]</span>
+<span class="va">Type</span>=simple
+<span class="va">User</span>=mlservice           <span class="co"># Run as dedicated service user</span>
+<span class="va">Group</span>=mlservice
+<span class="va">WorkingDirectory</span>=/opt/mlapp
+<span class="va">ExecStart</span>=/opt/mlapp/venv/bin/uvicorn serve:app --host 0.0.0.0 --port 8501
+<span class="va">Restart</span>=always           <span class="co"># Restart on any exit</span>
+<span class="va">RestartSec</span>=5             <span class="co"># Wait 5s before restart</span>
+<span class="va">StandardOutput</span>=journal   <span class="co"># Logs go to journalctl</span>
+<span class="va">StandardError</span>=journal
+<span class="va">Environment</span>="MODEL_PATH=/opt/models/v2"
+<span class="va">Environment</span>="LOG_LEVEL=info"
+<span class="va">LimitNOFILE</span>=65536        <span class="co"># High file descriptor limit for ML workloads</span>
+ 
+<span class="fl">[Install]</span>
+<span class="va">WantedBy</span>=multi-user.target</code></pre></div>
+        </div></div>
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Enable and start the service</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo systemctl daemon-reload</span>      <span class="co"># Load new unit file</span>
+<span class="cm">sudo systemctl enable</span> mlserver    <span class="co"># Start on boot</span>
+<span class="cm">sudo systemctl start</span> mlserver     <span class="co"># Start now</span>
+<span class="cm">sudo systemctl status</span> mlserver
+<span class="cm">sudo journalctl</span> <span class="fl">-fu</span> mlserver      <span class="co"># Follow live logs</span></code></pre></div>
+        </div></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>RHCSA exam requires creating systemd unit files — know the [Unit], [Service], [Install] sections</li>
+          <li>Restart=always restarts on any exit; Restart=on-failure restarts only on non-zero exit</li>
+          <li>Always run <span class="ic2">systemctl daemon-reload</span> after editing unit files</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q6.3 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 6.3</span><span class="q-level lv-a">Advanced</span>
+      <div><div class="q-title">A service starts but dies after 30 seconds — debug with journalctl and fix the OOM issue</div>
+      <div class="q-tags"><span class="tag">journalctl</span><span class="tag">OOM killer</span><span class="tag">dmesg</span><span class="tag">MemoryLimit</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>Your ML training service starts successfully but crashes after ~30 seconds. <span class="ic2">systemctl status</span> shows it was running but exits with code "killed". This happens repeatedly.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Check for OOM (Out of Memory) kill events</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo journalctl</span> <span class="fl">-k --since "1 hour ago"</span> | <span class="cm">grep</span> <span class="fl">-i</span> <span class="st">"oom\|killed\|out of memory"</span>
+<span class="out"># Jan 15 09:30:15 kernel: Out of memory: Kill process 5678 (python3) score 850 or sacrifice child
+# Jan 15 09:30:15 kernel: Killed process 5678 (python3) total-vm:8388608kB, anon-rss:7900000kB</span>
+ 
+<span class="cm">sudo dmesg</span> | <span class="cm">grep</span> <span class="fl">-i oom</span>  <span class="co"># Alternative</span></code></pre></div>
+        </div></div>
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Check memory before and after service start</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">free</span> <span class="fl">-h</span>
+<span class="out"># total: 8G   used: 7.8G   free: 200M   buff/cache: 500M</span>
+<span class="cm">cat</span> /proc/meminfo | <span class="cm">grep</span> MemAvailable</code></pre></div>
+        </div></div>
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Add memory limit to unit file to prevent OOM</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Edit with systemctl edit (creates override, not modifying original)</span>
+<span class="cm">sudo systemctl edit</span> mltraining
+<span class="co"># Add in editor:</span>
+<span class="co"># [Service]</span>
+<span class="co"># MemoryLimit=6G</span>
+<span class="co"># OOMScoreAdjust=-500   (negative = less likely to be killed)</span>
+ 
+<span class="cm">sudo systemctl daemon-reload</span>
+<span class="cm">sudo systemctl restart</span> mltraining</code></pre></div>
+        </div></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li><span class="ic2">systemctl edit</span> creates a drop-in override file in /etc/systemd/system/service.d/ — preferred over editing original unit</li>
+          <li>OOM score range: -1000 (never kill) to +1000 (kill first). Service accounts should have negative values</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q6.4 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 6.4</span><span class="q-level lv-i">Intermediate</span>
+      <div><div class="q-title">Multi-service dependency: ensure database starts before application service</div>
+      <div class="q-tags"><span class="tag">After=</span><span class="tag">Requires=</span><span class="tag">Wants=</span><span class="tag">dependency</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>Your application service fails on boot because it starts before PostgreSQL is ready. You need to configure systemd ordering so that the app waits for the DB, and if the DB fails, the app also stops.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">INI — /etc/systemd/system/webapp.service</span></div>
+        <pre class="p"><code><span class="fl">[Unit]</span>
+<span class="va">Description</span>=Web Application Server
+<span class="va">After</span>=network.target postgresql.service   <span class="co"># Start AFTER these</span>
+<span class="va">Requires</span>=postgresql.service               <span class="co"># If postgres fails, app stops too</span>
+<span class="co"># Wants=  would be softer dependency — app still starts even if postgres fails</span>
+<span class="co"># BindsTo= is strictest — if postgres stops, app immediately stops</span>
+ 
+<span class="fl">[Service]</span>
+<span class="va">Type</span>=simple
+<span class="va">User</span>=appuser
+<span class="va">ExecStartPre</span>=/usr/bin/pg_isready -h localhost -p 5432  <span class="co"># Pre-check DB</span>
+<span class="va">ExecStart</span>=/opt/app/start.sh
+<span class="va">Restart</span>=on-failure
+ 
+<span class="fl">[Install]</span>
+<span class="va">WantedBy</span>=multi-user.target</code></pre></div>
+        <div class="cw"><div class="ct"><span class="lang">BASH — Verify dependency graph</span></div>
+        <pre class="p"><code><span class="cm">systemctl list-dependencies</span> webapp.service
+<span class="cm">systemd-analyze</span> plot > /tmp/boot.svg  <span class="co"># Boot timing visualization</span>
+<span class="cm">systemd-analyze blame</span>  <span class="co"># Which services slow down boot</span></code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>After= = ordering only. Requires= = hard dependency. Wants= = soft dependency</li>
+          <li>ExecStartPre runs before ExecStart — use for pre-flight checks. If it fails, service doesn't start</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q6.5 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 6.5</span><span class="q-level lv-i">Intermediate</span>
+      <div><div class="q-title">Audit all enabled services at boot and disable unnecessary ones for security hardening</div>
+      <div class="q-tags"><span class="tag">systemctl</span><span class="tag">security</span><span class="tag">hardening</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>Security audit reveals a production web server has 47 services enabled at boot. You need to audit them and disable anything that shouldn't run on a web server.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># List all enabled services (auto-start at boot)</span>
+<span class="cm">systemctl list-unit-files</span> <span class="fl">--state=enabled --type=service</span>
+ 
+<span class="co"># List all currently RUNNING services</span>
+<span class="cm">systemctl list-units</span> <span class="fl">--type=service --state=active</span>
+ 
+<span class="co"># List all failed services (important!)</span>
+<span class="cm">systemctl</span> <span class="fl">--failed</span>
+ 
+<span class="co"># Disable a service (stop it and prevent boot start)</span>
+<span class="cm">sudo systemctl disable</span> <span class="fl">--now</span> cups          <span class="co"># Printing - not needed on web server</span>
+<span class="cm">sudo systemctl disable</span> <span class="fl">--now</span> bluetooth     <span class="co"># Bluetooth on a server?</span>
+<span class="cm">sudo systemctl disable</span> <span class="fl">--now</span> avahi-daemon  <span class="co"># mDNS - rarely needed</span>
+<span class="cm">sudo systemctl disable</span> <span class="fl">--now</span> nfs-server    <span class="co"># If NFS not used</span>
+ 
+<span class="co"># Mask a service (completely prevent starting, even manually)</span>
+<span class="cm">sudo systemctl mask</span> telnet.service          <span class="co"># Mask insecure services</span>
+ 
+<span class="co"># View what a service does before disabling</span>
+<span class="cm">systemctl cat</span> cups.service</code></pre></div>
+      </div>
+      <div class="mistakes"><div class="mis-label">⚠️ Common Mistakes</div>
+        <ul>
+          <li>Confusing <span class="ic2">disable</span> (prevents boot start) vs <span class="ic2">stop</span> (stops now but starts next boot)</li>
+          <li>Using <span class="ic2">--now</span> flag is key: <span class="ic2">systemctl disable --now service</span> = disable + stop in one command</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q6.6 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 6.6</span><span class="q-level lv-a">Advanced</span>
+      <div><div class="q-title">Debug slow boot — identify which service is adding 2 minutes to startup time</div>
+      <div class="q-tags"><span class="tag">systemd-analyze</span><span class="tag">boot</span><span class="tag">performance</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>After a recent package update, the server takes 3 minutes to boot instead of 45 seconds. A new cloud instance must boot fast for auto-scaling. Identify and fix the slow service.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># View total boot time breakdown</span>
+<span class="cm">systemd-analyze</span>
+<span class="out"># Startup finished in 1.234s (kernel) + 2min 45.678s (userspace) = 2min 46.912s</span>
+ 
+<span class="co"># Find the slowest services</span>
+<span class="cm">systemd-analyze blame</span>
+<span class="out"># 2min 02.345s cloud-init.service
+#     30.123s apt-daily-upgrade.service
+#     15.456s NetworkManager-wait-online.service
+#      5.234s docker.service</span>
+ 
+<span class="co"># Visualize the full dependency/boot graph</span>
+<span class="cm">systemd-analyze plot</span> > /tmp/boot_graph.svg
+ 
+<span class="co"># Check critical chain (longest path)</span>
+<span class="cm">systemd-analyze critical-chain</span>
+<span class="out"># The time after the unit is active or started is printed after the "@" character.
+# multi-user.target @2min 46.912s
+# └─cloud-init.target @2min 46.910s
+#   └─cloud-final.service @45.123s +2min 01.787s</span>
+ 
+<span class="co"># Fix: cloud-init is fine — but NetworkManager-wait-online is the real problem on VMs</span>
+<span class="cm">sudo systemctl disable</span> NetworkManager-wait-online.service
+<span class="co"># OR reduce cloud-init timeout (if cloud-init not needed after first boot)</span>
+<span class="cm">sudo touch</span> /etc/cloud/cloud-init.disabled</code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li><span class="ic2">systemd-analyze blame</span> + <span class="ic2">critical-chain</span> is the two-step boot performance diagnosis</li>
+          <li>NetworkManager-wait-online is a common boot blocker on cloud instances — safe to disable if DNS works</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div><!-- /ch6 -->
+ 
+ 
+<!-- ══════════════════════════════════════════
+     CHAPTER 7: TEXT PROCESSING
+══════════════════════════════════════════ -->
+<div id="ch7">
+  <div class="chap-head ch7">
+    <div>
+      <span class="chap-num">Chapter 7</span>
+      <div class="chap-title">📊 Text Processing (grep, awk, sed, cut, sort, uniq)</div>
+      <div class="chap-sub">Log analysis · data extraction · reporting pipelines · transformations</div>
+    </div>
+    <div class="q-count">7 Questions</div>
+  </div>
+ 
+  <!-- Q7.1 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 7.1</span><span class="q-level lv-b">Beginner</span>
+      <div><div class="q-title">Analyze Nginx access logs — find top 10 IPs causing the most traffic</div>
+      <div class="q-tags"><span class="tag">awk</span><span class="tag">sort</span><span class="tag">uniq</span><span class="tag">head</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>Production nginx is receiving unexpectedly high traffic. You need to identify which IPs are sending the most requests and whether any single IP is hammering the server (potential DDoS).</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH — /var/log/nginx/access.log</span></div>
+        <pre class="p"><code><span class="co"># Top 10 IPs by request count</span>
+<span class="cm">awk</span> <span class="st">'{print $1}'</span> /var/log/nginx/access.log | \
+    <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span> | <span class="cm">sort</span> <span class="fl">-rn</span> | <span class="cm">head</span> <span class="fl">-10</span>
+<span class="out"># 45823  203.0.113.50
+#  8234  198.51.100.25
+#  1234  10.0.1.50</span>
+ 
+<span class="co"># Top 10 requested URLs</span>
+<span class="cm">awk</span> <span class="st">'{print $7}'</span> /var/log/nginx/access.log | \
+    <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span> | <span class="cm">sort</span> <span class="fl">-rn</span> | <span class="cm">head</span> <span class="fl">-10</span>
+ 
+<span class="co"># HTTP status code distribution</span>
+<span class="cm">awk</span> <span class="st">'{print $9}'</span> /var/log/nginx/access.log | \
+    <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span> | <span class="cm">sort</span> <span class="fl">-rn</span>
+<span class="out"># 45123  200
+#  1234  404
+#   456  500
+#   123  429</span>
+ 
+<span class="co"># Requests per hour (traffic pattern analysis)</span>
+<span class="cm">awk</span> <span class="st">'{print substr($4,2,14)}'</span> /var/log/nginx/access.log | \
+    <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span>
+<span class="co"># substr($4,2,14) extracts: "15/Jan/2024:09" from [15/Jan/2024:09:30:15 +0000]</span>
+ 
+<span class="co"># 500 errors with IPs</span>
+<span class="cm">awk</span> <span class="st">'$9 == "500" {print $1, $7}'</span> /var/log/nginx/access.log | \
+    <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span> | <span class="cm">sort</span> <span class="fl">-rn</span></code></pre></div>
+      </div>
+      <div class="alt"><div class="alt-label">🔄 Alternative Solutions</div>
+        <ul>
+          <li>GoAccess: <span class="ic2">goaccess /var/log/nginx/access.log --log-format=COMBINED</span> — real-time web analytics dashboard</li>
+          <li>Using grep first: <span class="ic2">grep "POST" access.log | awk '{print $1}' | sort | uniq -c | sort -rn</span></li>
+        </ul>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>The pipeline <span class="ic2">awk + sort + uniq -c + sort -rn</span> is the classic frequency analysis pattern — know it cold</li>
+          <li>Nginx combined log format: $1=IP $4=timestamp $7=URL $9=status $10=size</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q7.2 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 7.2</span><span class="q-level lv-i">Intermediate</span>
+      <div><div class="q-title">Extract error messages from application logs, count by type, and email a summary report</div>
+      <div class="q-tags"><span class="tag">grep</span><span class="tag">awk</span><span class="tag">sed</span><span class="tag">mail</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>A data engineering team wants a daily report of application errors: count per error type, affected users, and the full command to pipe into an email notification.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Extract error lines and count by error type</span>
+<span class="cm">grep</span> <span class="fl">-E</span> <span class="st">"ERROR|CRITICAL|FATAL"</span> /var/log/app/app.log | \
+    <span class="cm">awk</span> <span class="st">'{print $5}'</span> | \              <span class="co"># 5th field = error type</span>
+    <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span> | <span class="cm">sort</span> <span class="fl">-rn</span>
+ 
+<span class="co"># Extract errors from last 24 hours</span>
+<span class="cm">awk</span> <span class="st">-v date="$(date -d 'yesterday' '+%Y-%m-%d')" \
+    '$0 ~ date && /ERROR/ {print}'</span> /var/log/app/app.log
+ 
+<span class="co"># Generate summary report and email</span>
+{
+    <span class="cm">echo</span> <span class="st">"=== Application Error Report: $(date) ==="</span>
+    <span class="cm">echo</span> <span class="st">""</span>
+    <span class="cm">echo</span> <span class="st">"--- Error Count by Type ---"</span>
+    <span class="cm">grep</span> <span class="st">"ERROR"</span> /var/log/app/app.log | <span class="cm">awk</span> <span class="st">'{print $5}'</span> | <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span> | <span class="cm">sort</span> <span class="fl">-rn</span>
+    <span class="cm">echo</span> <span class="st">""</span>
+    <span class="cm">echo</span> <span class="st">"--- Recent Critical Errors ---"</span>
+    <span class="cm">grep</span> <span class="st">"CRITICAL"</span> /var/log/app/app.log | <span class="cm">tail</span> <span class="fl">-10</span>
+} | <span class="cm">mail</span> <span class="fl">-s</span> <span class="st">"Daily Error Report - $(date +%Y-%m-%d)"</span> devops@company.com
+ 
+<span class="co"># Extract specific field with sed (remove timestamps)</span>
+<span class="cm">grep</span> <span class="st">"ERROR"</span> /var/log/app/app.log | \
+    <span class="cm">sed</span> <span class="st">'s/^[0-9-]* [0-9:]* //'</span> | \   <span class="co"># Remove timestamp prefix</span>
+    <span class="cm">sort</span> <span class="fl">-u</span>                              <span class="co"># Unique error messages</span></code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>Wrap report generation in <span class="ic2">{ }</span> curly braces to capture all output in one pipe</li>
+          <li>Mention this would be put in a cron job with <span class="ic2">0 8 * * * /opt/scripts/error_report.sh</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q7.3 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 7.3</span><span class="q-level lv-i">Intermediate</span>
+      <div><div class="q-title">Use sed to update database connection strings across all config files in a deployment</div>
+      <div class="q-tags"><span class="tag">sed</span><span class="tag">find</span><span class="tag">xargs</span><span class="tag">config management</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>Your database server was renamed from <span class="ic2">db-old.internal</span> to <span class="ic2">db-prod.internal</span>. You need to update this hostname in 50+ config files across <span class="ic2">/opt/app/config/</span> while keeping backups.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Preview changes first (dry run with grep)</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">grep</span> <span class="fl">-rn</span> <span class="st">"db-old.internal"</span> /opt/app/config/
+<span class="out"># /opt/app/config/database.ini:5:host=db-old.internal
+# /opt/app/config/celery.conf:12:BROKER_URL=amqp://user@db-old.internal
+# /opt/app/config/etl.yaml:34:  connection: "postgresql://db-old.internal:5432/data"</span></code></pre></div>
+        </div></div>
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Make replacement with backup using find + sed</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Method 1: sed with automatic backup (-i.bak)</span>
+<span class="cm">find</span> /opt/app/config <span class="fl">-type f -name "*.conf" -o -name "*.ini" -o -name "*.yaml"</span> | \
+    <span class="cm">xargs</span> <span class="cm">sed</span> <span class="fl">-i.bak</span> <span class="st">'s/db-old\.internal/db-prod.internal/g'</span>
+ 
+<span class="co"># Method 2: grep first, then sed on matching files only</span>
+<span class="cm">grep</span> <span class="fl">-rl</span> <span class="st">"db-old.internal"</span> /opt/app/config/ | \
+    <span class="cm">xargs</span> <span class="cm">sed</span> <span class="fl">-i.bak</span> <span class="st">'s/db-old\.internal/db-prod.internal/g'</span>
+ 
+<span class="co"># Verify all replacements were made</span>
+<span class="cm">grep</span> <span class="fl">-rn</span> <span class="st">"db-old.internal"</span> /opt/app/config/  <span class="co"># Should return nothing</span>
+<span class="cm">grep</span> <span class="fl">-rn</span> <span class="st">"db-prod.internal"</span> /opt/app/config/ <span class="co"># Should show all replacements</span>
+ 
+<span class="co"># Remove backup files after verification</span>
+<span class="cm">find</span> /opt/app/config <span class="fl">-name "*.bak" -delete</span></code></pre></div>
+        </div></div>
+      </div>
+      <div class="alt"><div class="alt-label">🔄 Alternative Solutions</div>
+        <ul>
+          <li><span class="ic2">perl -pi -e 's/old/new/g' files</span> — Perl has better regex support and handles edge cases better than sed</li>
+          <li>Using Ansible: <span class="ic2">lineinfile</span> or <span class="ic2">replace</span> modules — better for idempotent config management</li>
+        </ul>
+      </div>
+      <div class="mistakes"><div class="mis-label">⚠️ Common Mistakes</div>
+        <ul>
+          <li>Forgetting to escape dots in regex: <span class="ic2">db-old.internal</span> should be <span class="ic2">db-old\.internal</span> (dot = any char in regex)</li>
+          <li>Using sed -i without .bak on production — always keep a backup</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q7.4 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 7.4</span><span class="q-level lv-a">Advanced</span>
+      <div><div class="q-title">Parse CSV data and generate aggregated report using awk — sales data pipeline</div>
+      <div class="q-tags"><span class="tag">awk</span><span class="tag">cut</span><span class="tag">sort</span><span class="tag">data engineering</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>You have a sales CSV file with columns: date,product,region,quantity,revenue. Generate a daily report: total revenue by region, top 5 products, and flag any orders where revenue/quantity (unit price) &lt; $10.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Sample data: date,product,region,quantity,revenue</span>
+<span class="co"># 2024-01-15,Widget-A,APAC,100,2500.00</span>
+ 
+<span class="co"># 1. Total revenue by region</span>
+<span class="cm">awk</span> <span class="fl">-F,</span> <span class="st">'NR>1 {rev[$3] += $5} END {for(r in rev) print r, rev[r]}'</span> \
+    sales.csv | <span class="cm">sort</span> <span class="fl">-k2 -rn</span>
+<span class="out"># APAC 145234.50
+# EMEA 98765.00
+# AMER 87654.25</span>
+ 
+<span class="co"># 2. Top 5 products by total revenue</span>
+<span class="cm">awk</span> <span class="fl">-F,</span> <span class="st">'NR>1 {prod[$2] += $5} END {for(p in prod) print prod[p], p}'</span> \
+    sales.csv | <span class="cm">sort</span> <span class="fl">-rn</span> | <span class="cm">head</span> <span class="fl">-5</span>
+ 
+<span class="co"># 3. Flag suspicious orders (unit price < $10)</span>
+<span class="cm">awk</span> <span class="fl">-F,</span> <span class="st">'NR>1 {
+    unit_price = $5 / $4
+    if (unit_price < 10) {
+        printf "ALERT: %s %s qty=%s revenue=%s unit_price=%.2f\n", $1, $2, $4, $5, unit_price
+    }
+}'</span> sales.csv
+ 
+<span class="co"># 4. Complete report with date filter</span>
+<span class="cm">awk</span> <span class="fl">-F,</span> <span class="st">-v today="$(date +%Y-%m-%d)" \
+'NR>1 && $1==today {
+    region[$3] += $5
+    count[$3]++
+    total += $5
+}
+END {
+    print "=== Daily Sales Report: " today " ==="
+    print "Region\t\tRevenue\t\tOrders"
+    for (r in region) printf "%s\t\t%.2f\t\t%d\n", r, region[r], count[r]
+    printf "TOTAL: %.2f\n", total
+}'</span> sales.csv</code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>awk associative arrays (like region[$3]) are the key data structure for aggregation — know this pattern</li>
+          <li>NR>1 skips the header row. NF is total number of fields. $NF is the last field</li>
+          <li>The -v flag passes shell variables into awk: <span class="ic2">awk -v today="$(date +%Y-%m-%d)"</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q7.5 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 7.5</span><span class="q-level lv-i">Intermediate</span>
+      <div><div class="q-title">Real-time log monitoring — filter, colorize, and alert on critical patterns</div>
+      <div class="q-tags"><span class="tag">tail -f</span><span class="tag">grep</span><span class="tag">awk</span><span class="tag">monitoring</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>During a deployment, you need to monitor application logs in real time, highlight different log levels, and automatically alert (send notification) if CRITICAL errors appear.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Basic: follow log and filter errors only</span>
+<span class="cm">tail</span> <span class="fl">-f</span> /var/log/app/app.log | <span class="cm">grep</span> <span class="fl">--line-buffered -E</span> <span class="st">"ERROR|CRITICAL|WARN"</span>
+ 
+<span class="co"># With color highlighting</span>
+<span class="cm">tail</span> <span class="fl">-F</span> /var/log/app/app.log | <span class="cm">awk</span> <span class="st">'
+/CRITICAL/ {print "\033[1;31m" $0 "\033[0m"; next}  # Red bold
+/ERROR/    {print "\033[0;31m" $0 "\033[0m"; next}  # Red
+/WARN/     {print "\033[0;33m" $0 "\033[0m"; next}  # Yellow
+/INFO/     {print "\033[0;32m" $0 "\033[0m"; next}  # Green
+           {print $0}'</span>
+ 
+<span class="co"># Alert on CRITICAL: send notification via webhook</span>
+<span class="cm">tail</span> <span class="fl">-F</span> /var/log/app/app.log | <span class="cm">grep</span> <span class="fl">--line-buffered</span> <span class="st">"CRITICAL"</span> | \
+<span class="kw">while</span> <span class="kw">read</span> line; <span class="kw">do</span>
+    <span class="cm">curl</span> <span class="fl">-s -X POST</span> https://hooks.slack.com/services/WEBHOOK \
+        <span class="fl">-d</span> <span class="st">"{\"text\": \"🚨 CRITICAL: $line\"}"</span>
+<span class="kw">done</span>
+ 
+<span class="co"># Monitor multiple log files simultaneously</span>
+<span class="cm">tail</span> <span class="fl">-f</span> /var/log/app/*.log | <span class="cm">grep</span> <span class="fl">--line-buffered</span> <span class="st">"ERROR"</span></code></pre></div>
+      </div>
+      <div class="alt"><div class="alt-label">🔄 Alternative Solutions</div>
+        <ul>
+          <li><span class="ic2">multitail</span> — monitor multiple log files with color in split-screen terminal</li>
+          <li><span class="ic2">lnav</span> — advanced log file navigator with built-in filtering and highlighting</li>
+          <li>Use <span class="ic2">tail -F</span> (capital F) instead of <span class="ic2">-f</span> — survives log rotation by monitoring filename</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q7.6 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 7.6</span><span class="q-level lv-a">Advanced</span>
+      <div><div class="q-title">Extract, transform, and load: parse JSON-like log entries and generate structured CSV</div>
+      <div class="q-tags"><span class="tag">awk</span><span class="tag">sed</span><span class="tag">grep -oP</span><span class="tag">ETL</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>Application logs contain JSON-structured lines like: <span class="ic2">{"timestamp":"2024-01-15","user":"alice","action":"login","duration_ms":245,"status":"ok"}</span>. Extract user, action, duration_ms and generate a CSV for analysis.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Using grep -oP (Perl regex) to extract JSON values</span>
+<span class="cm">grep</span> <span class="fl">-oP</span> <span class="st">'"user":"\K[^"]+'</span> app.log | <span class="cm">head</span>   <span class="co"># Extract user values</span>
+<span class="co"># \K = lookbehind: discard what's before this point</span>
+<span class="co"># [^"]+ = one or more non-quote characters</span>
+ 
+<span class="co"># Full ETL pipeline: extract multiple fields into CSV</span>
+<span class="cm">grep</span> <span class="st">'"action"'</span> app.log | <span class="cm">awk</span> <span class="st">'{
+    user = ""
+    action = ""
+    duration = ""
+    if (match($0, /"user":"([^"]+)"/, arr)) user = arr[1]
+    if (match($0, /"action":"([^"]+)"/, arr)) action = arr[1]
+    if (match($0, /"duration_ms":([0-9]+)/, arr)) duration = arr[1]
+    if (user && action) print user "," action "," duration
+}'</span> | <span class="cm">sort</span>
+ 
+<span class="co"># Add CSV header</span>
+{ <span class="cm">echo</span> <span class="st">"user,action,duration_ms"</span>;
+  <span class="cm">grep</span> <span class="st">'"action"'</span> app.log | <span class="cm">awk</span> <span class="st">'...'</span>
+} > /tmp/user_actions.csv
+ 
+<span class="co"># Using jq (the proper JSON tool)</span>
+<span class="cm">grep</span> <span class="st">'^{'</span> app.log | \
+    <span class="cm">jq</span> <span class="fl">-r</span> <span class="st">'[.user, .action, (.duration_ms | tostring)] | join(",")'</span> | \
+    <span class="cm">sort</span></code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>For JSON logs, always mention <span class="ic2">jq</span> as the preferred tool — then show awk as the fallback</li>
+          <li><span class="ic2">grep -oP</span> with Perl regex is the most powerful extraction tool for structured text patterns</li>
+          <li>The match(string, regex, array) function in awk captures groups into array</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div><!-- /ch7 -->
+ 
+ 
+<!-- ══════════════════════════════════════════
+     CHAPTER 8: SYSTEM DIAGNOSTICS & TROUBLESHOOTING
+══════════════════════════════════════════ -->
+<div id="ch8">
+  <div class="chap-head ch8">
+    <div>
+      <span class="chap-num">Chapter 8</span>
+      <div class="chap-title">🔧 System Diagnostics &amp; Troubleshooting</div>
+      <div class="chap-sub">ps · top · lsof · strace · vmstat · iostat · dmesg · uptime · watch</div>
+    </div>
+    <div class="q-count">7 Questions</div>
+  </div>
+ 
+  <!-- Q8.1 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 8.1</span><span class="q-level lv-b">Beginner</span>
+      <div><div class="q-title">Server is slow — identify the CPU/memory-hogging process and kill it safely</div>
+      <div class="q-tags"><span class="tag">top</span><span class="tag">ps</span><span class="tag">kill</span><span class="tag">nice</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>A production server is responding slowly. SSH is barely working. You need to quickly identify and handle the rogue process without causing more damage.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Quick overview: load averages and top consumers</span>
+<span class="cm">uptime</span>
+<span class="out"># 14:30:00 up 45 days,  2:15,  1 user,  load average: 15.23, 14.87, 12.45
+# Load > CPU count = overloaded! (check: nproc = number of CPUs)</span>
+ 
+<span class="cm">nproc</span>    <span class="co"># Number of CPUs</span>
+ 
+<span class="co"># Find top CPU consumers without interactive top</span>
+<span class="cm">ps aux</span> <span class="fl">--sort=-%cpu</span> | <span class="cm">head</span> <span class="fl">-10</span>
+<span class="out"># USER  PID  %CPU %MEM    VSZ   RSS COMMAND
+# alice 9234 95.3  2.1 458234 87234 python3 train.py
+# bob   8756  8.2  0.5  23456  8765 node server.js</span>
+ 
+<span class="co"># Top memory consumers</span>
+<span class="cm">ps aux</span> <span class="fl">--sort=-%mem</span> | <span class="cm">head</span> <span class="fl">-10</span>
+ 
+<span class="co"># Check if process is actually doing work or stuck</span>
+<span class="cm">strace</span> <span class="fl">-p</span> 9234 <span class="fl">-c</span> <span class="fl">-e</span> trace=all  <span class="co"># What syscalls is it making?</span>
+ 
+<span class="co"># Option 1: Lower priority (don't kill, just slow it down)</span>
+<span class="cm">sudo renice</span> <span class="fl">+15</span> <span class="fl">-p</span> 9234   <span class="co"># Lower priority (19=lowest, -20=highest)</span>
+ 
+<span class="co"># Option 2: SIGTERM first (graceful shutdown)</span>
+<span class="cm">kill</span> <span class="fl">-15</span> 9234   <span class="co"># Or: kill -SIGTERM 9234</span>
+<span class="cm">sleep</span> 5
+<span class="cm">kill</span> <span class="fl">-0</span> 9234 2>/dev/null && <span class="cm">kill</span> <span class="fl">-9</span> 9234  <span class="co"># Force kill if still running</span>
+ 
+<span class="co"># Kill by name</span>
+<span class="cm">pkill</span> <span class="fl">-f</span> <span class="st">"python3 train.py"</span></code></pre></div>
+      </div>
+      <div class="mistakes"><div class="mis-label">⚠️ Common Mistakes</div>
+        <ul>
+          <li>Immediately using kill -9 — always try SIGTERM first for graceful shutdown</li>
+          <li>Not checking load average context: load 15 on 16-core = OK. Load 15 on 2-core = critical</li>
+        </ul>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>Load average 1/5/15 min: if 1-min &gt; CPU count, system is overloaded right now</li>
+          <li>Kill signal priority: SIGTERM(15) → wait → SIGINT(2) → wait → SIGKILL(9)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q8.2 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 8.2</span><span class="q-level lv-i">Intermediate</span>
+      <div><div class="q-title">File descriptor exhaustion — lsof investigation and fix for "too many open files" error</div>
+      <div class="q-tags"><span class="tag">lsof</span><span class="tag">ulimit</span><span class="tag">file descriptors</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>Production API server throws "too many open files: EMFILE" errors. New connections are failing. The service is running but can't accept more connections.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Check current file descriptor limits</span>
+<span class="cm">ulimit</span> <span class="fl">-n</span>          <span class="co"># Soft limit for current shell</span>
+<span class="cm">ulimit</span> <span class="fl">-Hn</span>         <span class="co"># Hard limit</span>
+<span class="out"># 1024 (very low for production!)</span>
+ 
+<span class="co"># Find which process is exhausting FDs</span>
+<span class="cm">lsof</span> | <span class="cm">awk</span> <span class="st">'{print $2}'</span> | <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span> | <span class="cm">sort</span> <span class="fl">-rn</span> | <span class="cm">head</span> <span class="fl">-10</span>
+<span class="out"># 4523  12345   ← PID 12345 has 4523 open files!</span>
+ 
+<span class="co"># See what those files are</span>
+<span class="cm">lsof</span> <span class="fl">-p</span> 12345 | <span class="cm">head</span> <span class="fl">-20</span>
+<span class="cm">lsof</span> <span class="fl">-p</span> 12345 | <span class="cm">wc</span> <span class="fl">-l</span>
+ 
+<span class="co"># Check system-wide FD usage</span>
+<span class="cm">cat</span> /proc/sys/fs/file-nr
+<span class="out"># 45234  0  100000   (used, free/unused, max)</span>
+ 
+<span class="co"># Immediate fix: increase limit for current session</span>
+<span class="cm">ulimit</span> <span class="fl">-n</span> 65536
+ 
+<span class="co"># Permanent fix: /etc/security/limits.conf</span>
+<span class="cm">sudo nano</span> /etc/security/limits.conf
+<span class="co"># Add these lines:</span>
+<span class="co"># appuser soft nofile 65536</span>
+<span class="co"># appuser hard nofile 131072</span>
+<span class="co"># * soft nofile 65536</span>
+ 
+<span class="co"># For systemd services: add to unit file [Service] section</span>
+<span class="co"># LimitNOFILE=65536</span>
+ 
+<span class="co"># Check if file leak (same file opened many times)</span>
+<span class="cm">lsof</span> <span class="fl">-p</span> 12345 | <span class="cm">awk</span> <span class="st">'{print $9}'</span> | <span class="cm">sort</span> | <span class="cm">uniq</span> <span class="fl">-c</span> | <span class="cm">sort</span> <span class="fl">-rn</span> | <span class="cm">head</span>
+<span class="out"># 450  /var/log/app.log  ← Same file opened 450 times = file descriptor LEAK!</span></code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>Production web servers should have nofile limit of 65536-1000000, not the default 1024</li>
+          <li>lsof is the primary tool for FD investigation. <span class="ic2">lsof -p PID | wc -l</span> counts FDs for a process</li>
+          <li>A file opened 450 times for the same path = file descriptor leak in the application code</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q8.3 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 8.3</span><span class="q-level lv-a">Advanced</span>
+      <div><div class="q-title">I/O bottleneck — application is slow due to disk I/O, diagnose and tune</div>
+      <div class="q-tags"><span class="tag">iostat</span><span class="tag">iotop</span><span class="tag">vmstat</span><span class="tag">lsof</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>A data pipeline processing large files is extremely slow. CPU usage is low but the system feels sluggish. Application logs show high write latency. Diagnose the I/O bottleneck.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Step 1: Check if I/O is the bottleneck</span>
+<span class="cm">vmstat</span> 1 5
+<span class="out"># procs  memory      swap    io    system  cpu
+# r  b   swpd free    si  so  bi    bo    in   cs  us sy id wa
+# 2  8   1024 2048     0   0  128 45000  1234 5678  5 10 10 75
+# ^b=8 waiting for I/O   ^wa=75 = 75% CPU waiting for I/O ← CONFIRMED!</span>
+ 
+<span class="co"># Step 2: Find which disk and what operation</span>
+<span class="cm">iostat</span> <span class="fl">-x 1 5</span>      <span class="co"># Extended stats every 1s, 5 iterations</span>
+<span class="out"># Device:  r/s    w/s   rkB/s   wkB/s  await %util
+# sda      2.5  456.7    32.0  45678.0   234.5  99.8   ← 99.8% util = saturated!</span>
+ 
+<span class="co"># Step 3: Find which process is doing the I/O</span>
+<span class="cm">sudo iotop</span> <span class="fl">-o</span>     <span class="co"># -o: only show processes with I/O</span>
+<span class="out"># TID  PRIO USER  DISK READ  DISK WRITE  COMMAND
+# 5678 be/4 data    0.00 B/s  44.50 MB/s python3 etl_pipeline.py</span>
+ 
+<span class="co"># Step 4: What files is the process writing?</span>
+<span class="cm">lsof</span> <span class="fl">-p</span> 5678 | <span class="cm">grep</span> <span class="st">"REG"</span>   <span class="co"># Regular files only</span>
+ 
+<span class="co"># Step 5: Check read-ahead and write caching</span>
+<span class="cm">cat</span> /sys/block/sda/queue/read_ahead_kb   <span class="co"># Default: 128</span>
+<span class="cm">echo</span> 4096 | <span class="cm">sudo tee</span> /sys/block/sda/queue/read_ahead_kb  <span class="co"># Increase for sequential I/O</span>
+ 
+<span class="co"># Step 6: Check if it's random vs sequential I/O</span>
+<span class="cm">sudo blktrace</span> <span class="fl">-d /dev/sda -o</span> /tmp/blktrace <span class="fl">-w 10</span>
+<span class="co"># Solution: if random I/O, consider SSD. If sequential, optimize batch sizes</span></code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>vmstat wa% (I/O wait) &gt; 20% = I/O bottleneck. iostat %util close to 100% = disk saturated</li>
+          <li>The diagnostic chain: vmstat → iostat -x → iotop → lsof confirms exactly what's happening</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q8.4 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 8.4</span><span class="q-level lv-i">Intermediate</span>
+      <div><div class="q-title">Memory leak detection — track process memory growth over time</div>
+      <div class="q-tags"><span class="tag">ps</span><span class="tag">watch</span><span class="tag">free</span><span class="tag">smaps</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>An ML serving process uses 500MB RAM when started but grows to 8GB over 24 hours until OOM kills it. You need to confirm the memory leak and collect data for developers.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Track memory of specific process over time</span>
+<span class="va">PID</span>=12345
+<span class="kw">while</span> <span class="kw">true</span>; <span class="kw">do</span>
+    <span class="cm">echo</span> <span class="st">"$(date): $(ps -p $PID -o rss= | awk '{print $1/1024" MB"}')"</span>
+    <span class="cm">sleep</span> 60
+<span class="kw">done</span> | <span class="cm">tee</span> /tmp/memory_growth.log
+ 
+<span class="co"># Watch memory in real time</span>
+<span class="cm">watch</span> <span class="fl">-n 5</span> <span class="st">"ps -p $PID -o pid,rss,vsz,pmem,comm"</span>
+ 
+<span class="co"># Detailed memory breakdown (for developers)</span>
+<span class="cm">cat</span> /proc/$PID/status | <span class="cm">grep</span> <span class="fl">-E</span> <span class="st">"VmRSS|VmPeak|VmSwap"</span>
+<span class="out"># VmPeak:  8388608 kB   (peak virtual memory = 8GB)
+# VmRSS:   7823456 kB   (current RSS = 7.4GB)
+# VmSwap:   524288 kB   (512MB in swap)</span>
+ 
+<span class="co"># Detailed memory map by mapping type</span>
+<span class="cm">sudo cat</span> /proc/$PID/smaps | <span class="cm">awk</span> <span class="st">'/^Size/ {size += $2}
+                             /^Rss/  {rss += $2}
+                             END {printf "Size: %d MB, RSS: %d MB\n", size/1024, rss/1024}'</span>
+ 
+<span class="co"># System-wide memory over time</span>
+<span class="kw">while</span> <span class="kw">true</span>; <span class="kw">do</span>
+    <span class="cm">echo</span> <span class="st">"$(date) $(free -m | awk '/Mem/{print $3"MB used"}')"</span>
+    <span class="cm">sleep</span> 300
+<span class="kw">done</span> >> /var/log/memory_trend.log</code></pre></div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q8.5 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 8.5</span><span class="q-level lv-a">Advanced</span>
+      <div><div class="q-title">Zombie process accumulation — diagnose orphan processes and fix parent issue</div>
+      <div class="q-tags"><span class="tag">ps</span><span class="tag">wait</span><span class="tag">zombie</span><span class="tag">SIGCHLD</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>A worker process manager is spawning hundreds of zombie processes. The system isn't crashing but PID space is slowly filling up and process table is near limit.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Find zombie processes (state Z)</span>
+<span class="cm">ps aux</span> | <span class="cm">awk</span> <span class="st">'$8 == "Z" {print}'</span>
+<span class="out"># USER  PID   %CPU %MEM  S   COMMAND
+# root  5234  0.0  0.0   Z   [worker] <defunct>
+# root  5235  0.0  0.0   Z   [worker] <defunct></span>
+ 
+<span class="co"># Count zombies</span>
+<span class="cm">ps aux</span> | <span class="cm">grep</span> <span class="fl">-c</span> <span class="st">" Z "</span>
+<span class="out"># 347</span>
+ 
+<span class="co"># Find the parent process (the guilty one)</span>
+<span class="cm">ps aux</span> | <span class="cm">awk</span> <span class="st">'$8 == "Z" {print $2}'</span> | <span class="cm">head</span> <span class="fl">-1</span> | <span class="cm">xargs</span> <span class="fl">-I{}</span> \
+    <span class="cm">ps</span> <span class="fl">-o ppid= -p</span> {} | <span class="cm">xargs</span> <span class="fl">-I{}</span> <span class="cm">ps</span> <span class="fl">-p</span> {} <span class="fl">-o pid,cmd</span>
+<span class="out"># PID  CMD: 4567  python3 worker_manager.py  ← Parent not calling wait()</span>
+ 
+<span class="co"># Can't directly kill zombies — send SIGCHLD to parent to trigger reaping</span>
+<span class="cm">kill</span> <span class="fl">-SIGCHLD</span> 4567
+ 
+<span class="co"># If parent is stuck, killing parent will make init (PID 1) adopt and reap zombies</span>
+<span class="cm">kill</span> <span class="fl">-9</span> 4567   <span class="co"># Last resort: init/systemd will adopt and reap zombies</span>
+ 
+<span class="co"># Monitor PID table health</span>
+<span class="cm">cat</span> /proc/sys/kernel/pid_max     <span class="co"># Max PIDs (default: 32768)</span>
+<span class="cm">cat</span> /proc/sys/kernel/threads-max  <span class="co"># Max threads</span></code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>Zombie cannot be killed with kill -9 — it's already dead! Only parent can reap it by calling wait()</li>
+          <li>SIGCHLD tells the parent "a child finished, please reap it" — this is the non-destructive fix</li>
+          <li>Root cause: developer bug — application spawns children but doesn't call wait() in SIGCHLD handler</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q8.6 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 8.6</span><span class="q-level lv-i">Intermediate</span>
+      <div><div class="q-title">strace debugging — application fails silently, trace system calls to find the root cause</div>
+      <div class="q-tags"><span class="tag">strace</span><span class="tag">ltrace</span><span class="tag">debugging</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>A Python script runs for 30 seconds and exits with code 1 but no error output. Application logs show nothing useful. You need to trace what it's actually doing at the OS level.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Trace all system calls with summary statistics</span>
+<span class="cm">strace</span> <span class="fl">-c</span> python3 /opt/app/script.py
+<span class="out"># % time  seconds  usecs/call calls errors  syscall
+# 85.23  28.456        456  62345      0  futex      ← Stuck on locks!
+#  8.45   2.821        221  12765      3  open       ← 3 failed opens!</span>
+ 
+<span class="co"># Trace only failed syscalls</span>
+<span class="cm">strace</span> <span class="fl">-e trace=open,openat -e signal=!all</span> python3 /opt/app/script.py 2>&1 | \
+    <span class="cm">grep</span> <span class="st">"ENOENT\|EACCES\|EPERM"</span>
+<span class="out"># openat(AT_FDCWD, "/etc/app/secret.conf", O_RDONLY) = -1 ENOENT (No such file or directory)
+# openat(AT_FDCWD, "/var/run/app.lock", O_RDWR) = -1 EACCES (Permission denied)</span>
+ 
+<span class="co"># Trace a running process</span>
+<span class="cm">strace</span> <span class="fl">-p</span> 12345 <span class="fl">-e trace=network</span>    <span class="co"># Only network calls</span>
+<span class="cm">strace</span> <span class="fl">-p</span> 12345 <span class="fl">-e trace=file</span>       <span class="co"># Only file operations</span>
+ 
+<span class="co"># Trace with timestamps</span>
+<span class="cm">strace</span> <span class="fl">-T -tt</span> python3 script.py 2>&1 | <span class="cm">grep</span> <span class="st">"[0-9]\."</span>
+<span class="co"># -T: time spent in each call, -tt: absolute timestamp</span>
+<span class="out"># 09:30:15.123456 connect(5, {sin_family=AF_INET, ...}) = -1 ETIMEDOUT (28.45s)</span></code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>strace reveals: missing config files, permission denied, network timeouts, lock contention — without source code</li>
+          <li><span class="ic2">strace -c</span> gives statistics — use first to identify which syscall is the bottleneck</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div><!-- /ch8 -->
+ 
+ 
+<!-- ══════════════════════════════════════════
+     CHAPTER 9: TASK SCHEDULING
+══════════════════════════════════════════ -->
+<div id="ch9">
+  <div class="chap-head ch9">
+    <div>
+      <span class="chap-num">Chapter 9</span>
+      <div class="chap-title">⏰ Task Scheduling (cron, at, batch)</div>
+      <div class="chap-sub">crontab · systemd timers · at · anacron · cron expressions</div>
+    </div>
+    <div class="q-count">6 Questions</div>
+  </div>
+ 
+  <!-- Q9.1 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 9.1</span><span class="q-level lv-b">Beginner</span>
+      <div><div class="q-title">Set up cron jobs for ML pipeline: daily model training, hourly data sync, weekly cleanup</div>
+      <div class="q-tags"><span class="tag">crontab</span><span class="tag">cron expressions</span><span class="tag">MLOps</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>You need to schedule three recurring tasks: 1) Daily model training at 2 AM, 2) Hourly data ingestion, 3) Weekly log cleanup on Sunday at midnight. Ensure errors are captured.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Edit crontab for mluser</span>
+<span class="cm">crontab</span> <span class="fl">-e</span>   <span class="co"># Opens editor (mluser's crontab)</span>
+<span class="co"># OR for specific user (as root):</span>
+<span class="cm">sudo crontab</span> <span class="fl">-u mluser -e</span></code></pre></div>
+        <div class="cw"><div class="ct"><span class="lang">CRON — crontab file content</span></div>
+        <pre class="p"><code><span class="co"># Cron Expression: MIN HOUR DOM MON DOW COMMAND</span>
+<span class="co">#                   *   *    *   *   *</span>
+<span class="co"># Field ranges:    0-59 0-23 1-31 1-12 0-7 (0,7=Sunday)</span>
+ 
+<span class="co"># Environment setup</span>
+<span class="va">SHELL</span>=/bin/bash
+<span class="va">PATH</span>=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+<span class="va">MAILTO</span>=devops@company.com   <span class="co"># Email errors to this address</span>
+ 
+<span class="co"># 1. Daily model training at 2:00 AM</span>
+<span class="nu">0 2</span> * * * /opt/mlapp/venv/bin/python /opt/mlapp/train.py >> /var/log/ml/train.log 2>&1
+ 
+<span class="co"># 2. Hourly data ingestion (at minute 0 of every hour)</span>
+<span class="nu">0</span> * * * * /opt/scripts/ingest_data.sh >> /var/log/ml/ingest.log 2>&1
+ 
+<span class="co"># 3. Weekly cleanup: Sunday at midnight</span>
+<span class="nu">0 0</span> * * <span class="nu">0</span> /opt/scripts/cleanup.sh >> /var/log/cleanup.log 2>&1
+ 
+<span class="co"># 4. Every 5 minutes (monitoring)</span>
+<span class="fl">*/5</span> * * * * /opt/scripts/healthcheck.sh
+ 
+<span class="co"># 5. Weekdays only at 9 AM (business report)</span>
+<span class="nu">0 9</span> * * <span class="nu">1-5</span> /opt/scripts/daily_report.sh
+ 
+<span class="co"># 6. First day of every month</span>
+<span class="nu">0 6 1</span> * * /opt/scripts/monthly_backup.sh</code></pre></div>
+        <div class="cw"><div class="ct"><span class="lang">BASH — Management Commands</span></div>
+        <pre class="p"><code><span class="co"># List current user's crontab</span>
+<span class="cm">crontab</span> <span class="fl">-l</span>
+ 
+<span class="co"># List another user's crontab (root only)</span>
+<span class="cm">sudo crontab</span> <span class="fl">-u mluser -l</span>
+ 
+<span class="co"># Check cron daemon is running</span>
+<span class="cm">systemctl status</span> cron   <span class="co"># Ubuntu/Debian</span>
+<span class="cm">systemctl status</span> crond  <span class="co"># RHEL/CentOS</span>
+ 
+<span class="co"># Check cron execution logs</span>
+<span class="cm">grep</span> CRON /var/log/syslog | <span class="cm">tail</span> <span class="fl">-20</span>    <span class="co"># Ubuntu</span>
+<span class="cm">grep</span> CRON /var/log/cron | <span class="cm">tail</span> <span class="fl">-20</span>      <span class="co"># RHEL</span>
+ 
+<span class="co"># System-wide cron directories</span>
+<span class="cm">ls</span> /etc/cron.d/        <span class="co"># Per-package cron configs</span>
+<span class="cm">ls</span> /etc/cron.daily/    <span class="co"># Scripts run daily by anacron</span>
+<span class="cm">ls</span> /etc/cron.hourly/</span></code></pre></div>
+      </div>
+      <div class="mistakes"><div class="mis-label">⚠️ Common Mistakes</div>
+        <ul>
+          <li>Not capturing stderr: use <span class="ic2">2>&1</span> or errors are silently lost</li>
+          <li>Not setting PATH in crontab — cron has minimal environment and commands aren't found</li>
+          <li>Using ~ in crontab — cron doesn't expand ~ . Use full paths /home/user/</li>
+        </ul>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>Use crontab.guru to validate cron expressions visually</li>
+          <li>Always redirect output: <span class="ic2">>> /var/log/job.log 2>&1</span> or cron output gets emailed (or lost)</li>
+          <li>MAILTO="" disables email notifications silently — only do this if redirecting to file</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q9.2 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 9.2</span><span class="q-level lv-i">Intermediate</span>
+      <div><div class="q-title">Cron job is running but not working — debug the "works manually but fails in cron" problem</div>
+      <div class="q-tags"><span class="tag">crontab</span><span class="tag">environment</span><span class="tag">debugging</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>A Python ETL script runs perfectly when executed manually but fails silently when run via cron. The cron log shows it executed but the database has no new data. This is the most common cron question in interviews.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Capture all output from cron</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">CRON</span></div>
+          <pre class="p"><code><span class="co"># Before (broken — no output captured)</span>
+<span class="nu">0 2</span> * * * python3 /opt/etl/run.py
+ 
+<span class="co"># After (captures everything including stderr)</span>
+<span class="nu">0 2</span> * * * /bin/bash -l -c "/opt/etl/venv/bin/python3 /opt/etl/run.py" >> /var/log/etl.log 2>&1</span></code></pre></div>
+        </div></div>
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Test with cron's minimal environment</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Simulate cron's environment</span>
+<span class="cm">env</span> <span class="fl">-i HOME=/home/mluser LOGNAME=mluser \
+    PATH=/usr/bin:/bin:/usr/sbin:/sbin \</span>
+    <span class="cm">bash</span> <span class="fl">-c</span> <span class="st">"python3 /opt/etl/run.py 2>&1"</span>
+<span class="out"># ModuleNotFoundError: No module named 'pandas'
+# ← Cron uses system python, not the venv!</span>
+ 
+<span class="co"># Fix: use absolute path to venv python</span>
+<span class="nu">0 2</span> * * * /opt/etl/venv/bin/python3 /opt/etl/run.py >> /var/log/etl.log 2>&1</span></code></pre></div>
+        </div></div>
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Fix environment variables in crontab</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">CRON — Production-ready crontab</span></div>
+          <pre class="p"><code><span class="va">SHELL</span>=/bin/bash
+<span class="va">PATH</span>=/opt/etl/venv/bin:/usr/local/bin:/usr/bin:/bin
+<span class="va">PYTHONPATH</span>=/opt/etl/lib
+<span class="va">DB_HOST</span>=prod-db.internal
+<span class="va">MAILTO</span>=data-team@company.com
+ 
+<span class="nu">0 2</span> * * * cd /opt/etl && python3 run.py >> /var/log/etl.log 2>&1</span></code></pre></div>
+        </div></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>The 3 most common cron failures: (1) Missing PATH, (2) Missing environment variables (DB_HOST etc.), (3) Wrong Python/virtual env</li>
+          <li>Use <span class="ic2">-l -c</span> flag: bash -l = login shell (loads profile), -c = command — ensures full environment</li>
+          <li>Always test by simulating cron's minimal env with <span class="ic2">env -i</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q9.3 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 9.3</span><span class="q-level lv-i">Intermediate</span>
+      <div><div class="q-title">Prevent cron job overlap — implement locking to stop parallel execution of long-running ETL</div>
+      <div class="q-tags"><span class="tag">flock</span><span class="tag">lockfile</span><span class="tag">pidfile</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>An ETL job runs every 30 minutes but sometimes takes 45 minutes. When it overlaps, two instances compete for the database and corrupt data. You need to prevent multiple instances from running simultaneously.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH — Method 1: flock (recommended)</span></div>
+        <pre class="p"><code><span class="co"># In crontab - flock creates an exclusive lock</span>
+<span class="nu">*/30</span> * * * * /usr/bin/flock <span class="fl">-n</span> /var/run/etl.lock /opt/etl/run.py >> /var/log/etl.log 2>&1
+<span class="co"># -n: non-blocking (skip if lock held, don't wait)</span>
+<span class="co"># If ETL is already running, new invocation exits immediately</span></code></pre></div>
+ 
+        <div class="cw"><div class="ct"><span class="lang">BASH — Method 2: PID file in script</span></div>
+        <pre class="p"><code><span class="co">#!/bin/bash
+# /opt/etl/run.py wrapper</span>
+ 
+<span class="va">PIDFILE</span>=/var/run/etl.pid
+<span class="va">LOCKFILE</span>=/var/run/etl.lock
+ 
+<span class="kw">if</span> [ <span class="fl">-f</span> <span class="st">"$PIDFILE"</span> ]; <span class="kw">then</span>
+    <span class="va">OLD_PID</span>=$(<span class="cm">cat</span> <span class="st">"$PIDFILE"</span>)
+    <span class="kw">if</span> <span class="cm">kill</span> <span class="fl">-0</span> <span class="st">"$OLD_PID"</span> 2>/dev/null; <span class="kw">then</span>
+        <span class="cm">echo</span> <span class="st">"$(date): ETL already running (PID $OLD_PID), skipping"</span>
+        <span class="cm">exit</span> 0
+    <span class="kw">fi</span>
+<span class="kw">fi</span>
+ 
+<span class="co"># Write our PID</span>
+<span class="cm">echo</span> $$ > <span class="st">"$PIDFILE"</span>
+<span class="co"># Ensure cleanup on exit</span>
+<span class="cm">trap</span> <span class="st">"rm -f $PIDFILE"</span> EXIT INT TERM
+ 
+<span class="co"># Run actual ETL</span>
+<span class="cm">python3</span> /opt/etl/pipeline.py</code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li><span class="ic2">flock -n lockfile command</span> is the cleanest solution — single line, no script modification needed</li>
+          <li>PID file approach is more portable but requires script modification and cleanup handling</li>
+          <li>Always use trap to clean up lockfile on exit — otherwise stale lock prevents future runs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q9.4 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 9.4</span><span class="q-level lv-a">Advanced</span>
+      <div><div class="q-title">Replace cron with systemd timer — better logging, dependency management, and monitoring</div>
+      <div class="q-tags"><span class="tag">systemd timer</span><span class="tag">OnCalendar</span><span class="tag">modern scheduling</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>Your team wants to migrate from cron to systemd timers for: better logging to journalctl, dependency on network availability, email/Slack alerts on failure, and accurate run status tracking.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Create the service unit</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">INI — /etc/systemd/system/etl-pipeline.service</span></div>
+          <pre class="p"><code><span class="fl">[Unit]</span>
+<span class="va">Description</span>=ETL Data Pipeline
+<span class="va">After</span>=network-online.target postgresql.service
+<span class="va">Wants</span>=network-online.target
+<span class="va">OnFailure</span>=notify-failure@%n.service   <span class="co"># Alert on failure!</span>
+ 
+<span class="fl">[Service]</span>
+<span class="va">Type</span>=oneshot                           <span class="co"># Runs to completion, then exits</span>
+<span class="va">User</span>=etluser
+<span class="va">WorkingDirectory</span>=/opt/etl
+<span class="va">ExecStart</span>=/opt/etl/venv/bin/python3 /opt/etl/pipeline.py
+<span class="va">Environment</span>="DB_HOST=prod-db.internal"
+<span class="va">StandardOutput</span>=journal               <span class="co"># Logs to journalctl</span>
+<span class="va">StandardError</span>=journal</code></pre></div>
+        </div></div>
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Create the timer unit</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">INI — /etc/systemd/system/etl-pipeline.timer</span></div>
+          <pre class="p"><code><span class="fl">[Unit]</span>
+<span class="va">Description</span>=ETL Pipeline Timer — runs every 30 minutes
+ 
+<span class="fl">[Timer]</span>
+<span class="va">OnCalendar</span>=*:0/30          <span class="co"># Every 30 minutes</span>
+<span class="co"># OnCalendar=daily          # Once per day at midnight</span>
+<span class="co"># OnCalendar=Mon..Fri 09:00 # Weekdays at 9 AM</span>
+<span class="co"># OnCalendar=2024-01-15 08:00 # Specific date/time</span>
+<span class="va">AccuracySec</span>=1s             <span class="co"># High accuracy (default 1min)</span>
+<span class="va">Persistent</span>=true            <span class="co"># Run missed job after reboot</span>
+ 
+<span class="fl">[Install]</span>
+<span class="va">WantedBy</span>=timers.target</code></pre></div>
+        </div></div>
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Enable and manage the timer</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo systemctl daemon-reload</span>
+<span class="cm">sudo systemctl enable</span> <span class="fl">--now</span> etl-pipeline.timer
+ 
+<span class="co"># Monitor</span>
+<span class="cm">systemctl list-timers</span>        <span class="co"># Show all timers + next/last run</span>
+<span class="cm">journalctl</span> <span class="fl">-u etl-pipeline</span>  <span class="co"># View all logs for this job</span>
+<span class="cm">systemctl status</span> etl-pipeline.service  <span class="co"># Last run status</span>
+ 
+<span class="co"># Manual trigger for testing</span>
+<span class="cm">sudo systemctl start</span> etl-pipeline.service</code></pre></div>
+        </div></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>systemd timers &gt; cron for: better logging, failure notifications (OnFailure=), dependency ordering, Persistent=true for missed jobs</li>
+          <li>Use <span class="ic2">systemd-analyze calendar "Mon..Fri 09:00"</span> to validate OnCalendar expressions</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q9.5 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 9.5</span><span class="q-level lv-b">Beginner</span>
+      <div><div class="q-title">Use 'at' command for one-time scheduled tasks — deployment at 3 AM</div>
+      <div class="q-tags"><span class="tag">at</span><span class="tag">batch</span><span class="tag">one-time</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>A database migration script must run at exactly 3 AM tonight when traffic is lowest. You can't stay up to manually trigger it. Use at to schedule it.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Schedule a command at specific time</span>
+<span class="cm">echo</span> <span class="st">"/opt/scripts/db_migration.sh >> /var/log/migration.log 2>&1"</span> | <span class="cm">at</span> 03:00
+ 
+<span class="co"># Interactive mode</span>
+<span class="cm">at</span> 03:00 tomorrow
+<span class="out"># at> /opt/scripts/db_migration.sh >> /var/log/migration.log 2>&1
+# at> Ctrl+D</span>
+ 
+<span class="co"># Various time formats</span>
+<span class="cm">at</span> now + 2 hours        <span class="co"># 2 hours from now</span>
+<span class="cm">at</span> 3am tomorrow         <span class="co"># Tomorrow at 3 AM</span>
+<span class="cm">at</span> noon Jan 15          <span class="co"># Specific date</span>
+<span class="cm">at</span> 15:30 01/20/2024     <span class="co"># Date and time</span>
+ 
+<span class="co"># List pending jobs</span>
+<span class="cm">atq</span>
+<span class="out"># 1  Thu Jan 15 03:00:00 2024 a alice</span>
+ 
+<span class="co"># View job content</span>
+<span class="cm">at</span> <span class="fl">-c</span> 1    <span class="co"># Show job 1's commands</span>
+ 
+<span class="co"># Remove a job</span>
+<span class="cm">atrm</span> 1    <span class="co"># Remove job ID 1</span>
+ 
+<span class="co"># batch: run when system load drops below 0.8</span>
+<span class="cm">echo</span> <span class="st">"/opt/scripts/heavy_report.sh"</span> | <span class="cm">batch</span></code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>cron = recurring. at = one-time. batch = one-time when load is low</li>
+          <li>at output is emailed to the user by default — redirect to file for script output</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div><!-- /ch9 -->
+ 
+ 
+<!-- ══════════════════════════════════════════
+     CHAPTER 10: NETWORKING & REMOTE MANAGEMENT
+══════════════════════════════════════════ -->
+<div id="ch10">
+  <div class="chap-head ch10">
+    <div>
+      <span class="chap-num">Chapter 10</span>
+      <div class="chap-title">🌐 Networking &amp; Remote Management</div>
+      <div class="chap-sub">ssh · scp · rsync · netstat · ss · curl · firewall · port-forwarding · VPN</div>
+    </div>
+    <div class="q-count">8 Questions</div>
+  </div>
+ 
+  <!-- Q10.1 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 10.1</span><span class="q-level lv-b">Beginner</span>
+      <div><div class="q-title">SSH key authentication setup — password-less login and SSH config for multiple servers</div>
+      <div class="q-tags"><span class="tag">ssh-keygen</span><span class="tag">authorized_keys</span><span class="tag">ssh config</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>You need to set up password-less SSH access to 10 production servers and configure SSH to use different keys for different environments (dev, staging, prod).</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Generate SSH key pair</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Generate ed25519 key (preferred — more secure than RSA)</span>
+<span class="cm">ssh-keygen</span> <span class="fl">-t ed25519 -C</span> <span class="st">"alice@company.com"</span> <span class="fl">-f</span> ~/.ssh/prod_ed25519
+<span class="out"># Generates: ~/.ssh/prod_ed25519 (private) and ~/.ssh/prod_ed25519.pub (public)</span>
+ 
+<span class="co"># RSA 4096 for legacy compatibility</span>
+<span class="cm">ssh-keygen</span> <span class="fl">-t rsa -b 4096 -C</span> <span class="st">"alice@company.com"</span> <span class="fl">-f</span> ~/.ssh/prod_rsa</code></pre></div>
+        </div></div>
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Copy public key to servers</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="co"># Automatic method</span>
+<span class="cm">ssh-copy-id</span> <span class="fl">-i</span> ~/.ssh/prod_ed25519.pub ubuntu@10.0.1.50
+ 
+<span class="co"># Manual method (when ssh-copy-id unavailable)</span>
+<span class="cm">cat</span> ~/.ssh/prod_ed25519.pub | <span class="cm">ssh</span> ubuntu@10.0.1.50 \
+    <span class="st">"mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"</span>
+ 
+<span class="co"># Copy to multiple servers</span>
+<span class="kw">for</span> server in prod-{1..10}.internal; <span class="kw">do</span>
+    <span class="cm">ssh-copy-id</span> <span class="fl">-i</span> ~/.ssh/prod_ed25519.pub ubuntu@${server}
+<span class="kw">done</span></code></pre></div>
+        </div></div>
+        <div class="step"><span class="step-num">3</span><div class="step-body">
+          <div class="step-desc"><strong>Configure ~/.ssh/config for multiple environments</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">INI — ~/.ssh/config</span></div>
+          <pre class="p"><code><span class="co"># Production servers</span>
+<span class="fl">Host</span> prod-*
+    <span class="va">User</span> ubuntu
+    <span class="va">IdentityFile</span> ~/.ssh/prod_ed25519
+    <span class="va">ServerAliveInterval</span> 60
+    <span class="va">ServerAliveCountMax</span> 3
+ 
+<span class="co"># Bastion/Jump server</span>
+<span class="fl">Host</span> bastion
+    <span class="va">HostName</span> 54.123.45.67
+    <span class="va">User</span> ubuntu
+    <span class="va">IdentityFile</span> ~/.ssh/prod_ed25519
+ 
+<span class="co"># Internal servers via bastion</span>
+<span class="fl">Host</span> *.internal
+    <span class="va">ProxyJump</span> bastion
+    <span class="va">User</span> ubuntu
+    <span class="va">IdentityFile</span> ~/.ssh/prod_ed25519
+ 
+<span class="co"># Development servers</span>
+<span class="fl">Host</span> dev-*
+    <span class="va">User</span> alice
+    <span class="va">IdentityFile</span> ~/.ssh/dev_ed25519
+    <span class="va">StrictHostKeyChecking</span> no
+ 
+<span class="co"># Named alias for quick access</span>
+<span class="fl">Host</span> mlgpu
+    <span class="va">HostName</span> 10.0.5.100
+    <span class="va">User</span> ubuntu
+    <span class="va">IdentityFile</span> ~/.ssh/prod_ed25519
+ 
+<span class="co"># Now: ssh mlgpu, ssh db-server.internal (auto via bastion)</span></code></pre></div>
+        </div></div>
+      </div>
+      <div class="tips"><span class="tip-label">💡 Interview Tips</span>
+        <ul>
+          <li>~/.ssh/config + ProxyJump is the professional way to handle bastion/jump hosts</li>
+          <li>ed25519 > RSA: faster, more secure, shorter keys. Use RSA only for legacy compatibility</li>
+          <li>Permissions matter: .ssh dir=700, private key=600, authorized_keys=600</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q10.2 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 10.2</span><span class="q-level lv-a">Advanced</span>
+      <div><div class="q-title">SSH port forwarding — securely access private database and Kubernetes dashboard through bastion</div>
+      <div class="q-tags"><span class="tag">ssh -L</span><span class="tag">ssh -R</span><span class="tag">tunnel</span><span class="tag">bastion</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>Your production PostgreSQL (port 5432) is in a private VPC with no public access. Your ML team needs to connect their local pgAdmin to it. The Kubernetes dashboard at port 8443 is also private. Set up secure tunnels.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co">═══ LOCAL PORT FORWARDING (-L) ═══
+# "Bring remote service to my local port"
+# Syntax: ssh -L LOCAL_PORT:REMOTE_HOST:REMOTE_PORT BASTION</span>
+ 
+<span class="co"># Access private PostgreSQL on localhost:5433</span>
+<span class="cm">ssh</span> <span class="fl">-N -L 5433:db.internal:5432</span> ubuntu@bastion.company.com
+<span class="co"># -N: no shell (just the tunnel)
+# Now: psql -h localhost -p 5433  ← connects to prod DB!</span>
+ 
+<span class="co"># Access Kubernetes dashboard</span>
+<span class="cm">ssh</span> <span class="fl">-N -L 8443:k8s-master.internal:8443</span> ubuntu@bastion.company.com
+<span class="co"># Open browser: https://localhost:8443</span>
+ 
+<span class="co"># Background the tunnel</span>
+<span class="cm">ssh</span> <span class="fl">-f -N -L 5433:db.internal:5432</span> ubuntu@bastion.company.com
+<span class="co"># -f: go to background after authentication</span>
+ 
+<span class="co">═══ REMOTE PORT FORWARDING (-R) ═══
+# "Expose my local service to remote server"
+# Useful: expose local Jupyter notebook to team</span>
+ 
+<span class="cm">ssh</span> <span class="fl">-N -R 8888:localhost:8888</span> ubuntu@shared-server.company.com
+<span class="co"># Team can now access: http://shared-server.company.com:8888</span>
+ 
+<span class="co">═══ DYNAMIC / SOCKS PROXY (-D) ═══</span>
+<span class="cm">ssh</span> <span class="fl">-N -D 1080</span> ubuntu@bastion.company.com
+<span class="co"># Configure browser to use SOCKS5 proxy: localhost:1080
+# All browser traffic routes through bastion</span></code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>-L = Local forwarding (most common). -R = Remote forwarding. -D = Dynamic SOCKS proxy</li>
+          <li>Production pattern: add tunnels to ~/.ssh/config as LocalForward entries for team reuse</li>
+          <li>For Kubernetes: <span class="ic2">kubectl port-forward</span> is cleaner for K8s services than SSH tunnels</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q10.3 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 10.3</span><span class="q-level lv-i">Intermediate</span>
+      <div><div class="q-title">Deploy code to 20 production servers simultaneously using ssh parallel execution</div>
+      <div class="q-tags"><span class="tag">ssh</span><span class="tag">parallel</span><span class="tag">xargs</span><span class="tag">pssh</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>You need to deploy a hotfix to 20 web servers simultaneously. Sequential SSH is too slow (20 minutes). You need to deploy all servers in parallel and collect results from each.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Method 1: xargs parallel SSH (no extra tools)</span>
+<span class="cm">cat</span> servers.txt | <span class="cm">xargs</span> <span class="fl">-P 20 -I {}</span> \
+    <span class="cm">ssh</span> <span class="fl">-o StrictHostKeyChecking=no</span> ubuntu@{} \
+    <span class="st">"cd /opt/app && git pull && systemctl restart webapp"</span>
+<span class="co"># -P 20: run 20 in parallel</span>
+ 
+<span class="co"># Method 2: Background jobs with output collection</span>
+<span class="kw">declare</span> <span class="fl">-A</span> <span class="va">results</span>
+<span class="kw">while</span> <span class="cm">read</span> server; <span class="kw">do</span>
+    <span class="va">results[$server]</span>=$(<span class="cm">ssh</span> ubuntu@$server <span class="st">"git pull && systemctl restart webapp && echo SUCCESS"</span> 2>&1) &
+<span class="kw">done</span> < servers.txt
+<span class="kw">wait</span>
+ 
+<span class="co"># Report results</span>
+<span class="kw">for</span> server in <span class="st">"${!results[@]}"</span>; <span class="kw">do</span>
+    <span class="cm">echo</span> <span class="st">"$server: ${results[$server]}"</span>
+<span class="kw">done</span>
+ 
+<span class="co"># Method 3: pssh (parallel SSH tool)</span>
+<span class="cm">sudo apt-get install</span> pssh
+<span class="cm">pssh</span> <span class="fl">-h</span> servers.txt <span class="fl">-l ubuntu -P</span> <span class="st">"cd /opt/app && git pull && systemctl restart webapp"</span>
+<span class="co"># -P: print output as it arrives
+# -h: hosts file</span>
+ 
+<span class="co"># Parallel rsync (deploy files)</span>
+<span class="cm">cat</span> servers.txt | <span class="cm">xargs</span> <span class="fl">-P 10 -I {}</span> \
+    <span class="cm">rsync</span> <span class="fl">-avz --delete</span> /opt/app/ ubuntu@{}:/opt/app/</code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>Mention that Ansible is the production-grade tool for this — but knowing the shell approach shows depth</li>
+          <li><span class="ic2">wait</span> after background jobs is critical — ensures all jobs complete before reading results</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q10.4 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 10.4</span><span class="q-level lv-i">Intermediate</span>
+      <div><div class="q-title">Network connectivity troubleshooting — diagnose why an application can't reach the database</div>
+      <div class="q-tags"><span class="tag">ss</span><span class="tag">netstat</span><span class="tag">nc</span><span class="tag">traceroute</span><span class="tag">tcpdump</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>After a network security group change, your application can no longer connect to PostgreSQL. The DB is running but the app gets "Connection refused" or times out. Walk through the full diagnostic process.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH — Systematic Network Diagnosis</span></div>
+        <pre class="p"><code><span class="co"># Step 1: Verify DB is actually listening</span>
+<span class="co"># (Run on the DB server)</span>
+<span class="cm">sudo ss</span> <span class="fl">-tlnp</span> | <span class="cm">grep</span> 5432
+<span class="out"># tcp LISTEN 0 128 0.0.0.0:5432  ← Good, PostgreSQL is listening</span>
+<span class="co"># If nothing: service is down → systemctl start postgresql</span>
+ 
+<span class="co"># Step 2: Test TCP reachability from app server</span>
+<span class="co"># (Run on the APPLICATION server)</span>
+<span class="cm">nc</span> <span class="fl">-zv</span> db.internal 5432
+<span class="out"># nc: connect to db.internal port 5432 (tcp) failed: Connection refused
+# OR: Connection timed out (firewall DROP vs port closed)</span>
+ 
+<span class="cm">nc</span> <span class="fl">-zv -w 5</span> db.internal 5432  <span class="co"># 5 second timeout</span>
+ 
+<span class="co"># Step 3: Check if firewall is blocking (timeout = firewall blocking)</span>
+<span class="co"># "Connection refused" = port closed. "Timeout" = firewall DROP</span>
+ 
+<span class="co"># Step 4: Trace the route</span>
+<span class="cm">traceroute</span> db.internal
+<span class="cm">traceroute</span> <span class="fl">-T -p 5432</span> db.internal  <span class="co"># TCP traceroute to specific port</span>
+ 
+<span class="co"># Step 5: Check if DNS resolves correctly</span>
+<span class="cm">dig</span> db.internal
+<span class="cm">nslookup</span> db.internal
+<span class="co"># Could be DNS returning wrong IP after change!</span>
+ 
+<span class="co"># Step 6: Check firewall rules on DB server</span>
+<span class="cm">sudo iptables</span> <span class="fl">-L -n</span> | <span class="cm">grep</span> 5432
+<span class="cm">sudo ufw status</span> | <span class="cm">grep</span> 5432
+<span class="cm">sudo firewall-cmd</span> <span class="fl">--list-all</span>
+ 
+<span class="co"># Step 7: Capture to confirm traffic reaches DB server</span>
+<span class="co"># (On DB server)</span>
+<span class="cm">sudo tcpdump</span> <span class="fl">-nn -i any port 5432</span>
+<span class="co"># Then try connection from app server
+# If no packets captured: network level block before reaching server
+# If SYN packets seen but no SYN-ACK: process not responding or firewall on server</span>
+ 
+<span class="co"># Step 8: Check pg_hba.conf (PostgreSQL auth)</span>
+<span class="cm">sudo cat</span> /etc/postgresql/14/main/pg_hba.conf
+<span class="co"># Might need: host all all 10.0.0.0/8 md5</span></code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>The diagnostic order: DNS → reachability (nc/ping) → port open (ss) → firewall → service config</li>
+          <li>"Connection refused" = port closed or process not listening. "Timeout" = firewall blocking</li>
+          <li>tcpdump on the server reveals if traffic even reaches it — key for firewall-vs-process diagnosis</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q10.5 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 10.5</span><span class="q-level lv-a">Advanced</span>
+      <div><div class="q-title">Secure file sync to S3-like storage using rsync and SSH with bandwidth limiting for production</div>
+      <div class="q-tags"><span class="tag">rsync</span><span class="tag">ssh</span><span class="tag">bwlimit</span><span class="tag">backup</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>Your ML pipeline generates 50GB of training data daily. You need to sync it to a backup server with: encryption (SSH), bandwidth limiting (don't saturate production network), checksums, and only transfer changed files.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+        <pre class="p"><code><span class="co"># Production rsync command</span>
+<span class="cm">rsync</span> \
+    <span class="fl">-avz</span> \                      <span class="co"># archive + verbose + compress</span>
+    <span class="fl">--checksum</span> \                <span class="co"># verify with checksum, not just timestamp</span>
+    <span class="fl">--bwlimit=102400</span> \          <span class="co"># 100 MB/s limit (in KB/s)</span>
+    <span class="fl">--delete</span> \                  <span class="co"># Mirror: delete removed files from dest</span>
+    <span class="fl">--partial --progress</span> \      <span class="co"># Resume + show progress</span>
+    <span class="fl">--exclude='*.tmp'</span> \         <span class="co"># Exclude temp files</span>
+    <span class="fl">--exclude='__pycache__/'</span> \
+    <span class="fl">--log-file=/var/log/rsync.log</span> \
+    <span class="fl">-e</span> <span class="st">"ssh -i /home/mluser/.ssh/backup_key -p 22"</span> \
+    /data/ml/training/ \
+    backup@backup-server.internal:/backups/ml/training/
+ 
+<span class="co"># Verify transfer statistics</span>
+<span class="cm">rsync</span> <span class="fl">--stats -n</span> /data/ml/ backup@backup-server:/backups/ml/
+<span class="out"># Number of files: 45,234
+# Number of regular files transferred: 234
+# Total file size: 50.23G bytes
+# Total transferred file size: 2.45G bytes  ← Only 2.45GB (delta!)</span>
+ 
+<span class="co"># Script with notification on failure</span>
+<span class="cm">rsync</span> <span class="fl">-avz --checksum</span> /data/ml/ backup@server:/backup/ || {
+    <span class="cm">echo</span> <span class="st">"rsync failed! Disk space: $(df -h /data)"</span> | \
+        <span class="cm">mail</span> <span class="fl">-s</span> <span class="st">"ALERT: ML Backup Failed"</span> devops@company.com
+    <span class="cm">exit</span> 1
+}</code></pre></div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q10.6 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 10.6</span><span class="q-level lv-a">Advanced</span>
+      <div><div class="q-title">API health monitoring with curl — automated endpoint testing pipeline</div>
+      <div class="q-tags"><span class="tag">curl</span><span class="tag">jq</span><span class="tag">API testing</span><span class="tag">monitoring</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>Your ML inference API needs automated health checks every minute. Check: response time, HTTP status code, response body validity (model version), and alert if any check fails.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH — Comprehensive API health check script</span></div>
+        <pre class="p"><code><span class="co">#!/bin/bash
+# /opt/scripts/api_healthcheck.sh</span>
+ 
+<span class="va">API_URL</span>=<span class="st">"https://api.ml-platform.internal/v1"</span>
+<span class="va">ALERT_EMAIL</span>=<span class="st">"oncall@company.com"</span>
+<span class="va">THRESHOLD_MS</span>=2000
+ 
+<span class="co"># 1. Basic connectivity + response time</span>
+<span class="va">RESPONSE</span>=$(<span class="cm">curl</span> <span class="fl">-sS -w</span> <span class="st">"\n%{http_code}\n%{time_total}"</span> \
+    <span class="fl">-H</span> <span class="st">"Authorization: Bearer $API_TOKEN"</span> \
+    <span class="fl">-m 10</span> \   <span class="co"># 10 second timeout</span>
+    <span class="st">"$API_URL/health"</span>)
+ 
+<span class="va">BODY</span>=$(<span class="cm">echo</span> <span class="st">"$RESPONSE"</span> | <span class="cm">head</span> <span class="fl">-1</span>)
+<span class="va">STATUS_CODE</span>=$(<span class="cm">echo</span> <span class="st">"$RESPONSE"</span> | <span class="cm">tail</span> <span class="fl">-2</span> | <span class="cm">head</span> <span class="fl">-1</span>)
+<span class="va">RESPONSE_TIME</span>=$(<span class="cm">echo</span> <span class="st">"$RESPONSE"</span> | <span class="cm">tail</span> <span class="fl">-1</span>)
+ 
+<span class="co"># 2. Check HTTP status</span>
+<span class="kw">if</span> [ <span class="st">"$STATUS_CODE"</span> != <span class="st">"200"</span> ]; <span class="kw">then</span>
+    <span class="cm">echo</span> <span class="st">"ALERT: API returned $STATUS_CODE"</span> | <span class="cm">mail</span> <span class="fl">-s</span> <span class="st">"API DOWN"</span> <span class="st">$ALERT_EMAIL</span>
+    <span class="cm">exit</span> 1
+<span class="kw">fi</span>
+ 
+<span class="co"># 3. Check response body (model version)</span>
+<span class="va">MODEL_VERSION</span>=$(<span class="cm">echo</span> <span class="st">"$BODY"</span> | <span class="cm">jq</span> <span class="fl">-r</span> <span class="st">'.model_version'</span>)
+<span class="kw">if</span> [ <span class="st">"$MODEL_VERSION"</span> != <span class="st">"v2.1"</span> ]; <span class="kw">then</span>
+    <span class="cm">echo</span> <span class="st">"ALERT: Wrong model version: $MODEL_VERSION"</span> | <span class="cm">mail</span> <span class="fl">-s</span> <span class="st">"Model Mismatch"</span> <span class="st">$ALERT_EMAIL</span>
+<span class="kw">fi</span>
+ 
+<span class="co"># 4. Check response time</span>
+<span class="va">RESPONSE_MS</span>=$(<span class="cm">echo</span> <span class="st">"$RESPONSE_TIME * 1000"</span> | <span class="cm">bc</span> | <span class="cm">cut</span> <span class="fl">-d.</span> <span class="fl">-f1</span>)
+<span class="kw">if</span> [ <span class="st">"$RESPONSE_MS"</span> -gt <span class="st">"$THRESHOLD_MS"</span> ]; <span class="kw">then</span>
+    <span class="cm">echo</span> <span class="st">"WARN: Slow response ${RESPONSE_MS}ms > ${THRESHOLD_MS}ms"</span>
+<span class="kw">fi</span>
+ 
+<span class="co"># 5. Test inference endpoint</span>
+<span class="va">PREDICTION</span>=$(<span class="cm">curl</span> <span class="fl">-sS -X POST</span> \
+    <span class="fl">-H</span> <span class="st">"Content-Type: application/json"</span> \
+    <span class="fl">-d</span> <span class="st">'{"input": [1.0, 2.0, 3.0]}'</span> \
+    <span class="fl">-m 5</span> \
+    <span class="st">"$API_URL/predict"</span>)
+ 
+<span class="cm">echo</span> <span class="st">"$PREDICTION"</span> | <span class="cm">jq</span> <span class="fl">-e</span> <span class="st">'.prediction != null'</span> > /dev/null || {
+    <span class="cm">echo</span> <span class="st">"ALERT: Invalid prediction response"</span> | <span class="cm">mail</span> <span class="fl">-s</span> <span class="st">"API Error"</span> <span class="st">$ALERT_EMAIL</span>
+}</code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li><span class="ic2">curl -w "%{time_total}\n%{http_code}"</span> is the standard way to get both response time and status code</li>
+          <li><span class="ic2">jq -e</span> exits with code 1 if result is false/null — useful in if statements</li>
+          <li>This script goes in crontab: <span class="ic2">*/1 * * * * /opt/scripts/api_healthcheck.sh</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q10.7 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 10.7</span><span class="q-level lv-a">Advanced</span>
+      <div><div class="q-title">SSH hardening — secure a production server's SSH configuration against attacks</div>
+      <div class="q-tags"><span class="tag">sshd_config</span><span class="tag">fail2ban</span><span class="tag">security</span><span class="tag">hardening</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>Security audit shows your server received 50,000 failed SSH login attempts in the last week. You need to harden SSH, install fail2ban to auto-block attackers, and implement all security best practices.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="step"><span class="step-num">1</span><div class="step-body">
+          <div class="step-desc"><strong>Harden /etc/ssh/sshd_config</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">INI — /etc/ssh/sshd_config (hardened)</span></div>
+          <pre class="p"><code><span class="co"># Change default port (reduces noise attacks)</span>
+<span class="va">Port</span> 2222
+ 
+<span class="co"># Only allow SSH protocol 2</span>
+<span class="va">Protocol</span> 2
+ 
+<span class="co"># Disable root login</span>
+<span class="va">PermitRootLogin</span> no
+ 
+<span class="co"># Key-based auth only (disable password)</span>
+<span class="va">PasswordAuthentication</span> no
+<span class="va">PubkeyAuthentication</span> yes
+<span class="va">AuthorizedKeysFile</span> .ssh/authorized_keys
+ 
+<span class="co"># Disable unused auth methods</span>
+<span class="va">ChallengeResponseAuthentication</span> no
+<span class="va">UsePAM</span> yes
+ 
+<span class="co"># Restrict which users/groups can SSH</span>
+<span class="va">AllowUsers</span> alice bob deploy
+<span class="co"># OR: AllowGroups ssh-users</span>
+ 
+<span class="co"># Connection limits</span>
+<span class="va">MaxAuthTries</span> 3           <span class="co"># 3 attempts before disconnect</span>
+<span class="va">MaxSessions</span> 10
+<span class="va">LoginGraceTime</span> 30        <span class="co"># 30 seconds to authenticate</span>
+<span class="va">ClientAliveInterval</span> 60   <span class="co"># Send keepalive every 60s</span>
+<span class="va">ClientAliveCountMax</span> 3    <span class="co"># Disconnect after 3 missed keepalives</span>
+ 
+<span class="co"># Disable X11 and other attack surfaces</span>
+<span class="va">X11Forwarding</span> no
+<span class="va">PrintLastLog</span> yes
+<span class="va">Banner</span> /etc/ssh/banner    <span class="co"># Warning banner</span></code></pre></div>
+        </div></div>
+        <div class="step"><span class="step-num">2</span><div class="step-body">
+          <div class="step-desc"><strong>Install and configure fail2ban</strong></div>
+          <div class="cw"><div class="ct"><span class="lang">BASH</span></div>
+          <pre class="p"><code><span class="cm">sudo apt-get install</span> <span class="fl">-y</span> fail2ban
+ 
+<span class="co"># /etc/fail2ban/jail.local</span>
+<span class="cm">sudo tee</span> /etc/fail2ban/jail.local << <span class="st">'EOF'</span>
+[DEFAULT]
+bantime  = 1h          # Ban for 1 hour
+findtime  = 10m        # Within 10 minutes
+maxretry = 3           # 3 failures = ban
+ignoreip = 127.0.0.1/8 10.0.0.0/8  # Whitelist
+ 
+[sshd]
+enabled = true
+port    = 2222
+logpath = %(sshd_log)s
+maxretry = 3
+EOF
+ 
+<span class="cm">sudo systemctl enable</span> <span class="fl">--now</span> fail2ban
+ 
+<span class="co"># Check banned IPs</span>
+<span class="cm">sudo fail2ban-client status sshd</span>
+<span class="out"># Status for the jail: sshd
+# - Filter: ...
+# - Actions: 234 ban(s)</span>
+ 
+<span class="co"># Manually ban/unban</span>
+<span class="cm">sudo fail2ban-client set sshd banip</span> 203.0.113.50
+<span class="cm">sudo fail2ban-client set sshd unbanip</span> 203.0.113.50</code></pre></div>
+        </div></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>Order matters: add your SSH key BEFORE disabling PasswordAuthentication or you lock yourself out</li>
+          <li>Changing SSH port reduces bot traffic by ~90% (security by obscurity — not true security, but reduces noise)</li>
+          <li>AllowUsers is a whitelist — if specified, ALL others are denied even with valid credentials</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Q10.8 -->
+  <div class="q-card">
+    <div class="q-header">
+      <span class="q-num">Q 10.8</span><span class="q-level lv-a">Advanced</span>
+      <div><div class="q-title">Multi-topic capstone: Server migration — transfer all data, config, services and verify</div>
+      <div class="q-tags"><span class="tag">rsync</span><span class="tag">ssh</span><span class="tag">systemctl</span><span class="tag">ss</span><span class="tag">curl</span></div></div>
+    </div>
+    <div class="q-body">
+      <div class="scenario"><div class="slabel">🧩 Scenario</div>
+        <p>Migrate a production ML serving platform from server A (10.0.1.50) to server B (10.0.1.100). Transfer: application code, models, configurations, database data, systemd services, cron jobs. Verify everything works before DNS cutover.</p>
+      </div>
+      <div class="solution">
+        <div class="sol-label">🛠 Step-by-Step Solution</div>
+        <div class="cw"><div class="ct"><span class="lang">BASH — Full Server Migration Checklist</span></div>
+        <pre class="p"><code><span class="co">═══ PHASE 1: INVENTORY & PREP ═══</span>
+ 
+<span class="co"># Document current state on source server (10.0.1.50)</span>
+<span class="cm">systemctl list-units</span> <span class="fl">--type=service --state=active</span> > /tmp/running_services.txt
+<span class="cm">crontab</span> <span class="fl">-l</span> > /tmp/crontab_backup.txt
+<span class="cm">sudo crontab</span> <span class="fl">-l</span> > /tmp/root_crontab.txt
+<span class="cm">ss</span> <span class="fl">-tlnp</span> > /tmp/listening_ports.txt
+<span class="cm">df</span> <span class="fl">-h</span> > /tmp/disk_usage.txt
+<span class="cm">dpkg</span> <span class="fl">--get-selections</span> > /tmp/installed_packages.txt
+ 
+<span class="co">═══ PHASE 2: DATA TRANSFER ═══</span>
+ 
+<span class="co"># Install same packages on destination</span>
+<span class="cm">ssh</span> ubuntu@10.0.1.100 <span class="st">"sudo dpkg --set-selections < /tmp/installed_packages.txt && sudo apt-get dselect-upgrade"</span>
+ 
+<span class="co"># Sync application code</span>
+<span class="cm">rsync</span> <span class="fl">-avz --checksum</span> /opt/app/ ubuntu@10.0.1.100:/opt/app/
+<span class="cm">rsync</span> <span class="fl">-avz --checksum</span> /opt/models/ ubuntu@10.0.1.100:/opt/models/
+ 
+<span class="co"># Sync configurations</span>
+<span class="cm">rsync</span> <span class="fl">-avz</span> /etc/nginx/ ubuntu@10.0.1.100:/etc/nginx/
+<span class="cm">rsync</span> <span class="fl">-avz</span> /etc/systemd/system/mlserver.service ubuntu@10.0.1.100:/etc/systemd/system/
+<span class="cm">rsync</span> <span class="fl">-avz</span> /var/lib/postgresql/ ubuntu@10.0.1.100:/var/lib/postgresql/
+ 
+<span class="co">═══ PHASE 3: CONFIGURE DESTINATION ═══</span>
+ 
+<span class="cm">ssh</span> ubuntu@10.0.1.100 <span class="st">"
+    sudo systemctl daemon-reload
+    sudo systemctl enable mlserver nginx postgresql
+    sudo systemctl start postgresql nginx mlserver
+"</span>
+ 
+<span class="co"># Restore crontab</span>
+<span class="cm">scp</span> /tmp/crontab_backup.txt ubuntu@10.0.1.100:/tmp/
+<span class="cm">ssh</span> ubuntu@10.0.1.100 <span class="st">"crontab /tmp/crontab_backup.txt"</span>
+ 
+<span class="co">═══ PHASE 4: VERIFICATION ═══</span>
+ 
+<span class="co"># Verify all services are running</span>
+<span class="cm">ssh</span> ubuntu@10.0.1.100 <span class="st">"systemctl status nginx mlserver postgresql"</span>
+ 
+<span class="co"># Verify same ports are listening</span>
+<span class="cm">ssh</span> ubuntu@10.0.1.100 <span class="st">"ss -tlnp"</span> | <span class="cm">diff</span> /tmp/listening_ports.txt -
+ 
+<span class="co"># Test API endpoint directly on new server</span>
+<span class="cm">curl</span> <span class="fl">-sS</span> http://10.0.1.100/api/health | <span class="cm">jq</span>
+ 
+<span class="co"># Load test with wrk</span>
+<span class="cm">wrk</span> <span class="fl">-t4 -c100 -d30s</span> http://10.0.1.100/api/predict
+ 
+<span class="co">═══ PHASE 5: DNS CUTOVER ═══</span>
+ 
+<span class="co"># Update DNS record TTL to 60s BEFORE migration (minimum propagation)</span>
+<span class="co"># After verification: update A record from 10.0.1.50 to 10.0.1.100</span>
+<span class="cm">dig</span> api.company.com  <span class="co"># Verify DNS propagation</span>
+ 
+<span class="co"># Monitor for 30 minutes after cutover</span>
+<span class="cm">watch</span> <span class="fl">-n 5</span> <span class="st">"curl -sS https://api.company.com/health && echo OK"</span></code></pre></div>
+      </div>
+      <div class="tips"><div class="tip-label">💡 Interview Tips</div>
+        <ul>
+          <li>Real migrations use tools like Ansible, Chef, or Terraform — but knowing the manual process shows mastery</li>
+          <li>Pre-reduce DNS TTL is the #1 thing people forget — set it to 60s a day before migration</li>
+          <li>Always do a final rsync right before cutover to sync any changes made during migration window</li>
+          <li>Keep old server running for 24-48 hours after cutover as fallback</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+ 
+</div><!-- /ch10 -->
+ 
+
 </main>
 
 <footer>
