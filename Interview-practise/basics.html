@@ -1,0 +1,2275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File and Directory Management Interview Guide</title>
+  <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  @import url("https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.css");
+
+  :root {
+    --navy:    #0A1929;
+    --blue:    #1565C0;
+    --sky:     #0288D1;
+    --teal:    #00695C;
+    --green:   #2E7D32;
+    --orange:  #E65100;
+    --red:     #B71C1C;
+    --purple:  #6A1B9A;
+    --amber:   #F57F17;
+    --bg:      #EEF4FB;
+    --surface: #FFFFFF;
+    --surf2:   #E3EDF8;
+    --border:  #C2D4EC;
+    --text:    #0A1929;
+    --text2:   #1E3550;
+    --text3:   #4A637A;
+    --codebg:  #080F1A;
+    --sh-s:    0 1px 4px rgba(7,21,37,.07);
+    --sh-m:    0 4px 16px rgba(7,21,37,.10);
+    --sh-l:    0 14px 44px rgba(7,21,37,.14);
+    --r:       14px;
+    --rs:      9px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.8;
+    font-size: 15px;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ══ HERO ══ */
+  .hero {
+    background: linear-gradient(145deg, #030A13 0%, #071525 25%, #0A2040 55%, #0E2D5E 80%, #132F6A 100%);
+    padding: 70px 24px 58px; text-align: center; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 15% 55%, rgba(21,101,192,.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 85% 20%, rgba(0,105,92,.15) 0%, transparent 48%),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23FFFFFF' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .hero-in { position: relative; z-index: 1; }
+  .h-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.18); color: #81D4FA; font-size: .72rem; font-weight: 700; letter-spacing: 0; text-transform: uppercase; padding: 7px 20px; border-radius: 100px; margin-bottom: 20px; }
+  .hero h1 { font-size: 3.4rem; font-weight: 800; color: #fff; letter-spacing: 0; line-height: 1.15; margin-bottom: 13px; }
+  .hero h1 em { font-style: normal; color: #4FC3F7; }
+  .hero-desc { font-size: .97rem; color: #90CAF9; max-width: 680px; margin: 0 auto 26px; line-height: 1.7; }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 800px; margin: 0 auto; }
+  .chip { background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.15); color: #B3E5FC; font-size: .74rem; font-weight: 500; padding: 5px 13px; border-radius: 100px; }
+
+  /* ══ NAV ══ */
+  .nav { position: sticky; top: 0; z-index: 200; background: rgba(255,255,255,.93); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); box-shadow: var(--sh-s); }
+  .nav-in { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; height: 50px; padding: 0 20px; overflow-x: auto; white-space: nowrap; gap: 2px; }
+  .nav-in a { text-decoration: none; color: var(--text2); font-size: .76rem; font-weight: 600; padding: 5px 11px; border-radius: 100px; transition: all .15s; flex-shrink: 0; }
+  .nav-in a:hover { background: var(--surf2); color: var(--sky); }
+  .ndot { color: var(--border); margin: 0 1px; flex-shrink: 0; font-size: .85rem; }
+
+  /* ══ LAYOUT ══ */
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 44px 22px 100px; }
+  .reader {
+    max-width: 1080px;
+    margin: -28px auto 0;
+    padding: clamp(22px, 3vw, 44px);
+    position: relative;
+    z-index: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    box-shadow: var(--sh-l);
+  }
+  .reader > :first-child { margin-top: 0; }
+  .reader > :last-child { margin-bottom: 0; }
+  .reader > hr:first-child { display: none; }
+  .reader > h1 {
+    margin: clamp(28px, 4vw, 42px) 0 24px;
+    padding: 18px clamp(16px, 2.5vw, 26px);
+    background: linear-gradient(135deg, #0D2547, #1565C0);
+    border-radius: var(--r);
+    box-shadow: var(--sh-m);
+    color: #fff;
+    font-size: 1.9rem;
+  }
+  .reader > h1:first-child { margin-top: 0; }
+  .reader > h1 code {
+    background: rgba(255,255,255,.14);
+    border-color: rgba(255,255,255,.18);
+    color: #fff;
+  }
+  .reader h2,
+  .reader h3 { scroll-margin-top: 72px; }
+  .reader p { max-width: 92ch; }
+  .reader pre {
+    max-width: 100%;
+    margin: 12px 0 20px;
+  }
+  .reader table {
+    display: block;
+    max-width: 100%;
+    margin: 16px 0 22px;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--rs);
+    box-shadow: var(--sh-s);
+  }
+  .reader blockquote p:last-child { margin-bottom: 0; }
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .hero-link,
+  .hero-link:visited {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 8px 15px;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 100px;
+    background: rgba(255,255,255,.1);
+    color: #fff;
+    font-size: .8rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background .15s, border-color .15s, transform .15s;
+  }
+  .hero-link:hover {
+    border-color: rgba(255,255,255,.42);
+    background: rgba(255,255,255,.18);
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-1px);
+  }
+  .hero-link:focus-visible {
+    outline: 2px solid #81D4FA;
+    outline-offset: 3px;
+  }
+
+  /* ══ QUESTION CARD ══ */
+  .qcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh-m); margin-bottom: 32px; overflow: hidden; transition: all .2s; }
+  .qcard:hover { box-shadow: var(--sh-l); transform: translateY(-2px); }
+  .qhead { background: linear-gradient(135deg, #0D2547, #1565C0); padding: 16px 22px; display: flex; align-items: flex-start; gap: 14px; border-bottom: 1px solid var(--surf2); flex-wrap: wrap; }
+  .qnum { background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.35); color: #fff; font-size: .75rem; font-weight: 700; padding: 3px 11px; border-radius: 6px; flex-shrink: 0; margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+  .qlevel { font-size: .68rem; font-weight: 700; padding: 3px 10px; border-radius: 100px; flex-shrink: 0; margin-top: 2px; }
+  .lv-b { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
+  .lv-i { background: #FFF8E1; color: #F57F17; border: 1px solid #FFE082; }
+  .lv-a { background: #FEEBEA; color: #B71C1C; border: 1px solid #EF9A9A; }
+  .qtitle { font-size: .95rem; font-weight: 700; color: #fff; line-height: 1.5; flex: 1; min-width: 240px; }
+  .qbody { padding: 22px; }
+
+  a, a:visited { color: var(--blue); text-decoration: none; transition: color 0.2s; }
+  a:hover { color: var(--sky); text-decoration: underline; }
+  a:focus { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 2px; }
+
+  /* ══ SPECIALIZED BOXES ══ */
+  .scenario { background: linear-gradient(135deg, #E3F2FD, #EEF7FF); border: 1px solid #90CAF9; border-left: 5px solid #1565C0; border-radius: var(--rs); padding: 16px 18px; margin-bottom: 16px; }
+  .scenario .slabel { font-size: .7rem; font-weight: 800; color: #1565C0; text-transform: uppercase; letter-spacing: 0; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .scenario p { font-size: .875rem; color: var(--text2); line-height: 1.75; }
+
+  .problem { background: #FFF8E1; border: 1px solid #FFB74D; border-left: 5px solid #F57F17; border-radius: var(--rs); padding: 14px 18px; margin-bottom: 16px; }
+  .problem .plabel { font-size: .7rem; font-weight: 800; color: #E65100; text-transform: uppercase; letter-spacing: 0; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+  .problem p { font-size: .875rem; color: #4E342E; line-height: 1.7; }
+
+  .solution { margin-bottom: 14px; }
+  .sol-label { font-size: .7rem; font-weight: 800; color: var(--green); text-transform: uppercase; letter-spacing: 0; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .step { display: flex; gap: 12px; margin-bottom: 10px; align-items: flex-start; }
+  .step-num { background: var(--blue); color: #fff; width: 24px; height: 24px; border-radius: 50%; font-size: .68rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .step-body { flex: 1; }
+  .step-desc { font-size: .85rem; color: var(--text2); margin-bottom: 6px; line-height: 1.65; }
+  .step-desc strong { color: var(--text); }
+
+  .alt { background: #F3E5F5; border: 1px solid #CE93D8; border-left: 5px solid #8E24AA; border-radius: var(--rs); padding: 14px 18px; margin-bottom: 14px; }
+  .alt-label { font-size: .7rem; font-weight: 800; color: #6A1B9A; text-transform: uppercase; letter-spacing: 0; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .alt p, .alt li { font-size: .85rem; color: #3E0D5C; line-height: 1.7; }
+
+  .mistakes { background: #FEEBEA; border: 1px solid #EF9A9A; border-left: 5px solid #E53935; border-radius: var(--rs); padding: 14px 18px; margin-bottom: 14px; }
+  .mis-label { font-size: .7rem; font-weight: 800; color: #B71C1C; text-transform: uppercase; letter-spacing: 0; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .mistakes ul { list-style: none; padding: 0; }
+  .mistakes ul li { font-size: .85rem; color: #7F1D1D; line-height: 1.7; padding: 3px 0; }
+  .mistakes ul li::before { content: '✗ '; color: #E53935; font-weight: 700; }
+
+  .tips { background: #E8F5E9; border: 1px solid #A5D6A7; border-left: 5px solid #43A047; border-radius: var(--rs); padding: 14px 18px; margin-bottom: 0; }
+  .tip-label { font-size: .7rem; font-weight: 800; color: #2E7D32; text-transform: uppercase; letter-spacing: 0; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .tips ul { list-style: none; padding: 0; }
+  .tips ul li { font-size: .85rem; color: #1B5E20; line-height: 1.7; padding: 3px 0; }
+  .tips ul li::before { content: '💡 '; }
+
+  .info-box { background: #E0F2F1; border: 1px solid #80CBC4; border-left: 4px solid #00897B; border-radius: var(--rs); padding: 12px 16px; margin-bottom: 12px; font-size: .84rem; color: #004D40; line-height: 1.7; }
+
+  /* ══ HEADING HIERARCHY ══ */
+  h1 { font-size: 2.4rem; font-weight: 800; color: var(--navy); margin-bottom: 8px; line-height: 1.2; }
+  h1 em { color: var(--blue); font-style: normal; }
+  h2 { font-size: 1.85rem; font-weight: 700; color: var(--navy); margin-top: 2.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: 12px; line-height: 1.25; }
+  h3 { font-size: 1.2rem; font-weight: 700; color: var(--text); margin-top: 1.5rem; margin-bottom: 1rem; line-height: 1.3; }
+  h4 { font-size: 1.05rem; font-weight: 700; color: var(--text2); margin-top: 16px; margin-bottom: 8px; }
+  h5, h6 { font-size: 0.95rem; font-weight: 600; color: var(--text2); margin-top: 12px; margin-bottom: 6px; }
+  p { margin-bottom: 1.2rem; letter-spacing: 0; }
+
+  .ic, code { font-family: 'JetBrains Mono', monospace; background: #F5F7FA; color: #B71C1C; padding: 2px 6px; border-radius: 4px; font-size: .79rem; border: 1px solid #E3F2FD; letter-spacing: 0; }
+
+  /* ══ CODE BLOCK ══ */
+  .cw { margin-bottom: 12px; border-radius: var(--rs); overflow: hidden; }
+  .ct { background: #0E1E2F; padding: 6px 14px; display: flex; align-items: center; justify-content: space-between; font-size: .67rem; font-weight: 700; color: #3D6080; letter-spacing: 0; text-transform: uppercase; }
+  .ct .lang { color: #29B6F6; }
+  pre { background: var(--codebg); padding: 14px 18px; overflow-x: auto; margin: 0; border-top: 1px solid #152030; border-radius: var(--rs); }
+  pre code { font-family: 'JetBrains Mono', monospace; font-size: .79rem; line-height: 1.88; color: #90CAF9; background: none; padding: 0; }
+  .hljs { display: block; overflow-x: auto; padding: 0; background: none; }
+  .hljs-built_in { color: #FF8A80; font-weight: 600; }
+  .hljs-variable { color: #FFD54F; }
+  .hljs-comment { color: #546E7A; }
+  .c  { color: #546E7A; }
+  .k  { color: #FF8A80; font-weight: 600; }
+  .cm { color: #64B5F6; }
+  .fl { color: #FFCC80; }
+  .st2{ color: #A5D6A7; }
+  .sc { color: #CE93D8; font-weight: 600; }
+  .di { color: #FFD54F; }
+  .nu { color: #80CBC4; }
+
+  /* ══ FLAG TABLE ══ */
+  .tw { overflow-x: auto; border-radius: var(--rs); border: 1px solid var(--border); margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: .81rem; }
+  table thead tr { background: linear-gradient(90deg, #0D2547, #1565C0); }
+  table thead th { padding: 12px 14px; color: #fff; font-size: .7rem; font-weight: 700; letter-spacing: 0; text-transform: uppercase; text-align: left; border: none; white-space: nowrap; }
+  table tbody tr:nth-child(odd)  { background: #FAFCFF; }
+  table tbody tr:nth-child(even) { background: #EEF4FB; }
+  table tbody tr:hover { background: #D8E7F5; }
+  table td { padding: 12px 14px; border-bottom: 1px solid #DEEAF8; vertical-align: top; color: var(--text2); line-height: 1.6; font-size: .82rem; }
+  table td:first-child { font-family: 'JetBrains Mono', monospace; font-size: .74rem; font-weight: 600; color: #B71C1C; white-space: nowrap; border-right: 1px solid var(--border); }
+  table tbody tr:focus-within { background: #D4E4F7; }
+
+  /* ══ BLOCKQUOTE ══ */
+  blockquote {
+    background: linear-gradient(135deg, rgba(21,101,192,.08), rgba(0,105,92,.05));
+    border-left: 4px solid var(--blue);
+    border-radius: var(--rs);
+    padding: 14px 16px;
+    margin: 16px 0;
+    color: var(--text2);
+    font-size: .9rem;
+    line-height: 1.7;
+  }
+  blockquote strong { color: var(--navy); }
+
+  /* ══ LISTS ══ */
+  ul, ol {
+    margin: 12px 0 12px 24px;
+    line-height: 1.8;
+  }
+  li { margin-bottom: 6px; color: var(--text2); }
+
+  /* ══ HR ══ */
+  hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 28px 0;
+  }
+
+  /* ══ IMAGES ══ */
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--rs);
+    box-shadow: var(--sh-m);
+  }
+
+  .katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  /* ══ RESPONSIVE DESIGN ══ */
+  @media (max-width: 1024px) {
+    .wrap { max-width: 100%; padding: 32px 24px 80px; }
+    h1 { font-size: 2.1rem; }
+    h2 { font-size: 1.6rem; }
+  }
+
+  @media (max-width: 768px) {
+    .hero { padding: 42px 16px 38px; }
+    .hero h1 { font-size: 2rem; }
+    .wrap { padding: 24px 16px 60px; }
+    .reader {
+      margin-top: -16px;
+      padding: 22px 18px;
+    }
+    .reader > h1 { font-size: 1.55rem; }
+    .nav-in { gap: 1px; padding: 0 12px; height: 48px; }
+    .nav-in a { font-size: 0.65rem; padding: 3px 8px; }
+    h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.4rem; margin-top: 1.8rem; margin-bottom: 1.2rem; }
+    h3 { font-size: 1rem; margin-top: 1.2rem; }
+    .qhead { flex-direction: column; align-items: flex-start; }
+    .qtitle { font-size: 0.95rem; }
+    .qbody { padding: 20px; }
+    table { font-size: 0.75rem; }
+    table td, table th { padding: 10px 12px; }
+    .cw { margin-bottom: 10px; }
+    pre { padding: 12px 14px; }
+    pre code { font-size: 0.72rem; line-height: 1.7; }
+  }
+
+  @media (max-width: 480px) {
+    .wrap { padding: 16px 12px 50px; }
+    .hero h1 { font-size: 1.8rem; }
+    .reader {
+      padding: 18px 14px;
+      border-radius: 10px;
+    }
+    .reader > h1 { padding: 16px; font-size: 1.35rem; }
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 0.95rem; }
+    .qbody { padding: 16px; }
+    table { font-size: 0.7rem; }
+    table td, table th { padding: 8px 10px; }
+    .cw { margin-bottom: 10px; }
+    pre { padding: 10px 12px; }
+  }
+</style>
+</head>
+<body id="preview">
+<header class="hero">
+  <div class="hero-in">
+    <div class="h-pill">Linux Interview Practice</div>
+    <h1>Linux Commands<br><em>Interview Preparation Guide</em></h1>
+    <p class="hero-desc">File and directory command fundamentals for DevOps, Data Engineer, and AI-ML interview practice.</p>
+    <div class="chips">
+      <span class="chip">File Commands</span>
+      <span class="chip">Directories</span>
+      <span class="chip">Flags and Examples</span>
+      <span class="chip">Interview Questions</span>
+    </div>
+    <div class="hero-actions">
+      <a class="hero-link" href="index.html">Complete handbook</a>
+      <a class="hero-link" href="interview_guide.html">Interview guide</a>
+    </div>
+  </div>
+</header>
+<main class="wrap">
+<article class="reader">
+<h1 class="code-line has-line-data" data-line-start="4" data-line-end="5"><a id="SECTION_1_File_and_Directory_Management_4"></a>SECTION 1: File and Directory Management</h1>
+<h2 class="code-line has-line-data" data-line-start="8" data-line-end="9"><a id="ls_List_Directory_Contents_8"></a><code>ls</code> — List Directory Contents</h2>
+<h3 class="code-line has-line-data" data-line-start="10" data-line-end="11"><a id="1_Command_Overview_10"></a>1. Command Overview</h3>
+<p class="has-line-data" data-line-start="11" data-line-end="12"><code>ls</code> lists files and directories within the filesystem. It is one of the most frequently used Linux commands, essential for navigating and auditing the filesystem. In real-world scenarios, it’s used to inspect directory contents, verify file permissions, check timestamps, and confirm that scripts have created expected output files.</p>
+<h3 class="code-line has-line-data" data-line-start="13" data-line-end="14"><a id="2_Syntax_13"></a>2. Syntax</h3>
+<pre><code class="has-line-data language-bash" data-line-start="15" data-line-end="17"><span class="hljs-built_in">ls</span> [OPTIONS] [FILE/DIRECTORY]
+</code></pre>
+<ul>
+<li class="has-line-data" data-line-start="17" data-line-end="18"><code>OPTIONS</code> — flags that modify output behavior</li>
+<li class="has-line-data" data-line-start="18" data-line-end="20"><code>FILE/DIRECTORY</code> — target path (defaults to current directory if omitted)</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="20" data-line-end="21"><a id="3_Commonly_Used_OptionsFlags_20"></a>3. Commonly Used Options/Flags</h3>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-l</code></td>
+<td>Long listing format (permissions, owner, size, date)</td>
+<td><code>ls -l</code></td>
+</tr>
+<tr>
+<td><code>-a</code></td>
+<td>Show hidden files (starting with <code>.</code>)</td>
+<td><code>ls -a</code></td>
+</tr>
+<tr>
+<td><code>-h</code></td>
+<td>Human-readable file sizes (KB, MB, GB)</td>
+<td><code>ls -lh</code></td>
+</tr>
+<tr>
+<td><code>-t</code></td>
+<td>Sort by modification time (newest first)</td>
+<td><code>ls -lt</code></td>
+</tr>
+<tr>
+<td><code>-r</code></td>
+<td>Reverse sort order</td>
+<td><code>ls -ltr</code></td>
+</tr>
+<tr>
+<td><code>-R</code></td>
+<td>Recursively list subdirectories</td>
+<td><code>ls -R /var/log</code></td>
+</tr>
+<tr>
+<td><code>-S</code></td>
+<td>Sort by file size (largest first)</td>
+<td><code>ls -lS</code></td>
+</tr>
+<tr>
+<td><code>-i</code></td>
+<td>Show inode numbers</td>
+<td><code>ls -i</code></td>
+</tr>
+<tr>
+<td><code>-d</code></td>
+<td>List directory itself, not its contents</td>
+<td><code>ls -d /etc/</code></td>
+</tr>
+<tr>
+<td><code>--color</code></td>
+<td>Colorized output</td>
+<td><code>ls --color=auto</code></td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="35" data-line-end="36"><a id="4_Practical_Examples_35"></a>4. Practical Examples</h3>
+<pre><code class="has-line-data language-bash" data-line-start="38" data-line-end="65"><span class="hljs-comment"># Basic listing</span>
+<span class="hljs-built_in">ls</span>
+
+<span class="hljs-comment"># Detailed listing with human-readable sizes</span>
+<span class="hljs-built_in">ls</span> -lh
+
+<span class="hljs-comment"># Show all files including hidden ones, sorted by time</span>
+<span class="hljs-built_in">ls</span> -lath
+
+<span class="hljs-comment"># List only directories</span>
+<span class="hljs-built_in">ls</span> -d */
+
+<span class="hljs-comment"># Show 10 most recently modified files</span>
+<span class="hljs-built_in">ls</span> -lt | <span class="hljs-built_in">head</span> -10
+
+<span class="hljs-comment"># List files with their inode numbers (useful for hard links)</span>
+<span class="hljs-built_in">ls</span> -li
+
+<span class="hljs-comment"># Recursive listing — see all files in nested directories</span>
+<span class="hljs-built_in">ls</span> -lR /etc/nginx/
+
+<span class="hljs-comment"># Sort by file size, largest first</span>
+<span class="hljs-built_in">ls</span> -lSh
+
+<span class="hljs-comment"># List a specific directory without entering it</span>
+<span class="hljs-built_in">ls</span> -l /var/log/
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="66" data-line-end="67"><a id="5_RealWorld_Use_Cases_66"></a>5. Real-World Use Cases</h3>
+<ul>
+<li class="has-line-data" data-line-start="67" data-line-end="68"><strong>Deployment verification:</strong> <code>ls -lth /opt/app/releases/</code> — confirm the latest release was deployed</li>
+<li class="has-line-data" data-line-start="68" data-line-end="69"><strong>Log rotation check:</strong> <code>ls -ltr /var/log/</code> — find oldest vs newest logs</li>
+<li class="has-line-data" data-line-start="69" data-line-end="70"><strong>Permission auditing:</strong> <code>ls -la /etc/sudoers.d/</code> — verify sudo config permissions</li>
+<li class="has-line-data" data-line-start="70" data-line-end="71"><strong>Cron job output:</strong> <code>ls -lh /tmp/report_*.csv</code> — confirm generated reports exist</li>
+<li class="has-line-data" data-line-start="71" data-line-end="73"><strong>Disk space triage:</strong> <code>ls -lSh /home/</code> — quickly identify large files</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="73" data-line-end="74"><a id="6_Interview_Questions_Answers_73"></a>6. Interview Questions &amp; Answers</h3>
+<p class="has-line-data" data-line-start="75" data-line-end="76"><strong>Q1: What does <code>ls -ltr</code> do, and when would you use it?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="76" data-line-end="77"><strong>A:</strong> <code>-l</code> gives long format, <code>-t</code> sorts by modification time, and <code>-r</code> reverses the order — so the most recently modified file appears at the bottom. This is extremely useful when watching log directories or deployment folders, because the most recent file is the last one printed — easy to spot in a terminal without scrolling.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="78" data-line-end="79"><strong>Q2: What is the difference between <code>ls -a</code> and <code>ls -A</code>?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="79" data-line-end="80"><strong>A:</strong> <code>-a</code> shows ALL hidden files including <code>.</code> (current directory) and <code>..</code> (parent directory). <code>-A</code> shows hidden files but excludes <code>.</code> and <code>..</code>. In scripting, <code>-A</code> is preferred to avoid accidentally processing <code>.</code> and <code>..</code> in loops.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="81" data-line-end="82"><strong>Q3: How would you find the 5 largest files in /var using ls?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="82" data-line-end="83"><strong>A:</strong> <code>ls -lSh /var/ | head -6</code> — sort by size descending (<code>-S</code>), human-readable (<code>-h</code>), then take top results. For recursive search, combine with <code>find</code> and <code>sort</code> instead.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="84" data-line-end="85"><strong>Q4: Scenario — Your deployment script ran, but you’re not sure if the new binary was placed correctly. How do you verify?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="85" data-line-end="86"><strong>A:</strong> <code>ls -lh /usr/local/bin/myapp</code> — check file exists, note the timestamp matches deployment time, and verify permissions. Then <code>ls -li</code> to check inode if you suspect it’s a stale symlink.</p>
+</blockquote>
+<h3 class="code-line has-line-data" data-line-start="87" data-line-end="88"><a id="7_Common_Mistakes_Tips_87"></a>7. Common Mistakes &amp; Tips</h3>
+<ul>
+<li class="has-line-data" data-line-start="88" data-line-end="89"><strong>Mistake:</strong> Using <code>ls</code> in scripts to iterate files — never do <code>for f in $(ls /dir/)</code>. Use <code>for f in /dir/*</code> instead (handles spaces in filenames).</li>
+<li class="has-line-data" data-line-start="89" data-line-end="90"><strong>Mistake:</strong> Assuming <code>ls -l</code> size is disk usage — it shows logical size; use <code>du</code> for actual disk consumption.</li>
+<li class="has-line-data" data-line-start="90" data-line-end="91"><strong>Tip:</strong> Alias <code>ls</code> as <code>ls --color=auto -h</code> in <code>.bashrc</code> for improved readability.</li>
+<li class="has-line-data" data-line-start="91" data-line-end="93"><strong>Tip:</strong> <code>ls -la | grep '^d'</code> quickly filters to show only directories.</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="93" data-line-end="94"><a id="8_Advanced_Insights_93"></a>8. Advanced Insights</h3>
+<ul>
+<li class="has-line-data" data-line-start="94" data-line-end="95"><code>ls</code> is NOT part of bash — it’s an external binary (<code>/bin/ls</code> or <code>/usr/bin/ls</code>).</li>
+<li class="has-line-data" data-line-start="95" data-line-end="96">On very large directories (millions of files), <code>ls</code> can be slow. <code>find /dir -maxdepth 1</code> is faster for certain tasks.</li>
+<li class="has-line-data" data-line-start="96" data-line-end="98"><code>ls</code> output format changes between systems — scripts should use <code>find</code> or <code>stat</code> for reliable parsing.</li>
+</ul>
+<hr>
+<h2 class="code-line has-line-data" data-line-start="100" data-line-end="101"><a id="cp_Copy_Files_and_Directories_100"></a><code>cp</code> — Copy Files and Directories</h2>
+<h3 class="code-line has-line-data" data-line-start="102" data-line-end="103"><a id="1_Command_Overview_102"></a>1. Command Overview</h3>
+<p class="has-line-data" data-line-start="103" data-line-end="104"><code>cp</code> copies files or directories from a source to a destination. In production environments, it’s used for backups, configuration deployment, artifact staging, and creating safe copies before editing critical files.</p>
+<h3 class="code-line has-line-data" data-line-start="105" data-line-end="106"><a id="2_Syntax_105"></a>2. Syntax</h3>
+<pre><code class="has-line-data language-bash" data-line-start="107" data-line-end="110"><span class="hljs-built_in">cp</span> [OPTIONS] SOURCE DESTINATION
+<span class="hljs-built_in">cp</span> [OPTIONS] SOURCE... DIRECTORY
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="111" data-line-end="112"><a id="3_Commonly_Used_OptionsFlags_111"></a>3. Commonly Used Options/Flags</h3>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-r</code> or <code>-R</code></td>
+<td>Recursively copy directories</td>
+<td><code>cp -r /src/ /dst/</code></td>
+</tr>
+<tr>
+<td><code>-p</code></td>
+<td>Preserve timestamps, ownership, permissions</td>
+<td><code>cp -p file.conf /backup/</code></td>
+</tr>
+<tr>
+<td><code>-a</code></td>
+<td>Archive mode (= <code>-dR --preserve=all</code>)</td>
+<td><code>cp -a /data/ /backup/</code></td>
+</tr>
+<tr>
+<td><code>-i</code></td>
+<td>Interactive — prompt before overwrite</td>
+<td><code>cp -i file.txt /dest/</code></td>
+</tr>
+<tr>
+<td><code>-u</code></td>
+<td>Copy only when source is newer</td>
+<td><code>cp -u *.log /archive/</code></td>
+</tr>
+<tr>
+<td><code>-v</code></td>
+<td>Verbose — show each file being copied</td>
+<td><code>cp -rv /src/ /dst/</code></td>
+</tr>
+<tr>
+<td><code>-n</code></td>
+<td>No-clobber — never overwrite</td>
+<td><code>cp -n config.yml /etc/app/</code></td>
+</tr>
+<tr>
+<td><code>--backup</code></td>
+<td>Make backup of existing destination</td>
+<td><code>cp --backup=numbered f.txt /dir/</code></td>
+</tr>
+<tr>
+<td><code>-l</code></td>
+<td>Create hard links instead of copying</td>
+<td><code>cp -l file.txt link.txt</code></td>
+</tr>
+<tr>
+<td><code>-s</code></td>
+<td>Create symbolic links instead of copying</td>
+<td><code>cp -s /abs/path/file.txt link.txt</code></td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="126" data-line-end="127"><a id="4_Practical_Examples_126"></a>4. Practical Examples</h3>
+<pre><code class="has-line-data language-bash" data-line-start="129" data-line-end="153"><span class="hljs-comment"># Copy a single file</span>
+<span class="hljs-built_in">cp</span> report.txt /backup/
+
+<span class="hljs-comment"># Copy preserving all metadata (timestamp, owner, permissions)</span>
+<span class="hljs-built_in">cp</span> -p /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
+
+<span class="hljs-comment"># Recursively copy a directory</span>
+<span class="hljs-built_in">cp</span> -r /var/www/html/ /backup/www_html_$(<span class="hljs-built_in">date</span> +%Y%m%d)/
+
+<span class="hljs-comment"># Copy only newer files (sync-like behavior)</span>
+<span class="hljs-built_in">cp</span> -u /source/*.py /dest/
+
+<span class="hljs-comment"># Copy and show progress</span>
+<span class="hljs-built_in">cp</span> -rv /data/ /mnt/backup/
+
+<span class="hljs-comment"># Copy multiple files into a directory</span>
+<span class="hljs-built_in">cp</span> file1.txt file2.txt file3.txt /tmp/staging/
+
+<span class="hljs-comment"># Archive copy — safest for full directory backup</span>
+<span class="hljs-built_in">cp</span> -a /etc/ /backup/etc_$(<span class="hljs-built_in">date</span> +%Y%m%d)/
+
+<span class="hljs-comment"># Copy with numbered backup of existing destination</span>
+<span class="hljs-built_in">cp</span> --backup=numbered nginx.conf /etc/nginx/nginx.conf
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="154" data-line-end="155"><a id="5_RealWorld_Use_Cases_154"></a>5. Real-World Use Cases</h3>
+<ul>
+<li class="has-line-data" data-line-start="155" data-line-end="156"><strong>Pre-change backup:</strong> <code>cp -p /etc/fstab /etc/fstab.bak</code> before editing mount configurations</li>
+<li class="has-line-data" data-line-start="156" data-line-end="157"><strong>Release staging:</strong> <code>cp -a /opt/app/current/ /opt/app/releases/v2.1/</code></li>
+<li class="has-line-data" data-line-start="157" data-line-end="158"><strong>Log archival:</strong> <code>cp -u /var/log/app/*.log /mnt/nfs/logs/</code></li>
+<li class="has-line-data" data-line-start="158" data-line-end="160"><strong>Config deployment:</strong> <code>cp -rp templates/ /etc/app/</code> in Ansible/Chef scripts</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="160" data-line-end="161"><a id="6_Interview_Questions_Answers_160"></a>6. Interview Questions &amp; Answers</h3>
+<p class="has-line-data" data-line-start="162" data-line-end="163"><strong>Q1: What is the difference between <code>cp -r</code> and <code>cp -a</code>?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="163" data-line-end="164"><strong>A:</strong> <code>-r</code> recursively copies directory contents but does NOT preserve metadata (timestamps, permissions, symlinks may be followed). <code>-a</code> is archive mode — it preserves everything: permissions, timestamps, ownership, and symlinks are copied as symlinks (not followed). Always use <code>-a</code> for backups.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="165" data-line-end="166"><strong>Q2: How would you copy a file without overwriting an existing destination?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="166" data-line-end="167"><strong>A:</strong> Use <code>cp -n source dest</code> (no-clobber). Alternatively, <code>cp -i</code> will prompt for confirmation.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="168" data-line-end="169"><strong>Q3: Scenario — You need to copy /data to /backup but only files modified in the last 24 hours. How?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="169" data-line-end="170"><strong>A:</strong> <code>find /data -mtime -1 -exec cp --parents {} /backup/ \;</code> — <code>--parents</code> preserves the directory structure. Or use <code>rsync --update</code> for more robust delta copying.</p>
+</blockquote>
+<h3 class="code-line has-line-data" data-line-start="171" data-line-end="172"><a id="7_Common_Mistakes_Tips_171"></a>7. Common Mistakes &amp; Tips</h3>
+<ul>
+<li class="has-line-data" data-line-start="172" data-line-end="173"><strong>Mistake:</strong> <code>cp -r /src /dst</code> vs <code>cp -r /src/ /dst</code> — the trailing slash matters. With <code>/src/</code>, the <strong>contents</strong> of src are copied into dst. Without it, the <code>src</code> directory itself is copied inside dst.</li>
+<li class="has-line-data" data-line-start="173" data-line-end="174"><strong>Mistake:</strong> Using <code>cp</code> for large backups instead of <code>rsync</code> — <code>cp</code> lacks checksumming and resume capability.</li>
+<li class="has-line-data" data-line-start="174" data-line-end="176"><strong>Tip:</strong> Always use <code>-p</code> when copying config files so timestamps match the original.</li>
+</ul>
+<hr>
+<h2 class="code-line has-line-data" data-line-start="178" data-line-end="179"><a id="mv_Move_or_Rename_Files_and_Directories_178"></a><code>mv</code> — Move or Rename Files and Directories</h2>
+<h3 class="code-line has-line-data" data-line-start="180" data-line-end="181"><a id="1_Command_Overview_180"></a>1. Command Overview</h3>
+<p class="has-line-data" data-line-start="181" data-line-end="182"><code>mv</code> moves files or directories from one location to another, or renames them. Unlike <code>cp</code>, <code>mv</code> does not create a copy — the source is removed. It is atomic when moving within the same filesystem (just updates directory entries, no data is copied).</p>
+<h3 class="code-line has-line-data" data-line-start="183" data-line-end="184"><a id="2_Syntax_183"></a>2. Syntax</h3>
+<pre><code class="has-line-data language-bash" data-line-start="185" data-line-end="188"><span class="hljs-built_in">mv</span> [OPTIONS] SOURCE DESTINATION
+<span class="hljs-built_in">mv</span> [OPTIONS] SOURCE... DIRECTORY
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="189" data-line-end="190"><a id="3_Commonly_Used_OptionsFlags_189"></a>3. Commonly Used Options/Flags</h3>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-i</code></td>
+<td>Interactive — prompt before overwrite</td>
+<td><code>mv -i file.txt /dest/</code></td>
+</tr>
+<tr>
+<td><code>-n</code></td>
+<td>No-clobber — never overwrite</td>
+<td><code>mv -n file.txt /dest/</code></td>
+</tr>
+<tr>
+<td><code>-u</code></td>
+<td>Move only if source is newer than destination</td>
+<td><code>mv -u file.txt /dest/</code></td>
+</tr>
+<tr>
+<td><code>-v</code></td>
+<td>Verbose output</td>
+<td><code>mv -v *.log /archive/</code></td>
+</tr>
+<tr>
+<td><code>-f</code></td>
+<td>Force — never prompt (overwrite silently)</td>
+<td><code>mv -f new.conf /etc/app.conf</code></td>
+</tr>
+<tr>
+<td><code>--backup</code></td>
+<td>Backup existing destination</td>
+<td><code>mv --backup=numbered f.conf /etc/</code></td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="200" data-line-end="201"><a id="4_Practical_Examples_200"></a>4. Practical Examples</h3>
+<pre><code class="has-line-data language-bash" data-line-start="203" data-line-end="224"><span class="hljs-comment"># Rename a file</span>
+<span class="hljs-built_in">mv</span> old_name.txt new_name.txt
+
+<span class="hljs-comment"># Move a file to another directory</span>
+<span class="hljs-built_in">mv</span> report.csv /var/reports/
+
+<span class="hljs-comment"># Move a directory</span>
+<span class="hljs-built_in">mv</span> /tmp/staging/ /opt/app/current/
+
+<span class="hljs-comment"># Rename while moving (atomic deploy pattern)</span>
+<span class="hljs-built_in">mv</span> /opt/app/new_release/ /opt/app/current/
+
+<span class="hljs-comment"># Bulk rename log files</span>
+<span class="hljs-built_in">mv</span> access.log access.log.$(<span class="hljs-built_in">date</span> +%Y%m%d)
+
+<span class="hljs-comment"># Move all .csv files to an archive directory</span>
+<span class="hljs-built_in">mv</span> *.csv /archive/
+
+<span class="hljs-comment"># Atomic configuration update (critical pattern!)</span>
+<span class="hljs-built_in">cp</span> new.conf /etc/app.conf.tmp &amp;&amp; <span class="hljs-built_in">mv</span> /etc/app.conf.tmp /etc/app.conf
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="225" data-line-end="226"><a id="5_RealWorld_Use_Cases_225"></a>5. Real-World Use Cases</h3>
+<ul>
+<li class="has-line-data" data-line-start="226" data-line-end="227"><strong>Atomic deploys:</strong> <code>mv /opt/app/new/ /opt/app/current/</code> — within same filesystem, this is instant and atomic</li>
+<li class="has-line-data" data-line-start="227" data-line-end="228"><strong>Log rotation:</strong> <code>mv app.log app.log.1</code> before recreating app.log</li>
+<li class="has-line-data" data-line-start="228" data-line-end="230"><strong>Safe config update:</strong> Write to temp file, then <code>mv</code> to final location to avoid partial writes being seen by running services</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="230" data-line-end="231"><a id="6_Interview_Questions_Answers_230"></a>6. Interview Questions &amp; Answers</h3>
+<p class="has-line-data" data-line-start="232" data-line-end="233"><strong>Q1: Why is <code>mv</code> considered atomic on the same filesystem?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="233" data-line-end="234"><strong>A:</strong> On the same filesystem, <code>mv</code> only updates the directory entry (inode pointer) without copying data. This is a single syscall (<code>rename(2)</code>) which the kernel guarantees is atomic — no process can see a half-moved state. Across filesystems, <code>mv</code> must copy data then delete the source, which is NOT atomic.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="235" data-line-end="236"><strong>Q2: How would you safely update a config file that a running daemon reads?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="236" data-line-end="237"><strong>A:</strong> Write the new config to a temp file in the same directory, validate it, then <code>mv temp.conf /etc/app/app.conf</code>. Because it’s on the same filesystem, the <code>mv</code> is atomic — the daemon either sees the old or new file, never a partial write.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="238" data-line-end="239"><strong>Q3: What happens if you <code>mv</code> a file to a destination that already exists?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="239" data-line-end="240"><strong>A:</strong> By default, <code>mv</code> silently overwrites the destination. Use <code>-i</code> for interactive prompt or <code>-n</code> to prevent overwriting.</p>
+</blockquote>
+<h3 class="code-line has-line-data" data-line-start="241" data-line-end="242"><a id="7_Common_Mistakes_Tips_241"></a>7. Common Mistakes &amp; Tips</h3>
+<ul>
+<li class="has-line-data" data-line-start="242" data-line-end="243"><strong>Mistake:</strong> Trying to <code>mv</code> across filesystems and expecting atomicity — it’s not atomic across mounts.</li>
+<li class="has-line-data" data-line-start="243" data-line-end="245"><strong>Tip:</strong> The <code>mv</code> + temp file pattern is the standard way daemons like nginx reload configs safely.</li>
+</ul>
+<hr>
+<h2 class="code-line has-line-data" data-line-start="247" data-line-end="248"><a id="rm_Remove_Files_or_Directories_247"></a><code>rm</code> — Remove Files or Directories</h2>
+<h3 class="code-line has-line-data" data-line-start="249" data-line-end="250"><a id="1_Command_Overview_249"></a>1. Command Overview</h3>
+<p class="has-line-data" data-line-start="250" data-line-end="251"><code>rm</code> permanently deletes files and directories. There is <strong>no recycle bin</strong> in Linux — deleted files are gone unless backups exist. This makes <code>rm</code> one of the most dangerous commands when misused.</p>
+<h3 class="code-line has-line-data" data-line-start="252" data-line-end="253"><a id="2_Syntax_252"></a>2. Syntax</h3>
+<pre><code class="has-line-data language-bash" data-line-start="254" data-line-end="256"><span class="hljs-built_in">rm</span> [OPTIONS] FILE...
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="257" data-line-end="258"><a id="3_Commonly_Used_OptionsFlags_257"></a>3. Commonly Used Options/Flags</h3>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-r</code> or <code>-R</code></td>
+<td>Recursively remove directories and their contents</td>
+<td><code>rm -r /tmp/olddir/</code></td>
+</tr>
+<tr>
+<td><code>-f</code></td>
+<td>Force — ignore nonexistent files, no prompts</td>
+<td><code>rm -f lock.pid</code></td>
+</tr>
+<tr>
+<td><code>-i</code></td>
+<td>Interactive — prompt before each deletion</td>
+<td><code>rm -i *.log</code></td>
+</tr>
+<tr>
+<td><code>-v</code></td>
+<td>Verbose — show each file removed</td>
+<td><code>rm -rv /tmp/cache/</code></td>
+</tr>
+<tr>
+<td><code>--no-preserve-root</code></td>
+<td>Allow deletion of root <code>/</code> (DANGEROUS)</td>
+<td>Never use in production</td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="267" data-line-end="268"><a id="4_Practical_Examples_267"></a>4. Practical Examples</h3>
+<pre><code class="has-line-data language-bash" data-line-start="270" data-line-end="294"><span class="hljs-comment"># Remove a single file</span>
+<span class="hljs-built_in">rm</span> file.txt
+
+<span class="hljs-comment"># Remove multiple files</span>
+<span class="hljs-built_in">rm</span> file1.txt file2.txt file3.txt
+
+<span class="hljs-comment"># Remove all .tmp files in current directory</span>
+<span class="hljs-built_in">rm</span> *.tmp
+
+<span class="hljs-comment"># Recursively remove a directory</span>
+<span class="hljs-built_in">rm</span> -r /tmp/old_cache/
+
+<span class="hljs-comment"># Force remove (useful in scripts where file may or may not exist)</span>
+<span class="hljs-built_in">rm</span> -f /var/run/app.pid
+
+<span class="hljs-comment"># Remove with confirmation (good habit for bulk deletes)</span>
+<span class="hljs-built_in">rm</span> -ri /tmp/old_data/
+
+<span class="hljs-comment"># Remove files matching a pattern, with verbose output</span>
+<span class="hljs-built_in">rm</span> -v /var/log/app.log.*
+
+<span class="hljs-comment"># Safe pattern — always quote variables</span>
+<span class="hljs-built_in">rm</span> -f <span class="hljs-string">&quot;<span class="hljs-variable">$TMPDIR</span>/session_<span class="hljs-variable">${USER}</span>.lock&quot;</span>
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="295" data-line-end="296"><a id="5_RealWorld_Use_Cases_295"></a>5. Real-World Use Cases</h3>
+<ul>
+<li class="has-line-data" data-line-start="296" data-line-end="297"><strong>Cleanup scripts:</strong> <code>rm -f /tmp/pipeline_*.tmp</code> — remove temp files after ETL job</li>
+<li class="has-line-data" data-line-start="297" data-line-end="298"><strong>Log management:</strong> <code>rm -f /var/log/app.log.gz</code> — remove compressed logs older than retention period</li>
+<li class="has-line-data" data-line-start="298" data-line-end="300"><strong>Deploy cleanup:</strong> <code>rm -rf /opt/app/old_releases/</code> — remove outdated release directories</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="300" data-line-end="301"><a id="6_Interview_Questions_Answers_300"></a>6. Interview Questions &amp; Answers</h3>
+<p class="has-line-data" data-line-start="302" data-line-end="303"><strong>Q1: What is the famous <code>rm -rf /</code> danger, and how is it prevented?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="303" data-line-end="304"><strong>A:</strong> <code>rm -rf /</code> would delete the entire filesystem. Modern Linux versions have a <code>--no-preserve-root</code> safeguard — without it, <code>rm -rf /</code> is rejected. However, <code>rm -rf /*</code> (note the wildcard) still works and would destroy the system. Best practice: never run <code>rm -rf</code> as root in production without <code>echo</code>-testing first.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="305" data-line-end="306"><strong>Q2: How can you recover a file deleted with <code>rm</code>?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="306" data-line-end="307"><strong>A:</strong> <code>rm</code> unlinks the inode — data stays on disk until overwritten. Recovery options: (1) Check if process still has the file open — <code>lsof | grep deleted</code> then copy from <code>/proc/&lt;pid&gt;/fd/&lt;fd&gt;</code>. (2) Use <code>extundelete</code> or <code>testdisk</code> for ext4 recovery. (3) Restore from backup. Prevention: use <code>trash-cli</code> or <code>safe-rm</code> wrapper.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="308" data-line-end="309"><strong>Q3: Scenario — You accidentally ran <code>rm -rf /var/log/</code> on a production server. What do you do?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="309" data-line-end="310"><strong>A:</strong> First, check <code>lsof | grep /var/log</code> — running processes may still hold file descriptors open, allowing recovery via <code>/proc</code>. Second, stop all writes to avoid overwriting data sectors. Third, use <code>extundelete /dev/sdX --restore-all</code>. Fourth, escalate and restore from backup. Fifth, document the incident for postmortem.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="311" data-line-end="312"><strong>Q4: What is the safe way to use <code>rm</code> in shell scripts?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="312" data-line-end="313"><strong>A:</strong> Always: (1) Quote all variables — <code>rm -f &quot;$file&quot;</code>, (2) Use <code>-f</code> only when file non-existence is acceptable, (3) Add a guard check — <code>[[ -f &quot;$file&quot; ]] &amp;&amp; rm &quot;$file&quot;</code>, (4) Test with <code>echo rm</code> before running for real, (5) Never expand unvalidated user input in <code>rm</code> commands.</p>
+</blockquote>
+<h3 class="code-line has-line-data" data-line-start="314" data-line-end="315"><a id="7_Common_Mistakes_Tips_314"></a>7. Common Mistakes &amp; Tips</h3>
+<ul>
+<li class="has-line-data" data-line-start="315" data-line-end="316"><strong>Mistake:</strong> <code>rm -rf $DIR/</code> when <code>$DIR</code> is unset — becomes <code>rm -rf /</code>. Always check: <code>[[ -n &quot;$DIR&quot; ]] &amp;&amp; rm -rf &quot;$DIR/&quot;</code>.</li>
+<li class="has-line-data" data-line-start="316" data-line-end="317"><strong>Mistake:</strong> Using <code>rm -rf</code> on symlinks — it deletes the link, but <code>rm -rf symlink/</code> (trailing slash) follows the link and deletes contents of the target!</li>
+<li class="has-line-data" data-line-start="317" data-line-end="319"><strong>Tip:</strong> In CI/CD pipelines, prefer <code>rm -rf &quot;${WORKSPACE:?}/build/&quot;</code> — the <code>:?</code> causes the script to abort if WORKSPACE is empty.</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="319" data-line-end="320"><a id="8_Advanced_Insights_319"></a>8. Advanced Insights</h3>
+<ul>
+<li class="has-line-data" data-line-start="320" data-line-end="321">Deleting a file only removes the directory entry (unlink). The data persists until all file descriptors are closed and disk blocks are reused.</li>
+<li class="has-line-data" data-line-start="321" data-line-end="322">For secure deletion (preventing forensic recovery), use <code>shred -vfz -n 3 file.txt</code>.</li>
+<li class="has-line-data" data-line-start="322" data-line-end="324">On SSDs, <code>shred</code> is less effective due to wear leveling — use disk encryption instead.</li>
+</ul>
+<hr>
+<h2 class="code-line has-line-data" data-line-start="326" data-line-end="327"><a id="touch_Create_Files_or_Update_Timestamps_326"></a><code>touch</code> — Create Files or Update Timestamps</h2>
+<h3 class="code-line has-line-data" data-line-start="328" data-line-end="329"><a id="1_Command_Overview_328"></a>1. Command Overview</h3>
+<p class="has-line-data" data-line-start="329" data-line-end="330"><code>touch</code> creates a new empty file if it doesn’t exist, or updates the access/modification timestamps of an existing file. In DevOps, it’s used to trigger make-based build systems, create lock files, and initialize log files.</p>
+<h3 class="code-line has-line-data" data-line-start="331" data-line-end="332"><a id="2_Syntax_331"></a>2. Syntax</h3>
+<pre><code class="has-line-data language-bash" data-line-start="333" data-line-end="335"><span class="hljs-built_in">touch</span> [OPTIONS] FILE...
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="336" data-line-end="337"><a id="3_Commonly_Used_OptionsFlags_336"></a>3. Commonly Used Options/Flags</h3>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-a</code></td>
+<td>Update access time only</td>
+<td><code>touch -a file.txt</code></td>
+</tr>
+<tr>
+<td><code>-m</code></td>
+<td>Update modification time only</td>
+<td><code>touch -m file.txt</code></td>
+</tr>
+<tr>
+<td><code>-t</code></td>
+<td>Set specific timestamp</td>
+<td><code>touch -t 202401011200 file.txt</code></td>
+</tr>
+<tr>
+<td><code>-d</code></td>
+<td>Set timestamp from string</td>
+<td><code>touch -d &quot;2024-01-01 12:00&quot; file.txt</code></td>
+</tr>
+<tr>
+<td><code>-r</code></td>
+<td>Use timestamp from reference file</td>
+<td><code>touch -r ref.txt target.txt</code></td>
+</tr>
+<tr>
+<td><code>-c</code></td>
+<td>Don’t create file if it doesn’t exist</td>
+<td><code>touch -c maybe_exists.txt</code></td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="347" data-line-end="348"><a id="4_Practical_Examples_347"></a>4. Practical Examples</h3>
+<pre><code class="has-line-data language-bash" data-line-start="350" data-line-end="371"><span class="hljs-comment"># Create an empty file</span>
+<span class="hljs-built_in">touch</span> newfile.txt
+
+<span class="hljs-comment"># Create multiple files at once</span>
+<span class="hljs-built_in">touch</span> file1.txt file2.txt file3.txt
+
+<span class="hljs-comment"># Create files with a name pattern</span>
+<span class="hljs-built_in">touch</span> log_{1..5}.txt  <span class="hljs-comment"># Creates log_1.txt through log_5.txt</span>
+
+<span class="hljs-comment"># Update timestamp to trigger rebuild</span>
+<span class="hljs-built_in">touch</span> src/main.py  <span class="hljs-comment"># Make triggers dependent targets</span>
+
+<span class="hljs-comment"># Set a specific timestamp</span>
+<span class="hljs-built_in">touch</span> -t 202401011200.00 archive.txt
+
+<span class="hljs-comment"># Copy timestamp from another file</span>
+<span class="hljs-built_in">touch</span> -r source.txt destination.txt
+
+<span class="hljs-comment"># Create lock file for script mutual exclusion</span>
+<span class="hljs-built_in">touch</span> /var/run/myscript.lock
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="372" data-line-end="373"><a id="5_RealWorld_Use_Cases_372"></a>5. Real-World Use Cases</h3>
+<ul>
+<li class="has-line-data" data-line-start="373" data-line-end="374"><strong>Makefile triggers:</strong> <code>touch Makefile</code> to force a full rebuild</li>
+<li class="has-line-data" data-line-start="374" data-line-end="375"><strong>Lock files:</strong> <code>touch /var/run/etl.lock</code> — signal that a pipeline job is running</li>
+<li class="has-line-data" data-line-start="375" data-line-end="376"><strong>Initialization:</strong> <code>touch /var/log/myapp.log</code> before starting an app expecting a log file</li>
+<li class="has-line-data" data-line-start="376" data-line-end="378"><strong>Caching invalidation:</strong> Update timestamps to invalidate cache-by-mtime systems</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="378" data-line-end="379"><a id="6_Interview_Questions_Answers_378"></a>6. Interview Questions &amp; Answers</h3>
+<p class="has-line-data" data-line-start="380" data-line-end="381"><strong>Q1: What happens when you run <code>touch</code> on an existing file?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="381" data-line-end="382"><strong>A:</strong> The file’s access time (atime) and modification time (mtime) are updated to the current time. The file contents are NOT modified. This is useful in make-based build systems where rebuilds are triggered by comparing timestamps.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="383" data-line-end="384"><strong>Q2: How would you create 100 empty files named file_001.txt through file_100.txt?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="384" data-line-end="385"><strong>A:</strong> <code>touch file_{001..100}.txt</code> — bash brace expansion with zero-padding. For more complex padding: <code>for i in $(seq -w 1 100); do touch &quot;file_${i}.txt&quot;; done</code>.</p>
+</blockquote>
+<h3 class="code-line has-line-data" data-line-start="386" data-line-end="387"><a id="7_Common_Mistakes_Tips_386"></a>7. Common Mistakes &amp; Tips</h3>
+<ul>
+<li class="has-line-data" data-line-start="387" data-line-end="388"><strong>Mistake:</strong> Thinking <code>touch file.txt</code> will clear an existing file’s contents — it won’t. Use <code>&gt; file.txt</code> to truncate.</li>
+<li class="has-line-data" data-line-start="388" data-line-end="390"><strong>Tip:</strong> <code>touch /path/to/flag_file</code> is a common pattern to signal completion in distributed pipelines — downstream jobs check for file existence before proceeding.</li>
+</ul>
+<hr>
+<h2 class="code-line has-line-data" data-line-start="392" data-line-end="393"><a id="cat_Concatenate_and_Display_File_Content_392"></a><code>cat</code> — Concatenate and Display File Content</h2>
+<h3 class="code-line has-line-data" data-line-start="394" data-line-end="395"><a id="1_Command_Overview_394"></a>1. Command Overview</h3>
+<p class="has-line-data" data-line-start="395" data-line-end="396"><code>cat</code> reads files and writes their content to standard output. It can concatenate multiple files, create files, and is the foundation of many shell pipelines. Despite its simplicity, it’s one of the most-used commands in data processing pipelines.</p>
+<h3 class="code-line has-line-data" data-line-start="397" data-line-end="398"><a id="2_Syntax_397"></a>2. Syntax</h3>
+<pre><code class="has-line-data language-bash" data-line-start="399" data-line-end="401"><span class="hljs-built_in">cat</span> [OPTIONS] [FILE...]
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="402" data-line-end="403"><a id="3_Commonly_Used_OptionsFlags_402"></a>3. Commonly Used Options/Flags</h3>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-n</code></td>
+<td>Number all output lines</td>
+<td><code>cat -n script.py</code></td>
+</tr>
+<tr>
+<td><code>-b</code></td>
+<td>Number non-empty lines only</td>
+<td><code>cat -b file.txt</code></td>
+</tr>
+<tr>
+<td><code>-s</code></td>
+<td>Squeeze multiple blank lines into one</td>
+<td><code>cat -s file.txt</code></td>
+</tr>
+<tr>
+<td><code>-A</code></td>
+<td>Show all — display tabs (<code>^I</code>) and end-of-line (<code>$</code>)</td>
+<td><code>cat -A config.txt</code></td>
+</tr>
+<tr>
+<td><code>-v</code></td>
+<td>Show non-printing characters</td>
+<td><code>cat -v binary.txt</code></td>
+</tr>
+<tr>
+<td><code>-e</code></td>
+<td>Show <code>$</code> at end of each line</td>
+<td><code>cat -e file.txt</code></td>
+</tr>
+<tr>
+<td><code>-t</code></td>
+<td>Show tabs as <code>^I</code></td>
+<td><code>cat -t file.txt</code></td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="414" data-line-end="415"><a id="4_Practical_Examples_414"></a>4. Practical Examples</h3>
+<pre><code class="has-line-data language-bash" data-line-start="417" data-line-end="447"><span class="hljs-comment"># Display file content</span>
+<span class="hljs-built_in">cat</span> /etc/hostname
+
+<span class="hljs-comment"># Display with line numbers</span>
+<span class="hljs-built_in">cat</span> -n /etc/nginx/nginx.conf
+
+<span class="hljs-comment"># Concatenate multiple files</span>
+<span class="hljs-built_in">cat</span> header.txt body.txt footer.txt &gt; complete.html
+
+<span class="hljs-comment"># Create a file with heredoc</span>
+<span class="hljs-built_in">cat</span> &gt; config.ini &lt;&lt; <span class="hljs-string">EOF
+[database]
+host=localhost
+port=5432
+EOF</span>
+
+<span class="hljs-comment"># Append content to a file</span>
+<span class="hljs-built_in">cat</span> &gt;&gt; access.log &lt;&lt; <span class="hljs-string">EOF
+2024-01-15 12:00:00 GET /api/health 200
+EOF</span>
+
+<span class="hljs-comment"># Show hidden characters (debug whitespace issues)</span>
+<span class="hljs-built_in">cat</span> -A problematic_script.sh
+
+<span class="hljs-comment"># Reverse a file (using tac)</span>
+<span class="hljs-built_in">tac</span> file.txt  <span class="hljs-comment"># tac is cat backwards</span>
+
+<span class="hljs-comment"># Display multiple files with separator</span>
+<span class="hljs-keyword">for</span> f <span class="hljs-keyword">in</span> *.<span class="hljs-built_in">log</span>; <span class="hljs-keyword">do</span> <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;=== <span class="hljs-variable">$f</span> ===&quot;</span>; <span class="hljs-built_in">cat</span> <span class="hljs-string">&quot;<span class="hljs-variable">$f</span>&quot;</span>; <span class="hljs-keyword">done</span>
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="448" data-line-end="449"><a id="5_RealWorld_Use_Cases_448"></a>5. Real-World Use Cases</h3>
+<ul>
+<li class="has-line-data" data-line-start="449" data-line-end="450"><strong>Pipeline building:</strong> <code>cat data.csv | grep &quot;ERROR&quot; | cut -d',' -f3 | sort | uniq -c</code></li>
+<li class="has-line-data" data-line-start="450" data-line-end="451"><strong>Config verification:</strong> <code>cat /etc/hosts | grep myapp</code> — quick lookup without opening editor</li>
+<li class="has-line-data" data-line-start="451" data-line-end="452"><strong>Log viewing:</strong> <code>cat /var/log/syslog | tail -100</code> — view recent entries</li>
+<li class="has-line-data" data-line-start="452" data-line-end="454"><strong>Script generation:</strong> <code>cat &gt; deploy.sh &lt;&lt; 'EOF' ... EOF</code> — generate scripts on the fly</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="454" data-line-end="455"><a id="6_Interview_Questions_Answers_454"></a>6. Interview Questions &amp; Answers</h3>
+<p class="has-line-data" data-line-start="456" data-line-end="457"><strong>Q1: What is “Useless Use of cat” (UUOC)?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="457" data-line-end="458"><strong>A:</strong> Many commands accept filenames directly, making <code>cat</code> unnecessary. <code>cat file | grep pattern</code> is UUOC — just use <code>grep pattern file</code>. UUOC spawns an extra process and wastes resources. It matters in tight loops or when processing millions of files.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="459" data-line-end="460"><strong>Q2: What is the difference between <code>cat</code> and <code>less</code>?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="460" data-line-end="461"><strong>A:</strong> <code>cat</code> outputs the entire file to stdout at once (no scrolling). <code>less</code> is a pager — it displays content screen-by-screen with navigation. For large files (logs, data files), always use <code>less</code> to avoid flooding the terminal. <code>cat</code> is appropriate for small files and pipeline use.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="462" data-line-end="463"><strong>Q3: How would you use <code>cat</code> to create a file with specific content in a script?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="463" data-line-end="464"><strong>A:</strong> Use a heredoc: <code>cat &gt; /etc/app/config.yml &lt;&lt; 'EOF' ... EOF</code>. The single quotes around <code>EOF</code> prevent variable expansion — useful when writing configs that contain <code>$</code> signs.</p>
+</blockquote>
+<h3 class="code-line has-line-data" data-line-start="465" data-line-end="466"><a id="7_Common_Mistakes_Tips_465"></a>7. Common Mistakes &amp; Tips</h3>
+<ul>
+<li class="has-line-data" data-line-start="466" data-line-end="467"><strong>Mistake:</strong> <code>cat large_file.log</code> in a terminal — dumps gigabytes of text. Use <code>less large_file.log</code> instead.</li>
+<li class="has-line-data" data-line-start="467" data-line-end="468"><strong>Mistake:</strong> <code>cat file | wc -l</code> — UUOC. Use <code>wc -l &lt; file</code> or <code>wc -l file</code>.</li>
+<li class="has-line-data" data-line-start="468" data-line-end="470"><strong>Tip:</strong> <code>cat -A</code> is invaluable for debugging scripts that fail silently — often reveals Windows-style <code>\r\n</code> line endings (<code>^M$</code>).</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="470" data-line-end="471"><a id="8_Advanced_Insights_470"></a>8. Advanced Insights</h3>
+<ul>
+<li class="has-line-data" data-line-start="471" data-line-end="472"><code>cat /dev/null &gt; file.txt</code> truncates a file to zero bytes — equivalent to <code>&gt; file.txt</code>.</li>
+<li class="has-line-data" data-line-start="472" data-line-end="473"><code>cat /proc/cpuinfo</code> — the <code>/proc</code> virtual filesystem is cat-friendly; many system stats are exposed as readable files.</li>
+<li class="has-line-data" data-line-start="473" data-line-end="475">For binary files, <code>xxd</code> or <code>od</code> are better choices than <code>cat</code>.</li>
+</ul>
+<hr>
+<h2 class="code-line has-line-data" data-line-start="477" data-line-end="478"><a id="grep_Search_for_Patterns_Within_Files_477"></a><code>grep</code> — Search for Patterns Within Files</h2>
+<h3 class="code-line has-line-data" data-line-start="479" data-line-end="480"><a id="1_Command_Overview_479"></a>1. Command Overview</h3>
+<p class="has-line-data" data-line-start="480" data-line-end="481"><code>grep</code> (Global Regular Expression Print) searches input files for lines matching a pattern and prints matching lines. It is the cornerstone of log analysis, text filtering, and data extraction in Linux. Mastering <code>grep</code> is essential for any engineer working with Linux systems.</p>
+<h3 class="code-line has-line-data" data-line-start="482" data-line-end="483"><a id="2_Syntax_482"></a>2. Syntax</h3>
+<pre><code class="has-line-data language-bash" data-line-start="484" data-line-end="488">grep [OPTIONS] PATTERN [FILE...]
+grep [OPTIONS] -e PATTERN [FILE...]
+grep [OPTIONS] -f PATTERN_FILE [FILE...]
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="489" data-line-end="490"><a id="3_Commonly_Used_OptionsFlags_489"></a>3. Commonly Used Options/Flags</h3>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-i</code></td>
+<td>Case-insensitive matching</td>
+<td><code>grep -i &quot;error&quot; app.log</code></td>
+</tr>
+<tr>
+<td><code>-n</code></td>
+<td>Show line numbers</td>
+<td><code>grep -n &quot;TODO&quot; *.py</code></td>
+</tr>
+<tr>
+<td><code>-r</code> or <code>-R</code></td>
+<td>Recursive search through directories</td>
+<td><code>grep -r &quot;api_key&quot; /etc/</code></td>
+</tr>
+<tr>
+<td><code>-l</code></td>
+<td>Print only filenames with matches</td>
+<td><code>grep -rl &quot;password&quot; /etc/</code></td>
+</tr>
+<tr>
+<td><code>-L</code></td>
+<td>Print filenames WITHOUT matches</td>
+<td><code>grep -rL &quot;version&quot; *.json</code></td>
+</tr>
+<tr>
+<td><code>-v</code></td>
+<td>Invert match (print non-matching lines)</td>
+<td><code>grep -v &quot;DEBUG&quot; app.log</code></td>
+</tr>
+<tr>
+<td><code>-c</code></td>
+<td>Print count of matching lines</td>
+<td><code>grep -c &quot;ERROR&quot; app.log</code></td>
+</tr>
+<tr>
+<td><code>-o</code></td>
+<td>Print only matched parts</td>
+<td><code>grep -o &quot;[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+&quot; access.log</code></td>
+</tr>
+<tr>
+<td><code>-A N</code></td>
+<td>Print N lines after match</td>
+<td><code>grep -A 5 &quot;Exception&quot; app.log</code></td>
+</tr>
+<tr>
+<td><code>-B N</code></td>
+<td>Print N lines before match</td>
+<td><code>grep -B 3 &quot;FATAL&quot; app.log</code></td>
+</tr>
+<tr>
+<td><code>-C N</code></td>
+<td>Print N lines before and after (context)</td>
+<td><code>grep -C 2 &quot;Error&quot; app.log</code></td>
+</tr>
+<tr>
+<td><code>-E</code></td>
+<td>Extended regex (ERE)</td>
+<td>`grep -E &quot;error</td>
+</tr>
+<tr>
+<td><code>-P</code></td>
+<td>Perl-compatible regex (PCRE)</td>
+<td><code>grep -P &quot;\d{4}-\d{2}-\d{2}&quot; log.txt</code></td>
+</tr>
+<tr>
+<td><code>-w</code></td>
+<td>Match whole words only</td>
+<td><code>grep -w &quot;host&quot; config.txt</code></td>
+</tr>
+<tr>
+<td><code>-x</code></td>
+<td>Match whole lines only</td>
+<td><code>grep -x &quot;127.0.0.1 localhost&quot; /etc/hosts</code></td>
+</tr>
+<tr>
+<td><code>--include</code></td>
+<td>Limit to specific file types</td>
+<td><code>grep -r --include=&quot;*.py&quot; &quot;import&quot; .</code></td>
+</tr>
+<tr>
+<td><code>--exclude</code></td>
+<td>Exclude specific file types</td>
+<td><code>grep -r --exclude=&quot;*.log&quot; &quot;error&quot; .</code></td>
+</tr>
+<tr>
+<td><code>-q</code></td>
+<td>Quiet — exit status only (no output)</td>
+<td><code>grep -q &quot;error&quot; log.txt &amp;&amp; echo &quot;found&quot;</code></td>
+</tr>
+<tr>
+<td><code>-m N</code></td>
+<td>Stop after N matches</td>
+<td><code>grep -m 5 &quot;ERROR&quot; app.log</code></td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="513" data-line-end="514"><a id="4_Practical_Examples_513"></a>4. Practical Examples</h3>
+<pre><code class="has-line-data language-bash" data-line-start="516" data-line-end="558"><span class="hljs-comment"># Basic pattern search</span>
+grep <span class="hljs-string">&quot;ERROR&quot;</span> application.log
+
+<span class="hljs-comment"># Case-insensitive search</span>
+grep -i <span class="hljs-string">&quot;warning&quot;</span> system.log
+
+<span class="hljs-comment"># Search in all files recursively</span>
+grep -r <span class="hljs-string">&quot;database_url&quot;</span> /etc/myapp/
+
+<span class="hljs-comment"># Show 3 lines of context around each match (great for error tracing)</span>
+grep -C 3 <span class="hljs-string">&quot;NullPointerException&quot;</span> app.log
+
+<span class="hljs-comment"># Count errors per hour (pipeline example)</span>
+grep <span class="hljs-string">&quot;ERROR&quot;</span> app.log | awk <span class="hljs-string">&#x27;{print $1, $2}&#x27;</span> | <span class="hljs-built_in">cut</span> -c1-13 | <span class="hljs-built_in">sort</span> | <span class="hljs-built_in">uniq</span> -c
+
+<span class="hljs-comment"># Extract all IP addresses from access log</span>
+grep -oP <span class="hljs-string">&#x27;\d{1,3}(\.\d{1,3}){3}&#x27;</span> access.log | <span class="hljs-built_in">sort</span> | <span class="hljs-built_in">uniq</span> -c | <span class="hljs-built_in">sort</span> -rn | <span class="hljs-built_in">head</span> -20
+
+<span class="hljs-comment"># Find files containing a pattern (audit passwords in configs)</span>
+grep -rl <span class="hljs-string">&quot;password&quot;</span> /etc/ 2&gt;/dev/null
+
+<span class="hljs-comment"># Multiple patterns using extended regex</span>
+grep -E <span class="hljs-string">&quot;ERROR|FATAL|CRITICAL&quot;</span> app.log
+
+<span class="hljs-comment"># Search excluding certain file types</span>
+grep -r --include=<span class="hljs-string">&quot;*.conf&quot;</span> <span class="hljs-string">&quot;listen&quot;</span> /etc/
+
+<span class="hljs-comment"># Use grep in scripts for conditional logic</span>
+<span class="hljs-keyword">if</span> grep -q <span class="hljs-string">&quot;FAILED&quot;</span> job.status; <span class="hljs-keyword">then</span>
+    <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Job failed! Alerting...&quot;</span>
+    send_alert
+<span class="hljs-keyword">fi</span>
+
+<span class="hljs-comment"># Negative grep — show lines NOT containing DEBUG</span>
+grep -v <span class="hljs-string">&quot;DEBUG&quot;</span> verbose.log &gt; filtered.log
+
+<span class="hljs-comment"># Extract emails from file</span>
+grep -oP <span class="hljs-string">&#x27;[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}&#x27;</span> contacts.txt
+
+<span class="hljs-comment"># Find processes (avoiding grep itself in results)</span>
+ps aux | grep <span class="hljs-string">&quot;[n]ginx&quot;</span>
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="559" data-line-end="560"><a id="5_RealWorld_Use_Cases_559"></a>5. Real-World Use Cases</h3>
+<ul>
+<li class="has-line-data" data-line-start="560" data-line-end="561"><strong>Error monitoring:</strong> <code>grep -c &quot;ERROR&quot; /var/log/app.log</code> in cron jobs — alert if count exceeds threshold</li>
+<li class="has-line-data" data-line-start="561" data-line-end="562"><strong>Security auditing:</strong> <code>grep -r &quot;aws_secret&quot; /home/ 2&gt;/dev/null</code> — find accidental secret commits</li>
+<li class="has-line-data" data-line-start="562" data-line-end="563"><strong>Log analysis:</strong> <code>grep -E &quot;5[0-9]{2}&quot; access.log | awk '{print $7}' | sort | uniq -c</code> — find 5xx endpoints</li>
+<li class="has-line-data" data-line-start="563" data-line-end="564"><strong>Config validation:</strong> <code>grep -P &quot;^\s*#&quot; config.py | wc -l</code> — count commented lines</li>
+<li class="has-line-data" data-line-start="564" data-line-end="566"><strong>CI/CD:</strong> <code>grep -q &quot;BUILD SUCCESSFUL&quot; build.log || exit 1</code> — fail pipeline on build failure</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="566" data-line-end="567"><a id="6_Interview_Questions_Answers_566"></a>6. Interview Questions &amp; Answers</h3>
+<p class="has-line-data" data-line-start="568" data-line-end="569"><strong>Q1: What is the difference between <code>grep</code>, <code>egrep</code>, and <code>fgrep</code>?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="569" data-line-end="570"><strong>A:</strong> <code>grep</code> uses Basic Regular Expressions (BRE) where <code>+</code>, <code>?</code>, <code>|</code> need backslash escaping. <code>egrep</code> (= <code>grep -E</code>) uses Extended Regular Expressions — no escaping needed for <code>+?|()</code>. <code>fgrep</code> (= <code>grep -F</code>) treats the pattern as a literal fixed string — fastest, no regex. In scripts, use <code>grep -E</code> and <code>grep -F</code> explicitly rather than the aliases.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="571" data-line-end="572"><strong>Q2: How would you find all lines in a log file that contain “ERROR” but NOT “ConnectionError”?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="572" data-line-end="573"><strong>A:</strong> <code>grep &quot;ERROR&quot; app.log | grep -v &quot;ConnectionError&quot;</code> — chain grep with -v. Or use a single command: <code>grep -P &quot;ERROR(?!.*ConnectionError)&quot; app.log</code> with PCRE negative lookahead.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="574" data-line-end="575"><strong>Q3: How do you search for a pattern that includes special regex characters like <code>.</code> or <code>*</code>?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="575" data-line-end="576"><strong>A:</strong> Use <code>grep -F</code> (fixed string mode) or escape them: <code>grep &quot;192\.168\.1\.1&quot; hosts.txt</code>. <code>-F</code> is the safest approach when searching for literal strings.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="577" data-line-end="578"><strong>Q4: Scenario — Production is getting 500 errors. You have a 50GB log file. How do you quickly find the relevant log entries?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="578" data-line-end="579"><strong>A:</strong> <code>grep -m 100 &quot;HTTP 500&quot; /var/log/access.log</code> — stop after 100 matches (faster on large files). Then narrow with <code>grep -C 5 &quot;500&quot; app.log | grep -B 5 &quot;Exception&quot;</code> for context. If the file is too large, use <code>tail -f</code> for live monitoring or split analysis with <code>split</code>.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="580" data-line-end="581"><strong>Q5: What does <code>ps aux | grep &quot;[n]ginx&quot;</code> accomplish that <code>ps aux | grep &quot;nginx&quot;</code> doesn’t?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="581" data-line-end="582"><strong>A:</strong> The bracket trick <code>[n]ginx</code> makes grep search for the pattern but the pattern itself doesn’t match itself — because <code>[n]ginx</code> doesn’t equal the string <code>[n]ginx</code>. Without it, the grep command’s own process would appear in the results since its command line contains “nginx”. It’s a classic trick to filter out the grep process from ps output.</p>
+</blockquote>
+<h3 class="code-line has-line-data" data-line-start="583" data-line-end="584"><a id="7_Common_Mistakes_Tips_583"></a>7. Common Mistakes &amp; Tips</h3>
+<ul>
+<li class="has-line-data" data-line-start="584" data-line-end="585"><strong>Mistake:</strong> Using <code>grep</code> without <code>-r</code> and wondering why directory searches fail — always add <code>-r</code> for directories.</li>
+<li class="has-line-data" data-line-start="585" data-line-end="586"><strong>Mistake:</strong> <code>grep &quot;.&quot; file.txt</code> — the dot matches ANY character, not a literal dot. Use <code>grep -F &quot;.&quot; file.txt</code> or <code>grep &quot;\.&quot; file.txt</code>.</li>
+<li class="has-line-data" data-line-start="586" data-line-end="587"><strong>Tip:</strong> <code>grep --color=always | less -R</code> — preserves colors when piping to less.</li>
+<li class="has-line-data" data-line-start="587" data-line-end="588"><strong>Tip:</strong> For very large files, <code>ripgrep</code> (<code>rg</code>) is 10-100x faster than GNU grep.</li>
+<li class="has-line-data" data-line-start="588" data-line-end="590"><strong>Tip:</strong> Use <code>-l</code> flag with <code>-r</code> first to find which files have matches, then grep individual files for full analysis.</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="590" data-line-end="591"><a id="8_Advanced_Insights_590"></a>8. Advanced Insights</h3>
+<ul>
+<li class="has-line-data" data-line-start="591" data-line-end="592"><code>grep</code> reads line-by-line — for binary files, it might miss multi-line patterns. Use <code>pcregrep -M</code> for multi-line matching.</li>
+<li class="has-line-data" data-line-start="592" data-line-end="593"><code>grep -P</code> enables PCRE but is not available on all platforms (notably Alpine Linux with BusyBox).</li>
+<li class="has-line-data" data-line-start="593" data-line-end="594">For log streaming, combine <code>tail -f app.log | grep --line-buffered &quot;ERROR&quot;</code> — <code>--line-buffered</code> flushes output after each line.</li>
+<li class="has-line-data" data-line-start="594" data-line-end="596"><code>zgrep</code> searches compressed <code>.gz</code> files without decompressing them first.</li>
+</ul>
+<hr>
+<h2 class="code-line has-line-data" data-line-start="598" data-line-end="599"><a id="find_Search_for_Files_and_Directories_598"></a><code>find</code> — Search for Files and Directories</h2>
+<h3 class="code-line has-line-data" data-line-start="600" data-line-end="601"><a id="1_Command_Overview_600"></a>1. Command Overview</h3>
+<p class="has-line-data" data-line-start="601" data-line-end="602"><code>find</code> recursively searches a directory hierarchy for files matching specific criteria — name, type, size, permissions, timestamps, ownership. Unlike <code>grep</code> (which searches file content), <code>find</code> searches for the files themselves. It is indispensable for system administration, security audits, and automation.</p>
+<h3 class="code-line has-line-data" data-line-start="603" data-line-end="604"><a id="2_Syntax_603"></a>2. Syntax</h3>
+<pre><code class="has-line-data language-bash" data-line-start="605" data-line-end="607">find [PATH...] [EXPRESSION]
+</code></pre>
+<ul>
+<li class="has-line-data" data-line-start="607" data-line-end="608"><code>PATH</code> — starting directory (defaults to <code>.</code> if omitted)</li>
+<li class="has-line-data" data-line-start="608" data-line-end="610"><code>EXPRESSION</code> — tests, actions, and operators</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="610" data-line-end="611"><a id="3_Commonly_Used_OptionsFlags_610"></a>3. Commonly Used Options/Flags</h3>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-name</code></td>
+<td>Match by filename (case-sensitive)</td>
+<td><code>find . -name &quot;*.log&quot;</code></td>
+</tr>
+<tr>
+<td><code>-iname</code></td>
+<td>Match by filename (case-insensitive)</td>
+<td><code>find . -iname &quot;readme*&quot;</code></td>
+</tr>
+<tr>
+<td><code>-type f</code></td>
+<td>Match files only</td>
+<td><code>find /etc -type f</code></td>
+</tr>
+<tr>
+<td><code>-type d</code></td>
+<td>Match directories only</td>
+<td><code>find . -type d</code></td>
+</tr>
+<tr>
+<td><code>-type l</code></td>
+<td>Match symlinks only</td>
+<td><code>find /usr -type l</code></td>
+</tr>
+<tr>
+<td><code>-size</code></td>
+<td>Match by file size</td>
+<td><code>find / -size +100M</code></td>
+</tr>
+<tr>
+<td><code>-mtime</code></td>
+<td>Modified N days ago</td>
+<td><code>find /var/log -mtime +30</code></td>
+</tr>
+<tr>
+<td><code>-mmin</code></td>
+<td>Modified N minutes ago</td>
+<td><code>find /tmp -mmin -10</code></td>
+</tr>
+<tr>
+<td><code>-newer</code></td>
+<td>Modified more recently than reference</td>
+<td><code>find . -newer reference.txt</code></td>
+</tr>
+<tr>
+<td><code>-perm</code></td>
+<td>Match by permissions</td>
+<td><code>find / -perm -4000</code></td>
+</tr>
+<tr>
+<td><code>-user</code></td>
+<td>Match by owner</td>
+<td><code>find /home -user john</code></td>
+</tr>
+<tr>
+<td><code>-group</code></td>
+<td>Match by group</td>
+<td><code>find /data -group developers</code></td>
+</tr>
+<tr>
+<td><code>-empty</code></td>
+<td>Match empty files/dirs</td>
+<td><code>find /tmp -empty</code></td>
+</tr>
+<tr>
+<td><code>-maxdepth</code></td>
+<td>Limit recursion depth</td>
+<td><code>find . -maxdepth 2 -name &quot;*.py&quot;</code></td>
+</tr>
+<tr>
+<td><code>-mindepth</code></td>
+<td>Minimum depth</td>
+<td><code>find . -mindepth 2 -name &quot;*.conf&quot;</code></td>
+</tr>
+<tr>
+<td><code>-exec</code></td>
+<td>Execute command on results</td>
+<td><code>find . -name &quot;*.tmp&quot; -exec rm {} \;</code></td>
+</tr>
+<tr>
+<td><code>-exec {} +</code></td>
+<td>Execute command, batch results</td>
+<td><code>find . -name &quot;*.py&quot; -exec wc -l {} +</code></td>
+</tr>
+<tr>
+<td><code>-print0</code></td>
+<td>Null-terminated output (safe for filenames with spaces)</td>
+<td><code>find . -name &quot;*.txt&quot; -print0</code></td>
+</tr>
+<tr>
+<td><code>-delete</code></td>
+<td>Delete matching files</td>
+<td><code>find /tmp -mtime +7 -delete</code></td>
+</tr>
+<tr>
+<td><code>-not</code> or <code>!</code></td>
+<td>Negate expression</td>
+<td><code>find . -not -name &quot;*.py&quot;</code></td>
+</tr>
+<tr>
+<td><code>-o</code></td>
+<td>OR operator</td>
+<td><code>find . -name &quot;*.log&quot; -o -name &quot;*.txt&quot;</code></td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="636" data-line-end="637"><a id="4_Practical_Examples_636"></a>4. Practical Examples</h3>
+<pre><code class="has-line-data language-bash" data-line-start="639" data-line-end="687"><span class="hljs-comment"># Find all Python files in current directory tree</span>
+find . -name <span class="hljs-string">&quot;*.py&quot;</span> -<span class="hljs-built_in">type</span> f
+
+<span class="hljs-comment"># Find files larger than 100MB (useful for disk space audit)</span>
+find / -<span class="hljs-built_in">type</span> f -size +100M -<span class="hljs-built_in">exec</span> <span class="hljs-built_in">ls</span> -lh {} \; 2&gt;/dev/null
+
+<span class="hljs-comment"># Find and delete files older than 30 days</span>
+find /var/log -name <span class="hljs-string">&quot;*.log&quot;</span> -mtime +30 -delete
+
+<span class="hljs-comment"># Find files modified in last 10 minutes (monitor changes)</span>
+find /etc -mmin -10 -<span class="hljs-built_in">type</span> f
+
+<span class="hljs-comment"># Find SUID files (security audit — critical!)</span>
+find / -perm -4000 -<span class="hljs-built_in">type</span> f 2&gt;/dev/null
+
+<span class="hljs-comment"># Find world-writable files (security risk)</span>
+find / -perm -o+w -<span class="hljs-built_in">type</span> f 2&gt;/dev/null
+
+<span class="hljs-comment"># Find empty files and directories</span>
+find /tmp -empty
+
+<span class="hljs-comment"># Find and compress log files older than 7 days</span>
+find /var/log -name <span class="hljs-string">&quot;*.log&quot;</span> -mtime +7 -<span class="hljs-built_in">exec</span> gzip {} \;
+
+<span class="hljs-comment"># Find files owned by a specific user</span>
+find /home -user alice -<span class="hljs-built_in">type</span> f
+
+<span class="hljs-comment"># Find with multiple conditions (AND is implicit)</span>
+find /var/log -name <span class="hljs-string">&quot;*.log&quot;</span> -size +10M -mtime +7
+
+<span class="hljs-comment"># Find Python files, count lines in each (batch exec)</span>
+find . -name <span class="hljs-string">&quot;*.py&quot;</span> -<span class="hljs-built_in">exec</span> <span class="hljs-built_in">wc</span> -l {} +
+
+<span class="hljs-comment"># Find files with spaces in names (null-terminated safe handling)</span>
+find . -name <span class="hljs-string">&quot;* *&quot;</span> -print0 | xargs -0 <span class="hljs-built_in">rm</span>
+
+<span class="hljs-comment"># Find broken symlinks</span>
+find /usr/local -<span class="hljs-built_in">type</span> l -! -e
+
+<span class="hljs-comment"># Find files changed in last hour and archive them</span>
+find /data -mmin -60 -<span class="hljs-built_in">type</span> f -print0 | tar -czvf hourly_backup.tar.gz --null -T -
+
+<span class="hljs-comment"># Exclude a directory from search</span>
+find / -path /proc -prune -o -name <span class="hljs-string">&quot;*.conf&quot;</span> -<span class="hljs-built_in">print</span>
+
+<span class="hljs-comment"># Find duplicate files by size (first pass)</span>
+find . -<span class="hljs-built_in">type</span> f -<span class="hljs-built_in">exec</span> <span class="hljs-built_in">md5sum</span> {} \; | <span class="hljs-built_in">sort</span> | <span class="hljs-built_in">uniq</span> -d -w32
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="688" data-line-end="689"><a id="5_RealWorld_Use_Cases_688"></a>5. Real-World Use Cases</h3>
+<ul>
+<li class="has-line-data" data-line-start="689" data-line-end="690"><strong>Security audits:</strong> <code>find / -perm -4000 2&gt;/dev/null</code> — find all SUID binaries (potential privilege escalation vectors)</li>
+<li class="has-line-data" data-line-start="690" data-line-end="691"><strong>Disk cleanup automation:</strong> <code>find /tmp -mtime +1 -delete</code> in cron — daily temp cleanup</li>
+<li class="has-line-data" data-line-start="691" data-line-end="692"><strong>Log rotation:</strong> <code>find /var/log -name &quot;*.log&quot; -size +500M -exec gzip {} \;</code></li>
+<li class="has-line-data" data-line-start="692" data-line-end="693"><strong>Deployment validation:</strong> <code>find /opt/app -name &quot;*.pyc&quot; -delete</code> — clean compiled Python files</li>
+<li class="has-line-data" data-line-start="693" data-line-end="695"><strong>Data pipeline:</strong> <code>find /data/incoming -name &quot;*.csv&quot; -newer /stamps/last_run -exec process.sh {} \;</code></li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="695" data-line-end="696"><a id="6_Interview_Questions_Answers_695"></a>6. Interview Questions &amp; Answers</h3>
+<p class="has-line-data" data-line-start="697" data-line-end="698"><strong>Q1: What is the difference between <code>-exec cmd {} \;</code> and <code>-exec cmd {} +</code>?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="698" data-line-end="699"><strong>A:</strong> <code>\;</code> runs the command once per file — 100 files = 100 command invocations. <code>+</code> batches files and passes them all to the command at once (like <code>xargs</code>) — much more efficient. Use <code>+</code> when the command accepts multiple arguments; use <code>\;</code> when each file must be processed independently.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="700" data-line-end="701"><strong>Q2: How would you find all SUID binaries on a system and why is this important?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="701" data-line-end="702"><strong>A:</strong> <code>find / -perm -4000 -type f 2&gt;/dev/null</code>. SUID (Set User ID) means the binary runs with the file owner’s privileges (often root) regardless of who executes it. Attackers exploit misconfigured SUID binaries for privilege escalation. Regular audits should compare against a known-good baseline.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="703" data-line-end="704"><strong>Q3: How do you safely handle find results that may contain spaces or special characters in filenames?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="704" data-line-end="705"><strong>A:</strong> Use <code>-print0</code> with <code>xargs -0</code>: <code>find . -name &quot;*.txt&quot; -print0 | xargs -0 process</code>. The null byte <code>\0</code> is the only character guaranteed not to appear in a filename, making it safe as a delimiter.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="706" data-line-end="707"><strong>Q4: Scenario — You need to find all config files modified in the last 24 hours across a production server. How?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="707" data-line-end="708"><strong>A:</strong> <code>find /etc /opt /home -name &quot;*.conf&quot; -mtime -1 -type f -ls 2&gt;/dev/null</code>. The <code>-ls</code> action shows detailed info. Then investigate: <code>find ... -newer /tmp/baseline -exec diff {} /backup/{} \;</code> to see what changed.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="709" data-line-end="710"><strong>Q5: What’s the difference between <code>-mtime</code>, <code>-atime</code>, and <code>-ctime</code>?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="710" data-line-end="711"><strong>A:</strong> <code>-mtime</code> = modification time (file contents changed). <code>-atime</code> = access time (file was read). <code>-ctime</code> = change time (inode changed — permissions, ownership, or content). Note: <code>-mtime +7</code> means “more than 7 days ago” (strictly greater than 7×24 hours), NOT “7 or more days.”</p>
+</blockquote>
+<h3 class="code-line has-line-data" data-line-start="712" data-line-end="713"><a id="7_Common_Mistakes_Tips_712"></a>7. Common Mistakes &amp; Tips</h3>
+<ul>
+<li class="has-line-data" data-line-start="713" data-line-end="714"><strong>Mistake:</strong> <code>find / -name file.txt</code> without <code>2&gt;/dev/null</code> — floods output with permission denied errors.</li>
+<li class="has-line-data" data-line-start="714" data-line-end="715"><strong>Mistake:</strong> <code>find . -mtime +7</code> means “older than 7 days” but the math is <code>floor(age_in_days) &gt; 7</code>, so files exactly 7 days old are NOT included.</li>
+<li class="has-line-data" data-line-start="715" data-line-end="716"><strong>Tip:</strong> <code>find . -maxdepth 1</code> is much faster than <code>ls</code> alternatives for large directories when you need filtering.</li>
+<li class="has-line-data" data-line-start="716" data-line-end="718"><strong>Tip:</strong> Test destructive find commands first: <code>find /tmp -mtime +30 -print</code> before <code>find /tmp -mtime +30 -delete</code>.</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="718" data-line-end="719"><a id="8_Advanced_Insights_718"></a>8. Advanced Insights</h3>
+<ul>
+<li class="has-line-data" data-line-start="719" data-line-end="720"><code>find</code> processes each file in a depth-first walk. The <code>-prune</code> action skips a directory without descending into it.</li>
+<li class="has-line-data" data-line-start="720" data-line-end="721">For performance on large filesystems, <code>find</code> with <code>-xdev</code> (don’t cross filesystem boundaries) avoids traversing network mounts.</li>
+<li class="has-line-data" data-line-start="721" data-line-end="723"><code>locate</code> is much faster than <code>find</code> for simple name searches but uses a database that may be stale (updated by <code>updatedb</code> daily).</li>
+</ul>
+<hr>
+<h2 class="code-line has-line-data" data-line-start="725" data-line-end="726"><a id="chmod_Change_File_Permissions_725"></a><code>chmod</code> — Change File Permissions</h2>
+<h3 class="code-line has-line-data" data-line-start="727" data-line-end="728"><a id="1_Command_Overview_727"></a>1. Command Overview</h3>
+<p class="has-line-data" data-line-start="728" data-line-end="729"><code>chmod</code> modifies the access permissions of files and directories. Linux permissions control who can read, write, or execute files — a fundamental security mechanism. Understanding <code>chmod</code> is critical for DevOps and security roles.</p>
+<h3 class="code-line has-line-data" data-line-start="730" data-line-end="731"><a id="2_Syntax_730"></a>2. Syntax</h3>
+<pre><code class="has-line-data language-bash" data-line-start="732" data-line-end="734"><span class="hljs-built_in">chmod</span> [OPTIONS] MODE FILE...
+</code></pre>
+<p class="has-line-data" data-line-start="734" data-line-end="735"><strong>Two modes of specifying permissions:</strong></p>
+<ul>
+<li class="has-line-data" data-line-start="735" data-line-end="736"><strong>Symbolic mode:</strong> <code>chmod u+x file.sh</code></li>
+<li class="has-line-data" data-line-start="736" data-line-end="738"><strong>Octal mode:</strong> <code>chmod 755 file.sh</code></li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="738" data-line-end="739"><a id="3_Permission_Structure_738"></a>3. Permission Structure</h3>
+<pre><code class="has-line-data" data-line-start="741" data-line-end="749">Owner  Group  Others
+rwx    rwx    rwx
+421    421    421
+
+r = read    = 4
+w = write   = 2
+x = execute = 1
+</code></pre>
+<p class="has-line-data" data-line-start="750" data-line-end="751"><strong>Common octal values:</strong></p>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Octal</th>
+<th>Symbolic</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>777</td>
+<td>rwxrwxrwx</td>
+<td>Full access for everyone (dangerous!)</td>
+</tr>
+<tr>
+<td>755</td>
+<td>rwxr-xr-x</td>
+<td>Owner: full; Group+Others: read+execute</td>
+</tr>
+<tr>
+<td>644</td>
+<td>rw-r–r–</td>
+<td>Owner: read+write; Group+Others: read only</td>
+</tr>
+<tr>
+<td>600</td>
+<td>rw-------</td>
+<td>Owner: read+write; No one else</td>
+</tr>
+<tr>
+<td>700</td>
+<td>rwx------</td>
+<td>Owner: full; No one else</td>
+</tr>
+<tr>
+<td>400</td>
+<td>r--------</td>
+<td>Owner: read only (immutable-like)</td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="760" data-line-end="761"><a id="4_Commonly_Used_OptionsFlags_760"></a>4. Commonly Used Options/Flags</h3>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-R</code></td>
+<td>Recursively change permissions</td>
+<td><code>chmod -R 755 /var/www/</code></td>
+</tr>
+<tr>
+<td><code>-v</code></td>
+<td>Verbose — show each change</td>
+<td><code>chmod -v 644 *.conf</code></td>
+</tr>
+<tr>
+<td><code>-c</code></td>
+<td>Report only when change is made</td>
+<td><code>chmod -c 755 script.sh</code></td>
+</tr>
+<tr>
+<td><code>--reference</code></td>
+<td>Use permissions from reference file</td>
+<td><code>chmod --reference=ref.txt target.txt</code></td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="769" data-line-end="770"><a id="5_Practical_Examples_769"></a>5. Practical Examples</h3>
+<pre><code class="has-line-data language-bash" data-line-start="772" data-line-end="804"><span class="hljs-comment"># Make a script executable</span>
+<span class="hljs-built_in">chmod</span> +x deploy.sh
+<span class="hljs-built_in">chmod</span> u+x deploy.sh  <span class="hljs-comment"># More explicit — add execute for owner only</span>
+
+<span class="hljs-comment"># Set standard web file permissions</span>
+<span class="hljs-built_in">chmod</span> 644 /var/www/html/index.html
+
+<span class="hljs-comment"># Set standard web directory permissions</span>
+<span class="hljs-built_in">chmod</span> 755 /var/www/html/
+
+<span class="hljs-comment"># Remove all permissions from others</span>
+<span class="hljs-built_in">chmod</span> o-rwx sensitive.key
+
+<span class="hljs-comment"># Set SSH private key permissions (required by SSH!)</span>
+<span class="hljs-built_in">chmod</span> 600 ~/.ssh/id_rsa
+<span class="hljs-built_in">chmod</span> 700 ~/.ssh/
+
+<span class="hljs-comment"># Set permissions recursively for a web root</span>
+<span class="hljs-built_in">chmod</span> -R 755 /var/www/html/
+
+<span class="hljs-comment"># Add write permission for group</span>
+<span class="hljs-built_in">chmod</span> g+w shared_file.txt
+
+<span class="hljs-comment"># Remove execute bit for all</span>
+<span class="hljs-built_in">chmod</span> a-x data.csv
+
+<span class="hljs-comment"># Set exact permissions using symbolic</span>
+<span class="hljs-built_in">chmod</span> u=rwx,g=rx,o=r file.sh
+
+<span class="hljs-comment"># Make file readable only by owner (sensitive config)</span>
+<span class="hljs-built_in">chmod</span> 400 production.env
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="805" data-line-end="806"><a id="6_Interview_Questions_Answers_805"></a>6. Interview Questions &amp; Answers</h3>
+<p class="has-line-data" data-line-start="807" data-line-end="808"><strong>Q1: What does <code>chmod 777</code> do and why is it dangerous?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="808" data-line-end="809"><strong>A:</strong> <code>chmod 777</code> grants read, write, and execute permissions to owner, group, and all others. It’s dangerous because any user on the system can modify or execute the file. In web contexts, it means the web server process can execute or overwrite the file — a critical security risk. If a web app is compromised, the attacker can overwrite any 777 file.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="810" data-line-end="811"><strong>Q2: What permissions should SSH private keys have?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="811" data-line-end="812"><strong>A:</strong> <code>600</code> (rw-------). SSH will refuse to use a private key with permissions that are too open and prints “UNPROTECTED PRIVATE KEY FILE!” The <code>~/.ssh/</code> directory should be <code>700</code>.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="813" data-line-end="814"><strong>Q3: What is the sticky bit and when do you use it?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="814" data-line-end="815"><strong>A:</strong> The sticky bit on a directory means only the file owner (and root) can delete files within it, even if others have write permission. <code>chmod +t /tmp</code> — this is why <code>/tmp</code> is world-writable but users can’t delete each other’s files. Set with <code>chmod 1777 /shared/</code> (1 = sticky).</p>
+</blockquote>
+<p class="has-line-data" data-line-start="816" data-line-end="817"><strong>Q4: What is the SUID bit and its security implications?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="817" data-line-end="818"><strong>A:</strong> SUID (set-user-ID) on an executable means it runs with the owner’s UID regardless of who runs it. <code>passwd</code> has SUID root because it needs to modify <code>/etc/shadow</code>. Set with <code>chmod 4755 binary</code>. Misconfigured SUID binaries are a primary privilege escalation vector.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="819" data-line-end="820"><strong>Q5: What is the difference between <code>chmod 755</code> and <code>chmod u=rwx,g=rx,o=rx</code>?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="820" data-line-end="821"><strong>A:</strong> They are equivalent — both set owner to rwx and group/others to r-x. Octal is faster to type; symbolic is more readable and allows relative changes (<code>chmod g+x</code> adds execute for group without touching other bits).</p>
+</blockquote>
+<h3 class="code-line has-line-data" data-line-start="822" data-line-end="823"><a id="7_Common_Mistakes_Tips_822"></a>7. Common Mistakes &amp; Tips</h3>
+<ul>
+<li class="has-line-data" data-line-start="823" data-line-end="824"><strong>Mistake:</strong> <code>chmod -R 777 /var/www/</code> — giving the entire web root full access, including PHP files that could be modified by a compromised web process.</li>
+<li class="has-line-data" data-line-start="824" data-line-end="825"><strong>Mistake:</strong> Setting <code>chmod 600</code> on directories — directories need execute (<code>x</code>) for anyone who needs to traverse them. Files in a <code>600</code> directory are inaccessible even with <code>644</code> permissions.</li>
+<li class="has-line-data" data-line-start="825" data-line-end="826"><strong>Tip:</strong> Standard web deployment: directories = 755, files = 644, config files with secrets = 640 or 600.</li>
+<li class="has-line-data" data-line-start="826" data-line-end="828"><strong>Tip:</strong> <code>umask</code> sets the default permissions for new files. <code>umask 022</code> means new files get 644, new directories get 755.</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="828" data-line-end="829"><a id="8_Advanced_Insights_828"></a>8. Advanced Insights</h3>
+<ul>
+<li class="has-line-data" data-line-start="829" data-line-end="830">Special permission bits: SUID=4000, SGID=2000, Sticky=1000. Example: <code>chmod 4755</code> = SUID + rwxr-xr-x.</li>
+<li class="has-line-data" data-line-start="830" data-line-end="831"><code>chmod</code> operates on symlinks’ targets, not the symlinks themselves (use <code>lchmod</code> for the link itself, rarely needed).</li>
+<li class="has-line-data" data-line-start="831" data-line-end="833">ACLs (<code>setfacl</code>/<code>getfacl</code>) provide finer-grained permission control beyond the traditional owner/group/other model.</li>
+</ul>
+<hr>
+<h2 class="code-line has-line-data" data-line-start="835" data-line-end="836"><a id="chown_Change_File_Owner_and_Group_835"></a><code>chown</code> — Change File Owner and Group</h2>
+<h3 class="code-line has-line-data" data-line-start="837" data-line-end="838"><a id="1_Command_Overview_837"></a>1. Command Overview</h3>
+<p class="has-line-data" data-line-start="838" data-line-end="839"><code>chown</code> changes the ownership (user and/or group) of files and directories. Proper ownership is essential for service isolation — web servers should own web files, database processes should own database files.</p>
+<h3 class="code-line has-line-data" data-line-start="840" data-line-end="841"><a id="2_Syntax_840"></a>2. Syntax</h3>
+<pre><code class="has-line-data language-bash" data-line-start="842" data-line-end="845"><span class="hljs-built_in">chown</span> [OPTIONS] [OWNER][:[GROUP]] FILE...
+<span class="hljs-built_in">chown</span> [OPTIONS] --reference=RFILE FILE...
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="846" data-line-end="847"><a id="3_Commonly_Used_OptionsFlags_846"></a>3. Commonly Used Options/Flags</h3>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-R</code></td>
+<td>Recursively change ownership</td>
+<td><code>chown -R www-data:www-data /var/www/</code></td>
+</tr>
+<tr>
+<td><code>-v</code></td>
+<td>Verbose output</td>
+<td><code>chown -v nginx:nginx config.conf</code></td>
+</tr>
+<tr>
+<td><code>--reference</code></td>
+<td>Use ownership from reference file</td>
+<td><code>chown --reference=/etc/app /etc/app/new.conf</code></td>
+</tr>
+<tr>
+<td><code>-h</code></td>
+<td>Affect symlinks (not targets)</td>
+<td><code>chown -h user link.txt</code></td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="855" data-line-end="856"><a id="4_Practical_Examples_855"></a>4. Practical Examples</h3>
+<pre><code class="has-line-data language-bash" data-line-start="858" data-line-end="881"><span class="hljs-comment"># Change owner to alice</span>
+<span class="hljs-built_in">chown</span> alice file.txt
+
+<span class="hljs-comment"># Change owner and group</span>
+<span class="hljs-built_in">chown</span> alice:developers file.txt
+
+<span class="hljs-comment"># Change only group (colon prefix)</span>
+<span class="hljs-built_in">chown</span> :developers file.txt
+<span class="hljs-comment"># Equivalent:</span>
+<span class="hljs-built_in">chgrp</span> developers file.txt
+
+<span class="hljs-comment"># Recursively change ownership for web deployment</span>
+<span class="hljs-built_in">chown</span> -R www-data:www-data /var/www/html/
+
+<span class="hljs-comment"># Change owner by UID</span>
+<span class="hljs-built_in">chown</span> 1001 file.txt
+
+<span class="hljs-comment"># Transfer ownership to nobody:nogroup (security isolation)</span>
+<span class="hljs-built_in">chown</span> nobody:nogroup /tmp/sandbox/
+
+<span class="hljs-comment"># Verify with ls</span>
+<span class="hljs-built_in">chown</span> alice:alice report.txt &amp;&amp; <span class="hljs-built_in">ls</span> -l report.txt
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="882" data-line-end="883"><a id="5_RealWorld_Use_Cases_882"></a>5. Real-World Use Cases</h3>
+<ul>
+<li class="has-line-data" data-line-start="883" data-line-end="884"><strong>Web deployment:</strong> <code>chown -R nginx:nginx /var/www/</code> — web server needs to read files</li>
+<li class="has-line-data" data-line-start="884" data-line-end="885"><strong>Database files:</strong> <code>chown -R postgres:postgres /var/lib/postgresql/</code> — only postgres process accesses data</li>
+<li class="has-line-data" data-line-start="885" data-line-end="886"><strong>Service isolation:</strong> Each service (nginx, mysql, redis) runs as its own user and owns its files</li>
+<li class="has-line-data" data-line-start="886" data-line-end="888"><strong>Upload directories:</strong> <code>chown www-data:www-data /var/uploads/</code> — web server can write uploads</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="888" data-line-end="889"><a id="6_Interview_Questions_Answers_888"></a>6. Interview Questions &amp; Answers</h3>
+<p class="has-line-data" data-line-start="890" data-line-end="891"><strong>Q1: What is the difference between <code>chown user:group file</code> and <code>chown user file</code>?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="891" data-line-end="892"><strong>A:</strong> <code>chown user:group</code> changes both owner and group. <code>chown user</code> changes only the owner. <code>chown user:</code> (colon with no group) changes owner and sets group to the user’s primary group.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="893" data-line-end="894"><strong>Q2: Why do services run as dedicated users instead of root?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="894" data-line-end="895"><strong>A:</strong> Principle of least privilege — if the service is compromised (e.g., nginx exploit), the attacker only gets nginx user privileges, not root. They can’t read <code>/etc/shadow</code>, modify system files, or install rootkits. <code>chown -R nginx:nginx /var/www/</code> ensures nginx only accesses what it owns.</p>
+</blockquote>
+<h3 class="code-line has-line-data" data-line-start="896" data-line-end="897"><a id="7_Common_Mistakes_Tips_896"></a>7. Common Mistakes &amp; Tips</h3>
+<ul>
+<li class="has-line-data" data-line-start="897" data-line-end="898"><strong>Mistake:</strong> <code>chown -R root:root /</code> — catastrophic; would change ownership of the entire filesystem.</li>
+<li class="has-line-data" data-line-start="898" data-line-end="900"><strong>Tip:</strong> Always use <code>-R</code> carefully. Prefer running <code>chown</code> on specific directories rather than <code>/</code> or <code>/home</code>.</li>
+</ul>
+<hr>
+<h2 class="code-line has-line-data" data-line-start="902" data-line-end="903"><a id="sed_Stream_Editor_for_Filtering_and_Transforming_Text_902"></a><code>sed</code> — Stream Editor for Filtering and Transforming Text</h2>
+<h3 class="code-line has-line-data" data-line-start="904" data-line-end="905"><a id="1_Command_Overview_904"></a>1. Command Overview</h3>
+<p class="has-line-data" data-line-start="905" data-line-end="906"><code>sed</code> is a powerful stream editor that processes text line by line, applying specified transformations. It’s essential for text manipulation, automated editing of config files, log processing, and data transformation in shell scripts.</p>
+<h3 class="code-line has-line-data" data-line-start="907" data-line-end="908"><a id="2_Syntax_907"></a>2. Syntax</h3>
+<pre><code class="has-line-data language-bash" data-line-start="909" data-line-end="913">sed [OPTIONS] <span class="hljs-string">&#x27;SCRIPT&#x27;</span> [FILE...]
+sed [OPTIONS] -e <span class="hljs-string">&#x27;SCRIPT1&#x27;</span> -e <span class="hljs-string">&#x27;SCRIPT2&#x27;</span> [FILE...]
+sed [OPTIONS] -f SCRIPT_FILE [FILE...]
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="914" data-line-end="915"><a id="3_Commonly_Used_OptionsFlags_914"></a>3. Commonly Used Options/Flags</h3>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-i</code></td>
+<td>Edit file in-place</td>
+<td><code>sed -i 's/old/new/g' file.txt</code></td>
+</tr>
+<tr>
+<td><code>-i.bak</code></td>
+<td>In-place with backup</td>
+<td><code>sed -i.bak 's/old/new/g' file.txt</code></td>
+</tr>
+<tr>
+<td><code>-n</code></td>
+<td>Suppress default output (only print with <code>p</code>)</td>
+<td><code>sed -n '5,10p' file.txt</code></td>
+</tr>
+<tr>
+<td><code>-e</code></td>
+<td>Multiple expressions</td>
+<td><code>sed -e 's/a/A/' -e 's/b/B/'</code></td>
+</tr>
+<tr>
+<td><code>-f</code></td>
+<td>Read script from file</td>
+<td><code>sed -f transforms.sed data.txt</code></td>
+</tr>
+<tr>
+<td><code>-r</code> or <code>-E</code></td>
+<td>Extended regex</td>
+<td><code>sed -E 's/[0-9]+/NUM/g' file.txt</code></td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="925" data-line-end="926"><a id="4_Practical_Examples_925"></a>4. Practical Examples</h3>
+<pre><code class="has-line-data language-bash" data-line-start="928" data-line-end="979"><span class="hljs-comment"># Basic substitution — replace first occurrence per line</span>
+sed <span class="hljs-string">&#x27;s/http/https/&#x27;</span> urls.txt
+
+<span class="hljs-comment"># Global substitution — replace ALL occurrences per line</span>
+sed <span class="hljs-string">&#x27;s/localhost/prod-server/g&#x27;</span> config.txt
+
+<span class="hljs-comment"># Case-insensitive substitution (GNU sed)</span>
+sed <span class="hljs-string">&#x27;s/error/ERROR/gi&#x27;</span> log.txt
+
+<span class="hljs-comment"># In-place edit — modify file directly (with backup!)</span>
+sed -i.bak <span class="hljs-string">&#x27;s/DEBUG=true/DEBUG=false/&#x27;</span> .<span class="hljs-built_in">env</span>
+
+<span class="hljs-comment"># Delete lines matching pattern</span>
+sed <span class="hljs-string">&#x27;/^#/d&#x27;</span> config.conf  <span class="hljs-comment"># Remove comment lines</span>
+sed <span class="hljs-string">&#x27;/^$/d&#x27;</span> file.txt     <span class="hljs-comment"># Remove empty lines</span>
+
+<span class="hljs-comment"># Print specific lines (like head/tail but flexible)</span>
+sed -n <span class="hljs-string">&#x27;10,20p&#x27;</span> large_file.txt  <span class="hljs-comment"># Print lines 10-20</span>
+sed -n <span class="hljs-string">&#x27;$p&#x27;</span> file.txt            <span class="hljs-comment"># Print last line</span>
+
+<span class="hljs-comment"># Insert line before pattern</span>
+sed <span class="hljs-string">&#x27;/\[database\]/i # Database configuration&#x27;</span> config.ini
+
+<span class="hljs-comment"># Append line after pattern</span>
+sed <span class="hljs-string">&#x27;/^Port 22/a Port 2222&#x27;</span> /etc/ssh/sshd_config
+
+<span class="hljs-comment"># Delete specific line number</span>
+sed <span class="hljs-string">&#x27;5d&#x27;</span> file.txt         <span class="hljs-comment"># Delete line 5</span>
+sed <span class="hljs-string">&#x27;5,10d&#x27;</span> file.txt      <span class="hljs-comment"># Delete lines 5-10</span>
+
+<span class="hljs-comment"># Replace only in lines matching a pattern</span>
+sed <span class="hljs-string">&#x27;/ERROR/ s/server01/server02/g&#x27;</span> app.log
+
+<span class="hljs-comment"># Multiple operations</span>
+sed -e <span class="hljs-string">&#x27;s/foo/bar/g&#x27;</span> -e <span class="hljs-string">&#x27;s/baz/qux/g&#x27;</span> file.txt
+
+<span class="hljs-comment"># Extract lines between two patterns</span>
+sed -n <span class="hljs-string">&#x27;/START/,/END/p&#x27;</span> file.txt
+
+<span class="hljs-comment"># Remove trailing whitespace (common cleanup)</span>
+sed <span class="hljs-string">&#x27;s/[[:space:]]*$//&#x27;</span> file.txt
+
+<span class="hljs-comment"># Add line number prefix</span>
+sed = file.txt | sed <span class="hljs-string">&#x27;N;s/\n/\t/&#x27;</span>
+
+<span class="hljs-comment"># Real-world: Update version in config file</span>
+sed -i <span class="hljs-string">&quot;s/VERSION=.*/VERSION=<span class="hljs-variable">${NEW_VERSION}</span>/&quot;</span> config.sh
+
+<span class="hljs-comment"># Remove ANSI color codes</span>
+sed <span class="hljs-string">&#x27;s/\x1B\[[0-9;]\{1,\}[A-Za-z]//g&#x27;</span> colored_output.txt
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="980" data-line-end="981"><a id="5_RealWorld_Use_Cases_980"></a>5. Real-World Use Cases</h3>
+<ul>
+<li class="has-line-data" data-line-start="981" data-line-end="982"><strong>Config automation:</strong> <code>sed -i &quot;s/DB_HOST=.*/DB_HOST=${DB_HOST}/&quot; /etc/app/config</code> in deployment scripts</li>
+<li class="has-line-data" data-line-start="982" data-line-end="983"><strong>Log cleansing:</strong> Strip sensitive data before shipping logs — <code>sed 's/password=[^ ]*/password=REDACTED/g'</code></li>
+<li class="has-line-data" data-line-start="983" data-line-end="984"><strong>Data transformation:</strong> Convert CSV field separators — <code>sed 's/,/|/g' data.csv &gt; data.psv</code></li>
+<li class="has-line-data" data-line-start="984" data-line-end="986"><strong>Template processing:</strong> <code>sed &quot;s/{{APP_NAME}}/${APP_NAME}/g&quot; template.nginx &gt; /etc/nginx/sites/app.conf</code></li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="986" data-line-end="987"><a id="6_Interview_Questions_Answers_986"></a>6. Interview Questions &amp; Answers</h3>
+<p class="has-line-data" data-line-start="988" data-line-end="989"><strong>Q1: What does <code>sed -i 's/old/new/g' file.txt</code> do, and what risk does <code>-i</code> carry?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="989" data-line-end="990"><strong>A:</strong> Substitutes all occurrences of “old” with “new” directly in the file. Risk: if the regex is wrong, you corrupt the file with no undo. Always use <code>-i.bak</code> to create a backup first: <code>sed -i.bak 's/old/new/g' file.txt</code>. Test with dry run first: <code>sed 's/old/new/g' file.txt</code>.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="991" data-line-end="992"><strong>Q2: How do you delete all comment lines and empty lines from a config file?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="992" data-line-end="993"><strong>A:</strong> <code>sed -e '/^[[:space:]]*#/d' -e '/^[[:space:]]*$/d' config.conf</code> — removes lines starting with <code>#</code> (with optional leading spaces) and empty/whitespace-only lines.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="994" data-line-end="995"><strong>Q3: What’s the difference between <code>sed 's/a/b/'</code> and <code>sed 's/a/b/g'</code>?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="995" data-line-end="996"><strong>A:</strong> Without <code>g</code> (global), only the FIRST occurrence on each line is replaced. With <code>g</code>, ALL occurrences on each line are replaced. A third option: <code>sed 's/a/b/2'</code> replaces only the second occurrence per line.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="997" data-line-end="998"><strong>Q4: How would you use sed to update an environment variable in a .env file?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="998" data-line-end="999"><strong>A:</strong> <code>sed -i &quot;s/^DB_HOST=.*/DB_HOST=${NEW_HOST}/&quot; .env</code> — the <code>^</code> anchors to start of line, and <code>.*</code> matches the rest, replacing the entire line. The quotes allow shell variable interpolation.</p>
+</blockquote>
+<h3 class="code-line has-line-data" data-line-start="1000" data-line-end="1001"><a id="7_Common_Mistakes_Tips_1000"></a>7. Common Mistakes &amp; Tips</h3>
+<ul>
+<li class="has-line-data" data-line-start="1001" data-line-end="1002"><strong>Mistake:</strong> Forgetting <code>g</code> flag — <code>sed 's/,/|/'</code> only replaces the first comma per line in CSV files.</li>
+<li class="has-line-data" data-line-start="1002" data-line-end="1003"><strong>Mistake:</strong> Using <code>sed -i</code> without testing first — always dry-run before in-place edits.</li>
+<li class="has-line-data" data-line-start="1003" data-line-end="1004"><strong>Tip:</strong> <code>sed -n '/pattern/p'</code> is equivalent to <code>grep pattern</code> but sed can do more complex filtering in the same pipeline.</li>
+<li class="has-line-data" data-line-start="1004" data-line-end="1006"><strong>Tip:</strong> For macOS, <code>sed -i</code> requires an extension argument: <code>sed -i '' 's/old/new/g' file.txt</code>.</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="1006" data-line-end="1007"><a id="8_Advanced_Insights_1006"></a>8. Advanced Insights</h3>
+<ul>
+<li class="has-line-data" data-line-start="1007" data-line-end="1008"><code>sed</code> scripts can use hold space (secondary buffer) for complex transformations: <code>h</code>, <code>g</code>, <code>G</code>, <code>H</code> commands.</li>
+<li class="has-line-data" data-line-start="1008" data-line-end="1009"><code>sed</code> processes one line at a time by default; the <code>N</code> command reads the next line into pattern space for multi-line operations.</li>
+<li class="has-line-data" data-line-start="1009" data-line-end="1011">For complex transformations, <code>awk</code> or Python may be more readable and maintainable.</li>
+</ul>
+<hr>
+<h2 class="code-line has-line-data" data-line-start="1013" data-line-end="1014"><a id="awk_Pattern_Scanning_and_Processing_Language_1013"></a><code>awk</code> — Pattern Scanning and Processing Language</h2>
+<h3 class="code-line has-line-data" data-line-start="1015" data-line-end="1016"><a id="1_Command_Overview_1015"></a>1. Command Overview</h3>
+<p class="has-line-data" data-line-start="1016" data-line-end="1017"><code>awk</code> is a complete text-processing language designed for structured data. It excels at working with columnar data (CSV, logs, <code>/proc</code> files), performing calculations, and generating reports. Named after its creators: Aho, Weinberger, and Kernighan.</p>
+<h3 class="code-line has-line-data" data-line-start="1018" data-line-end="1019"><a id="2_Syntax_1018"></a>2. Syntax</h3>
+<pre><code class="has-line-data language-bash" data-line-start="1020" data-line-end="1023">awk [OPTIONS] <span class="hljs-string">&#x27;PROGRAM&#x27;</span> [FILE...]
+awk [OPTIONS] -f PROGRAM_FILE [FILE...]
+</code></pre>
+<p class="has-line-data" data-line-start="1023" data-line-end="1024"><strong>Basic program structure:</strong></p>
+<pre><code class="has-line-data" data-line-start="1025" data-line-end="1029">/PATTERN/ { ACTION }
+BEGIN { ... }  # Runs before any input
+END { ... }    # Runs after all input
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="1030" data-line-end="1031"><a id="3_Builtin_Variables_1030"></a>3. Built-in Variables</h3>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>$0</code></td>
+<td>Entire current line</td>
+</tr>
+<tr>
+<td><code>$1, $2, ...</code></td>
+<td>Fields (columns)</td>
+</tr>
+<tr>
+<td><code>NF</code></td>
+<td>Number of fields in current line</td>
+</tr>
+<tr>
+<td><code>NR</code></td>
+<td>Current line (record) number</td>
+</tr>
+<tr>
+<td><code>FNR</code></td>
+<td>Line number within current file</td>
+</tr>
+<tr>
+<td><code>FS</code></td>
+<td>Field separator (default: whitespace)</td>
+</tr>
+<tr>
+<td><code>OFS</code></td>
+<td>Output field separator</td>
+</tr>
+<tr>
+<td><code>RS</code></td>
+<td>Record separator (default: newline)</td>
+</tr>
+<tr>
+<td><code>ORS</code></td>
+<td>Output record separator</td>
+</tr>
+<tr>
+<td><code>FILENAME</code></td>
+<td>Current filename</td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="1045" data-line-end="1046"><a id="4_Practical_Examples_1045"></a>4. Practical Examples</h3>
+<pre><code class="has-line-data language-bash" data-line-start="1048" data-line-end="1097"><span class="hljs-comment"># Print specific column</span>
+awk <span class="hljs-string">&#x27;{print $2}&#x27;</span> data.txt         <span class="hljs-comment"># Print 2nd column</span>
+awk <span class="hljs-string">&#x27;{print $NF}&#x27;</span> data.txt        <span class="hljs-comment"># Print last column</span>
+
+<span class="hljs-comment"># Print with custom delimiter</span>
+awk -F<span class="hljs-string">&#x27;,&#x27;</span> <span class="hljs-string">&#x27;{print $1, $3}&#x27;</span> data.csv  <span class="hljs-comment"># CSV: fields 1 and 3</span>
+awk -F<span class="hljs-string">&#x27;:&#x27;</span> <span class="hljs-string">&#x27;{print $1}&#x27;</span> /etc/passwd   <span class="hljs-comment"># Print usernames</span>
+
+<span class="hljs-comment"># Filter rows based on condition</span>
+awk <span class="hljs-string">&#x27;$3 &gt; 100 {print}&#x27;</span> data.txt      <span class="hljs-comment"># Lines where 3rd field &gt; 100</span>
+awk <span class="hljs-string">&#x27;/ERROR/ {print $0}&#x27;</span> app.log     <span class="hljs-comment"># Lines containing ERROR</span>
+
+<span class="hljs-comment"># Calculate column sum</span>
+awk <span class="hljs-string">&#x27;{sum += $2} END {print &quot;Total:&quot;, sum}&#x27;</span> sales.txt
+
+<span class="hljs-comment"># Count occurrences</span>
+awk <span class="hljs-string">&#x27;{count[$1]++} END {for(k in count) print k, count[k]}&#x27;</span> log.txt
+
+<span class="hljs-comment"># Print lines between two patterns</span>
+awk <span class="hljs-string">&#x27;/START/,/END/ {print}&#x27;</span> file.txt
+
+<span class="hljs-comment"># Custom output format</span>
+awk -F<span class="hljs-string">&#x27;,&#x27;</span> <span class="hljs-string">&#x27;{printf &quot;Name: %-20s Age: %d\n&quot;, $1, $2}&#x27;</span> people.csv
+
+<span class="hljs-comment"># Calculate average</span>
+awk <span class="hljs-string">&#x27;{sum+=$1; count++} END {print &quot;Avg:&quot;, sum/count}&#x27;</span> numbers.txt
+
+<span class="hljs-comment"># Print specific line numbers</span>
+awk <span class="hljs-string">&#x27;NR==5&#x27;</span> file.txt          <span class="hljs-comment"># Print line 5</span>
+awk <span class="hljs-string">&#x27;NR&gt;=10 &amp;&amp; NR&lt;=20&#x27;</span> file.txt  <span class="hljs-comment"># Print lines 10-20</span>
+
+<span class="hljs-comment"># Multiple field separators</span>
+awk -F<span class="hljs-string">&#x27;[,;:]&#x27;</span> <span class="hljs-string">&#x27;{print $1, $2}&#x27;</span> mixed.txt
+
+<span class="hljs-comment"># Multiline processing — parse access logs</span>
+awk <span class="hljs-string">&#x27;{ip[$1]++; bytes[$1]+=$10} END {for(ip in ip) printf &quot;%s requests=%d bytes=%d\n&quot;, ip, ip[ip], bytes[ip]}&#x27;</span> access.log
+
+<span class="hljs-comment"># Real-world: Extract process memory usage</span>
+ps aux | awk <span class="hljs-string">&#x27;NR&gt;1 {sum+=$6} END {print &quot;Total RSS:&quot;, sum/1024, &quot;MB&quot;}&#x27;</span>
+
+<span class="hljs-comment"># Format /etc/passwd for report</span>
+awk -F: <span class="hljs-string">&#x27;$3 &gt;= 1000 {printf &quot;User: %-15s Home: %s\n&quot;, $1, $6}&#x27;</span> /etc/passwd
+
+<span class="hljs-comment"># Find duplicate lines</span>
+awk <span class="hljs-string">&#x27;seen[$0]++ &gt; 0&#x27;</span> file.txt
+
+<span class="hljs-comment"># Count lines in each file (when passing multiple files)</span>
+awk <span class="hljs-string">&#x27;FNR==1 &amp;&amp; NR&gt;1 {print FILENAME, count; count=0} {count++} END {print FILENAME, count}&#x27;</span> *.<span class="hljs-built_in">log</span>
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="1098" data-line-end="1099"><a id="5_RealWorld_Use_Cases_1098"></a>5. Real-World Use Cases</h3>
+<ul>
+<li class="has-line-data" data-line-start="1099" data-line-end="1100"><strong>Access log analysis:</strong> Count requests per IP, calculate 95th percentile response times</li>
+<li class="has-line-data" data-line-start="1100" data-line-end="1101"><strong>System monitoring:</strong> <code>ps aux | awk 'NR&gt;1 &amp;&amp; $3&gt;50 {print $11, $3&quot;%&quot;}'</code> — processes over 50% CPU</li>
+<li class="has-line-data" data-line-start="1101" data-line-end="1102"><strong>Data transformation:</strong> Convert TSV to CSV: <code>awk 'BEGIN{OFS=&quot;,&quot;} {$1=$1; print}' data.tsv</code></li>
+<li class="has-line-data" data-line-start="1102" data-line-end="1103"><strong>Billing/chargeback:</strong> Sum data transfer per tenant from logs</li>
+<li class="has-line-data" data-line-start="1103" data-line-end="1105"><strong>Disk reporting:</strong> <code>df -h | awk '$5+0 &gt; 80 {print $6, &quot;is&quot;, $5, &quot;full!&quot;}'</code></li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="1105" data-line-end="1106"><a id="6_Interview_Questions_Answers_1105"></a>6. Interview Questions &amp; Answers</h3>
+<p class="has-line-data" data-line-start="1107" data-line-end="1108"><strong>Q1: What is the difference between <code>awk</code> and <code>sed</code>?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="1108" data-line-end="1109"><strong>A:</strong> <code>sed</code> is a stream editor optimized for substitutions and line deletions — primarily a text transformer. <code>awk</code> is a programming language optimized for structured/columnar data — it has variables, arrays, arithmetic, and control flow. Use <code>sed</code> for simple find-replace; use <code>awk</code> for calculations, aggregations, and multi-column data manipulation.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="1110" data-line-end="1111"><strong>Q2: How would you sum the values in the 3rd column of a CSV file?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="1111" data-line-end="1112"><strong>A:</strong> <code>awk -F',' '{sum+=$3} END {print sum}' file.csv</code> — <code>END</code> block runs after all lines are processed, printing the accumulated sum.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="1113" data-line-end="1114"><strong>Q3: How does <code>awk</code> handle multiple field separators?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="1114" data-line-end="1115"><strong>A:</strong> <code>awk -F'[,;:]'</code> uses a regex as the separator — matches any of comma, semicolon, or colon. Alternatively, set <code>FS</code> in the <code>BEGIN</code> block: <code>awk 'BEGIN{FS=&quot;[,;:]&quot;} {print $1}' file.txt</code>.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="1116" data-line-end="1117"><strong>Q4: Scenario — Parse an Nginx access log and find the top 10 IPs by request count.</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="1117" data-line-end="1118"><strong>A:</strong></p>
+</blockquote>
+<pre><code class="has-line-data language-bash" data-line-start="1119" data-line-end="1123">awk <span class="hljs-string">&#x27;{print $1}&#x27;</span> /var/log/nginx/access.log | <span class="hljs-built_in">sort</span> | <span class="hljs-built_in">uniq</span> -c | <span class="hljs-built_in">sort</span> -rn | <span class="hljs-built_in">head</span> -10
+<span class="hljs-comment"># Or pure awk:</span>
+awk <span class="hljs-string">&#x27;{count[$1]++} END {for(ip in count) print count[ip], ip}&#x27;</span> access.log | <span class="hljs-built_in">sort</span> -rn | <span class="hljs-built_in">head</span> -10
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="1124" data-line-end="1125"><a id="7_Common_Mistakes_Tips_1124"></a>7. Common Mistakes &amp; Tips</h3>
+<ul>
+<li class="has-line-data" data-line-start="1125" data-line-end="1126"><strong>Mistake:</strong> Using <code>awk '$1 = &quot;value&quot;'</code> (single <code>=</code> is assignment, not comparison). Use <code>==</code> for comparison.</li>
+<li class="has-line-data" data-line-start="1126" data-line-end="1127"><strong>Mistake:</strong> Forgetting that <code>awk</code> arrays are associative (hash maps) — <code>count[key]</code> is valid even without initialization.</li>
+<li class="has-line-data" data-line-start="1127" data-line-end="1129"><strong>Tip:</strong> <code>awk 'END{print NR}' file.txt</code> counts lines — equivalent to <code>wc -l</code> but in a pipeline.</li>
+</ul>
+<h3 class="code-line has-line-data" data-line-start="1129" data-line-end="1130"><a id="8_Advanced_Insights_1129"></a>8. Advanced Insights</h3>
+<ul>
+<li class="has-line-data" data-line-start="1130" data-line-end="1131"><code>gawk</code> (GNU awk) has extensions: <code>OFMT</code> for number formatting, <code>PROCINFO</code> for process info, <code>getline</code> for reading external commands.</li>
+<li class="has-line-data" data-line-start="1131" data-line-end="1132"><code>awk</code> can call external commands with <code>system()</code> or <code>&quot;cmd&quot; | getline var</code>.</li>
+<li class="has-line-data" data-line-start="1132" data-line-end="1134">For very large datasets, consider <code>datamash</code> or Python <code>pandas</code> for better performance and readability.</li>
+</ul>
+<hr>
+<h2 class="code-line has-line-data" data-line-start="1136" data-line-end="1137"><a id="sort_Sort_Lines_of_Text_Files_1136"></a><code>sort</code> — Sort Lines of Text Files</h2>
+<h3 class="code-line has-line-data" data-line-start="1138" data-line-end="1139"><a id="1_Command_Overview_1138"></a>1. Command Overview</h3>
+<p class="has-line-data" data-line-start="1139" data-line-end="1140"><code>sort</code> sorts the lines of a text file or stdin. It’s a fundamental building block of shell pipelines for data processing, report generation, and deduplication workflows.</p>
+<h3 class="code-line has-line-data" data-line-start="1141" data-line-end="1142"><a id="2_Syntax_1141"></a>2. Syntax</h3>
+<pre><code class="has-line-data language-bash" data-line-start="1143" data-line-end="1145"><span class="hljs-built_in">sort</span> [OPTIONS] [FILE...]
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="1146" data-line-end="1147"><a id="3_Commonly_Used_OptionsFlags_1146"></a>3. Commonly Used Options/Flags</h3>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-n</code></td>
+<td>Numeric sort</td>
+<td><code>sort -n numbers.txt</code></td>
+</tr>
+<tr>
+<td><code>-r</code></td>
+<td>Reverse order</td>
+<td><code>sort -rn data.txt</code></td>
+</tr>
+<tr>
+<td><code>-k</code></td>
+<td>Sort by specific field/column</td>
+<td><code>sort -k2 data.txt</code></td>
+</tr>
+<tr>
+<td><code>-t</code></td>
+<td>Field separator</td>
+<td><code>sort -t',' -k2n file.csv</code></td>
+</tr>
+<tr>
+<td><code>-u</code></td>
+<td>Unique (remove duplicates after sort)</td>
+<td><code>sort -u names.txt</code></td>
+</tr>
+<tr>
+<td><code>-h</code></td>
+<td>Human-readable sort (1K, 10M, 2G)</td>
+<td>`du -sh *</td>
+</tr>
+<tr>
+<td><code>-R</code></td>
+<td>Random sort (shuffle)</td>
+<td><code>sort -R list.txt</code></td>
+</tr>
+<tr>
+<td><code>-f</code></td>
+<td>Fold case (case-insensitive)</td>
+<td><code>sort -f names.txt</code></td>
+</tr>
+<tr>
+<td><code>-b</code></td>
+<td>Ignore leading blanks</td>
+<td><code>sort -b data.txt</code></td>
+</tr>
+<tr>
+<td><code>-o</code></td>
+<td>Write output to file</td>
+<td><code>sort -o sorted.txt file.txt</code></td>
+</tr>
+<tr>
+<td><code>-c</code></td>
+<td>Check if already sorted</td>
+<td><code>sort -c file.txt</code></td>
+</tr>
+<tr>
+<td><code>-m</code></td>
+<td>Merge sorted files</td>
+<td><code>sort -m file1.txt file2.txt</code></td>
+</tr>
+<tr>
+<td><code>-S</code></td>
+<td>Buffer size</td>
+<td><code>sort -S 2G large.txt</code></td>
+</tr>
+<tr>
+<td><code>--parallel</code></td>
+<td>Number of parallel threads</td>
+<td><code>sort --parallel=4 data.txt</code></td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="1165" data-line-end="1166"><a id="4_Practical_Examples_1165"></a>4. Practical Examples</h3>
+<pre><code class="has-line-data language-bash" data-line-start="1168" data-line-end="1198"><span class="hljs-comment"># Alphabetical sort</span>
+<span class="hljs-built_in">sort</span> names.txt
+
+<span class="hljs-comment"># Numeric sort</span>
+<span class="hljs-built_in">sort</span> -n numbers.txt
+
+<span class="hljs-comment"># Sort CSV by 3rd column (numeric)</span>
+<span class="hljs-built_in">sort</span> -t<span class="hljs-string">&#x27;,&#x27;</span> -k3n data.csv
+
+<span class="hljs-comment"># Sort by multiple keys (primary: column 2 desc, secondary: column 1 asc)</span>
+<span class="hljs-built_in">sort</span> -t<span class="hljs-string">&#x27;,&#x27;</span> -k2rn -k1 data.csv
+
+<span class="hljs-comment"># Human-readable size sort (for du output)</span>
+<span class="hljs-built_in">du</span> -sh /var/* | <span class="hljs-built_in">sort</span> -h
+
+<span class="hljs-comment"># Sort and remove duplicates</span>
+<span class="hljs-built_in">sort</span> -u words.txt
+
+<span class="hljs-comment"># Sort IPs (sort as version numbers)</span>
+<span class="hljs-built_in">sort</span> -t. -k1,1n -k2,2n -k3,3n -k4,4n ips.txt
+
+<span class="hljs-comment"># In-place sort</span>
+<span class="hljs-built_in">sort</span> -o file.txt file.txt
+
+<span class="hljs-comment"># Pipeline: top 10 most common words</span>
+<span class="hljs-built_in">cat</span> text.txt | <span class="hljs-built_in">tr</span> <span class="hljs-string">&#x27; &#x27;</span> <span class="hljs-string">&#x27;\n&#x27;</span> | <span class="hljs-built_in">sort</span> | <span class="hljs-built_in">uniq</span> -c | <span class="hljs-built_in">sort</span> -rn | <span class="hljs-built_in">head</span> -10
+
+<span class="hljs-comment"># Find duplicate lines</span>
+<span class="hljs-built_in">sort</span> file.txt | <span class="hljs-built_in">uniq</span> -d
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="1199" data-line-end="1200"><a id="5_Interview_Questions_Answers_1199"></a>5. Interview Questions &amp; Answers</h3>
+<p class="has-line-data" data-line-start="1201" data-line-end="1202"><strong>Q1: How do you sort a CSV file by the 3rd column numerically in descending order?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="1202" data-line-end="1203"><strong>A:</strong> <code>sort -t',' -k3,3rn file.csv</code> — <code>-t','</code> sets comma as delimiter, <code>-k3,3</code> sorts by column 3 only (start,end notation), <code>r</code> reverses, <code>n</code> for numeric comparison. The <code>,3</code> is important — without it, sort continues comparing beyond column 3.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="1204" data-line-end="1205"><strong>Q2: How would you sort IP addresses correctly?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="1205" data-line-end="1206"><strong>A:</strong> <code>sort -t. -k1,1n -k2,2n -k3,3n -k4,4n ips.txt</code> — treat the dot as separator, sort each octet numerically. Simple <code>sort</code> would give lexicographic order (10 &lt; 9 alphabetically).</p>
+</blockquote>
+<hr>
+<h2 class="code-line has-line-data" data-line-start="1209" data-line-end="1210"><a id="uniq_Report_or_Omit_Repeated_Lines_1209"></a><code>uniq</code> — Report or Omit Repeated Lines</h2>
+<h3 class="code-line has-line-data" data-line-start="1211" data-line-end="1212"><a id="1_Command_Overview_1211"></a>1. Command Overview</h3>
+<p class="has-line-data" data-line-start="1212" data-line-end="1213"><code>uniq</code> filters adjacent duplicate lines from sorted input. It must be used after <code>sort</code> since it only compares consecutive lines. Essential for deduplication and frequency analysis.</p>
+<h3 class="code-line has-line-data" data-line-start="1214" data-line-end="1215"><a id="2_Syntax_1214"></a>2. Syntax</h3>
+<pre><code class="has-line-data language-bash" data-line-start="1216" data-line-end="1218"><span class="hljs-built_in">uniq</span> [OPTIONS] [INPUT [OUTPUT]]
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="1219" data-line-end="1220"><a id="3_Commonly_Used_OptionsFlags_1219"></a>3. Commonly Used Options/Flags</h3>
+<table class="table table-striped table-bordered">
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-c</code></td>
+<td>Prefix lines with occurrence count</td>
+<td>`sort file.txt</td>
+</tr>
+<tr>
+<td><code>-d</code></td>
+<td>Print only duplicate lines</td>
+<td>`sort file.txt</td>
+</tr>
+<tr>
+<td><code>-u</code></td>
+<td>Print only unique (non-duplicate) lines</td>
+<td>`sort file.txt</td>
+</tr>
+<tr>
+<td><code>-i</code></td>
+<td>Case-insensitive comparison</td>
+<td>`sort file.txt</td>
+</tr>
+<tr>
+<td><code>-f N</code></td>
+<td>Skip first N fields</td>
+<td>`sort data.txt</td>
+</tr>
+<tr>
+<td><code>-s N</code></td>
+<td>Skip first N characters</td>
+<td>`sort file.txt</td>
+</tr>
+</tbody>
+</table>
+<h3 class="code-line has-line-data" data-line-start="1230" data-line-end="1231"><a id="4_Practical_Examples_1230"></a>4. Practical Examples</h3>
+<pre><code class="has-line-data language-bash" data-line-start="1233" data-line-end="1251"><span class="hljs-comment"># Count occurrence of each line (frequency analysis)</span>
+<span class="hljs-built_in">sort</span> access.log | <span class="hljs-built_in">uniq</span> -c | <span class="hljs-built_in">sort</span> -rn
+
+<span class="hljs-comment"># Find duplicate lines</span>
+<span class="hljs-built_in">sort</span> names.txt | <span class="hljs-built_in">uniq</span> -d
+
+<span class="hljs-comment"># Find unique (non-duplicated) lines</span>
+<span class="hljs-built_in">sort</span> names.txt | <span class="hljs-built_in">uniq</span> -u
+
+<span class="hljs-comment"># Pipeline: most common HTTP status codes</span>
+awk <span class="hljs-string">&#x27;{print $9}&#x27;</span> access.log | <span class="hljs-built_in">sort</span> | <span class="hljs-built_in">uniq</span> -c | <span class="hljs-built_in">sort</span> -rn
+
+<span class="hljs-comment"># Remove duplicate IPs from list</span>
+<span class="hljs-built_in">sort</span> ips.txt | <span class="hljs-built_in">uniq</span> &gt; unique_ips.txt
+
+<span class="hljs-comment"># Count unique users</span>
+awk -F: <span class="hljs-string">&#x27;{print $1}&#x27;</span> /etc/passwd | <span class="hljs-built_in">sort</span> | <span class="hljs-built_in">uniq</span> | <span class="hljs-built_in">wc</span> -l
+</code></pre>
+<h3 class="code-line has-line-data" data-line-start="1252" data-line-end="1253"><a id="5_Interview_Questions_Answers_1252"></a>5. Interview Questions &amp; Answers</h3>
+<p class="has-line-data" data-line-start="1254" data-line-end="1255"><strong>Q1: Why must <code>sort</code> be used before <code>uniq</code>?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="1255" data-line-end="1256"><strong>A:</strong> <code>uniq</code> only compares adjacent lines. If duplicates are not consecutive, <code>uniq</code> won’t catch them. <code>sort</code> brings identical lines together so <code>uniq</code> can detect them.</p>
+</blockquote>
+<p class="has-line-data" data-line-start="1257" data-line-end="1258"><strong>Q2: How would you find the most frequent error types in a log file?</strong></p>
+<blockquote>
+<p class="has-line-data" data-line-start="1258" data-line-end="1259"><strong>A:</strong> <code>grep &quot;ERROR&quot; app.log | awk '{print $NF}' | sort | uniq -c | sort -rn | head -10</code> — extract error field, sort, count occurrences, re-sort by count descending.</p>
+</blockquote>
+<hr>
+<h2 class="code-line has-line-data" data-line-start="1262" data-line-end="1263"><a id="Directory_Commands_pwd_cd_mkdir_rmdir_tree_1262"></a>Directory Commands: <code>pwd</code>, <code>cd</code>, <code>mkdir</code>, <code>rmdir</code>, <code>tree</code></h2>
+<h3 class="code-line has-line-data" data-line-start="1264" data-line-end="1265"><a id="pwd_Print_Working_Directory_1264"></a><code>pwd</code> — Print Working Directory</h3>
+<pre><code class="has-line-data language-bash" data-line-start="1267" data-line-end="1275"><span class="hljs-built_in">pwd</span>          <span class="hljs-comment"># Print current directory path</span>
+<span class="hljs-built_in">pwd</span> -P       <span class="hljs-comment"># Print physical path (resolves symlinks)</span>
+<span class="hljs-built_in">pwd</span> -L       <span class="hljs-comment"># Print logical path (with symlinks, default)</span>
+
+<span class="hljs-comment"># Use in scripts</span>
+SCRIPT_DIR=$(<span class="hljs-built_in">pwd</span>)
+<span class="hljs-built_in">cd</span> /tmp &amp;&amp; process &amp;&amp; <span class="hljs-built_in">cd</span> <span class="hljs-string">&quot;<span class="hljs-variable">$SCRIPT_DIR</span>&quot;</span>
+</code></pre>
+<p class="has-line-data" data-line-start="1276" data-line-end="1277"><strong>Interview Q:</strong> How does <code>pwd -P</code> differ from <code>pwd -L</code>?</p>
+<blockquote>
+<p class="has-line-data" data-line-start="1277" data-line-end="1278"><code>pwd -L</code> (logical) shows the path with symlinks intact (e.g., <code>/home/user</code> which might be a symlink to <code>/data/users/user</code>). <code>pwd -P</code> (physical) resolves all symlinks and shows the true filesystem path. Important in scripts that reference <code>__file__</code> or <code>$0</code>.</p>
+</blockquote>
+<hr>
+<h3 class="code-line has-line-data" data-line-start="1281" data-line-end="1282"><a id="cd_Change_Directory_1281"></a><code>cd</code> — Change Directory</h3>
+<pre><code class="has-line-data language-bash" data-line-start="1284" data-line-end="1295"><span class="hljs-built_in">cd</span> /var/log      <span class="hljs-comment"># Absolute path</span>
+<span class="hljs-built_in">cd</span> logs/         <span class="hljs-comment"># Relative path</span>
+<span class="hljs-built_in">cd</span> ~             <span class="hljs-comment"># Go to home directory</span>
+<span class="hljs-built_in">cd</span> -             <span class="hljs-comment"># Go to previous directory (very useful!)</span>
+<span class="hljs-built_in">cd</span> ..            <span class="hljs-comment"># Go up one level</span>
+<span class="hljs-built_in">cd</span> ../..         <span class="hljs-comment"># Go up two levels</span>
+<span class="hljs-built_in">cd</span> ~alice        <span class="hljs-comment"># Go to alice&#x27;s home directory</span>
+
+<span class="hljs-comment"># In scripts — always use absolute paths or cd with error checking</span>
+<span class="hljs-built_in">cd</span> /opt/app || { <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Failed to cd&quot;</span>; <span class="hljs-built_in">exit</span> 1; }
+</code></pre>
+<p class="has-line-data" data-line-start="1296" data-line-end="1297"><strong>Interview tip:</strong> <code>cd -</code> toggles between last two directories — invaluable when working between two locations repeatedly.</p>
+<hr>
+<h3 class="code-line has-line-data" data-line-start="1300" data-line-end="1301"><a id="mkdir_Create_Directories_1300"></a><code>mkdir</code> — Create Directories</h3>
+<pre><code class="has-line-data language-bash" data-line-start="1303" data-line-end="1312"><span class="hljs-built_in">mkdir</span> newdir              <span class="hljs-comment"># Create single directory</span>
+<span class="hljs-built_in">mkdir</span> -p /opt/app/config  <span class="hljs-comment"># Create with parent directories</span>
+<span class="hljs-built_in">mkdir</span> -p <span class="hljs-built_in">dir</span>{1..5}        <span class="hljs-comment"># Create dir1 through dir5</span>
+<span class="hljs-built_in">mkdir</span> -m 750 secure_dir   <span class="hljs-comment"># Create with specific permissions</span>
+<span class="hljs-built_in">mkdir</span> -pv /data/{raw,processed,archive}  <span class="hljs-comment"># Create multiple subdirs</span>
+
+<span class="hljs-comment"># Common pattern in deployment scripts</span>
+<span class="hljs-built_in">mkdir</span> -p <span class="hljs-string">&quot;<span class="hljs-variable">$DEPLOY_DIR</span>&quot;</span>/{bin,conf,logs,tmp}
+</code></pre>
+<p class="has-line-data" data-line-start="1313" data-line-end="1314"><strong>Interview Q:</strong> What does <code>mkdir -p</code> do?</p>
+<blockquote>
+<p class="has-line-data" data-line-start="1314" data-line-end="1315">Creates the directory and all necessary parent directories. Without <code>-p</code>, <code>mkdir /opt/app/config</code> fails if <code>/opt/app</code> doesn’t exist. With <code>-p</code>, it creates all missing parents. Also, <code>-p</code> doesn’t fail if the directory already exists.</p>
+</blockquote>
+<hr>
+<h3 class="code-line has-line-data" data-line-start="1318" data-line-end="1319"><a id="rmdir_Remove_Empty_Directories_1318"></a><code>rmdir</code> — Remove Empty Directories</h3>
+<pre><code class="has-line-data language-bash" data-line-start="1321" data-line-end="1328"><span class="hljs-built_in">rmdir</span> emptydir            <span class="hljs-comment"># Remove single empty directory</span>
+<span class="hljs-built_in">rmdir</span> -p a/b/c/           <span class="hljs-comment"># Remove directory and empty parents</span>
+<span class="hljs-built_in">rmdir</span> <span class="hljs-built_in">dir</span>{1..5}           <span class="hljs-comment"># Remove multiple directories</span>
+
+<span class="hljs-comment"># Note: rmdir ONLY removes empty directories</span>
+<span class="hljs-comment"># For non-empty: use rm -rf (carefully!)</span>
+</code></pre>
+<p class="has-line-data" data-line-start="1329" data-line-end="1330"><strong>Interview tip:</strong> <code>rmdir</code> is safer than <code>rm -rf</code> — it fails silently if a directory has content, preventing accidental deletion.</p>
+<hr>
+<h3 class="code-line has-line-data" data-line-start="1333" data-line-end="1334"><a id="tree_List_Directory_Contents_as_Tree_1333"></a><code>tree</code> — List Directory Contents as Tree</h3>
+<pre><code class="has-line-data language-bash" data-line-start="1336" data-line-end="1349">tree                       <span class="hljs-comment"># Tree from current directory</span>
+tree /etc/nginx/           <span class="hljs-comment"># Tree from specific path</span>
+tree -L 2                  <span class="hljs-comment"># Limit to 2 levels deep</span>
+tree -a                    <span class="hljs-comment"># Show hidden files</span>
+tree -d                    <span class="hljs-comment"># Show directories only</span>
+tree -h                    <span class="hljs-comment"># Human-readable file sizes</span>
+tree -f                    <span class="hljs-comment"># Show full path prefix</span>
+tree --filelimit 20        <span class="hljs-comment"># Don&#x27;t descend dirs with &gt; 20 files</span>
+tree -I <span class="hljs-string">&quot;*.pyc|__pycache__&quot;</span>  <span class="hljs-comment"># Ignore patterns</span>
+
+<span class="hljs-comment"># Great for documentation</span>
+tree -L 3 /opt/app/ &gt; project_structure.txt
+</code></pre>
+<hr>
+
+</article>
+</main>
+</body>
+</html>

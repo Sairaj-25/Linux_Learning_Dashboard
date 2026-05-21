@@ -163,6 +163,11 @@
       "title": "Interview Preparation",
       "items": [
         {
+          "title": "Basic commands Interview Preparation Guide",
+          "href": "Interview-practise/basics.html",
+          "tags": ["interview", "linux", "awk", "sed", "basic"]
+        },
+        {
           "title": "Linux Interview Preparation Guide - Complete Handbook",
           "href": "Interview-practise/index.html",
           "tags": ["interview", "linux", "handbook"]
