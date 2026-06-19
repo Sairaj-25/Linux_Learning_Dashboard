@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Section 4 – Process Management | Linux Learning Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg-color:       #0d1117;
+      --container-bg:   #161b22;
+      --card-bg:        #21262d;
+      --text-primary:   #c9d1d9;
+      --text-secondary: #8b949e;
+      --accent-blue:    #58a6ff;
+      --accent-green:   #3fb950;
+      --accent-orange:  #f0883e;
+      --accent-purple:  #bc8cff;
+      --accent-red:     #f85149;
+      --border-color:   #30363d;
+      --code-bg:        #0d1117;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg-color);
+      color: var(--text-primary);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── top bar ── */
+    .topbar {
+      background: linear-gradient(135deg, #161b22 0%, #1a2332 100%);
+      border-bottom: 3px solid var(--accent-blue);
+      box-shadow: 0 4px 6px rgba(0,0,0,.3);
+      position: sticky; top: 0; z-index: 40;
+    }
+    .mono-title {
+      color: var(--accent-blue);
+      font-family: "Courier New", Courier, monospace;
+    }
+    .section-badge {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      background: var(--accent-blue);
+      color: #0d1117;
+      padding: 2px 8px;
+      border-radius: 9999px;
+    }
+
+    /* ── layout ── */
+    .app-shell {
+      min-height: 100dvh;
+      background:
+        radial-gradient(circle at top left, rgba(88,166,255,.10), transparent 34rem),
+        var(--bg-color);
+    }
+    .content-shell {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1.25rem 1rem;
+      display: grid;
+      grid-template-columns: 240px minmax(0,1fr);
+      gap: 1.25rem;
+    }
+    @media (max-width: 860px) {
+      .content-shell { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+
+    /* ── sidebar ── */
+    .sidebar {
+      position: sticky;
+      top: 80px;
+      align-self: start;
+      background: var(--container-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 1rem;
+    }
+    .nav-link {
+      display: block;
+      padding: 0.4rem 0.65rem;
+      border-radius: 0.375rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: background .15s, color .15s;
+      border-left: 2px solid transparent;
+    }
+    .nav-link:hover {
+      background: var(--card-bg);
+      color: var(--text-primary);
+    }
+    .nav-link.active {
+      border-left-color: var(--accent-blue);
+      color: var(--accent-blue);
+      background: var(--card-bg);
+    }
+    .nav-group-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      color: var(--accent-orange);
+      text-transform: uppercase;
+      margin: 0.75rem 0 0.35rem 0.65rem;
+    }
+    .nav-group-label:first-child { margin-top: 0; }
+
+    /* ── main content ── */
+    .main-content { min-width: 0; }
+
+    .section-card {
+      background: var(--container-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .section-card:last-child { margin-bottom: 0; }
+
+    h2.topic-title {
+      font-family: "Courier New", Courier, monospace;
+      color: var(--accent-blue);
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0 0 0.9rem 0;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    h3.sub-title {
+      color: var(--accent-green);
+      font-size: 0.92rem;
+      font-weight: 700;
+      margin: 1.1rem 0 0.5rem 0;
+      letter-spacing: .03em;
+    }
+    h3.sub-title-purple {
+      color: var(--accent-purple);
+      font-size: 0.92rem;
+      font-weight: 700;
+      margin: 1.1rem 0 0.5rem 0;
+    }
+    h3.sub-title-orange {
+      color: var(--accent-orange);
+      font-size: 0.92rem;
+      font-weight: 700;
+      margin: 1.1rem 0 0.5rem 0;
+    }
+    p.body-text {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      line-height: 1.7;
+      margin: 0 0 0.75rem 0;
+    }
+    p.body-text:last-child { margin-bottom: 0; }
+
+    /* ── code blocks ── */
+    pre.code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      padding: 0.9rem 1.1rem;
+      overflow-x: auto;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.8rem;
+      line-height: 1.65;
+      color: var(--text-primary);
+      margin: 0.6rem 0 0.9rem;
+    }
+    pre.code-block:last-child { margin-bottom: 0; }
+    .cmd  { color: var(--accent-green); }
+    .flag { color: var(--accent-blue); }
+    .arg  { color: var(--accent-orange); }
+    .cmt  { color: var(--text-secondary); }
+    .sig  { color: var(--accent-purple); }
+    .warn { color: var(--accent-red); }
+    code.inline-code {
+      font-family: "Courier New", Courier, monospace;
+      background: var(--code-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 0.8rem;
+      color: var(--accent-blue);
+    }
+
+    /* ── tables ── */
+    .cmd-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin: 0.6rem 0 0.9rem;
+    }
+    .cmd-table th {
+      background: var(--card-bg);
+      color: var(--text-secondary);
+      font-weight: 700;
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--border-color);
+      font-size: 0.75rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .cmd-table td {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+    .cmd-table tr:nth-child(even) td { background: rgba(33,38,45,.4); }
+    .cmd-table td:first-child {
+      font-family: "Courier New", Courier, monospace;
+      color: var(--accent-green);
+      white-space: nowrap;
+      font-size: 0.8rem;
+    }
+
+    /* ── info / warning pills ── */
+    .info-box {
+      background: rgba(88,166,255,.08);
+      border: 1px solid rgba(88,166,255,.25);
+      border-radius: 0.375rem;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin: 0.65rem 0;
+      line-height: 1.6;
+    }
+    .warn-box {
+      background: rgba(248,81,73,.08);
+      border: 1px solid rgba(248,81,73,.3);
+      border-radius: 0.375rem;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.82rem;
+      color: #ffa198;
+      margin: 0.65rem 0;
+      line-height: 1.6;
+    }
+    .tip-box {
+      background: rgba(63,185,80,.08);
+      border: 1px solid rgba(63,185,80,.25);
+      border-radius: 0.375rem;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.82rem;
+      color: #7ee787;
+      margin: 0.65rem 0;
+      line-height: 1.6;
+    }
+
+    /* ── state diagram badges ── */
+    .state-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.55rem;
+      margin: 0.65rem 0;
+    }
+    .state-badge {
+      border-radius: 0.375rem;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.78rem;
+      font-family: "Courier New", Courier, monospace;
+      border: 1px solid;
+      text-align: center;
+    }
+
+    /* ── signal table ── */
+    .sig-num { color: var(--accent-purple); font-family: "Courier New", Courier, monospace; }
+
+    /* ── back link ── */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color .15s;
+    }
+    .back-link:hover { color: var(--accent-blue); }
+
+    /* ── footer ── */
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 0.6rem 1.5rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ══════════ TOP BAR ══════════ -->
+  <header class="topbar px-4 py-4 sm:px-6">
+    <div style="max-width:1280px;margin:0 auto;" class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-3">
+        <a href="../index.html" class="back-link">← Dashboard</a>
+        <span style="color:var(--border-color)">|</span>
+        <span class="section-badge">Section 4</span>
+        <h1 class="mono-title text-xl font-bold">Process Management</h1>
+      </div>
+      <p style="font-size:.75rem;color:var(--text-secondary)">Linux Learning Dashboard &nbsp;·&nbsp; Core Notes</p>
+    </div>
+  </header>
+
+  <!-- ══════════ BODY ══════════ -->
+  <div class="content-shell">
+
+    <!-- ── Sidebar Nav ── -->
+    <aside class="sidebar">
+      <p class="nav-group-label">Topics</p>
+      <a class="nav-link active" href="#intro">What Is a Process?</a>
+      <a class="nav-link" href="#states">Process States</a>
+      <a class="nav-link" href="#viewing">Viewing Processes</a>
+      <a class="nav-link" href="#top">top &amp; htop</a>
+      <a class="nav-link" href="#jobs">Jobs &amp; Background</a>
+      <a class="nav-link" href="#signals">Signals</a>
+      <a class="nav-link" href="#kill">kill / killall / pkill</a>
+      <a class="nav-link" href="#priority">Process Priority</a>
+      <a class="nav-link" href="#proc">/proc Filesystem</a>
+      <a class="nav-link" href="#monitoring">Monitoring Tools</a>
+      <a class="nav-link" href="#cheatsheet">Quick Cheat Sheet</a>
+
+      <p class="nav-group-label" style="margin-top:1.25rem;">Related</p>
+      <a class="nav-link" href="../Assignment/process_management/index.html">Assignment – ps/kill</a>
+      <a class="nav-link" href="../Assignment/nice_renice_command/index.html">Assignment – nice/renice</a>
+      <a class="nav-link" href="../Section7-System Services and Daemon Management/index.html">Section 7 – Services</a>
+    </aside>
+
+    <!-- ── Main Content ── -->
+    <main class="main-content">
+
+      <!-- ① What Is a Process? -->
+      <section id="intro" class="section-card">
+        <h2 class="topic-title">⚙️ What Is a Process?</h2>
+        <p class="body-text">
+          A <strong style="color:var(--text-primary)">process</strong> is an instance of a running program. When you execute
+          a command, the Linux kernel creates a process, allocates memory, assigns a unique
+          <strong style="color:var(--text-primary)">PID</strong> (Process ID), and schedules it for CPU time.
+        </p>
+
+        <h3 class="sub-title">Key Process Attributes</h3>
+        <table class="cmd-table">
+          <thead><tr><th>Attribute</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>PID</td><td>Process ID – unique integer assigned by the kernel</td></tr>
+            <tr><td>PPID</td><td>Parent PID – the process that spawned this one</td></tr>
+            <tr><td>UID / EUID</td><td>Real / Effective user ID owning the process</td></tr>
+            <tr><td>GID / EGID</td><td>Real / Effective group ID</td></tr>
+            <tr><td>TTY</td><td>Controlling terminal (<code class="inline-code">?</code> = none / daemon)</td></tr>
+            <tr><td>CPU %</td><td>Current CPU utilisation</td></tr>
+            <tr><td>MEM %</td><td>Physical RAM share</td></tr>
+            <tr><td>Priority / Nice</td><td>Scheduling priority; nice value alters it</td></tr>
+            <tr><td>CMD</td><td>The command name / path</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="sub-title">Types of Processes</h3>
+        <table class="cmd-table">
+          <thead><tr><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>Foreground</td><td>Attached to the terminal; blocks the shell until it exits</td></tr>
+            <tr><td>Background</td><td>Launched with <code class="inline-code">&amp;</code>; terminal stays usable</td></tr>
+            <tr><td>Daemon</td><td>Background service with no controlling terminal (TTY = ?)</td></tr>
+            <tr><td>Zombie</td><td>Exited but parent has not yet read its exit status</td></tr>
+            <tr><td>Orphan</td><td>Parent died first; adopted by <code class="inline-code">init</code> (PID 1)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="info-box">
+          💡 <strong>PID 1</strong> is always <code class="inline-code">systemd</code> (or <code class="inline-code">init</code> on older systems).
+          Every other process is a descendant — Linux uses a tree structure.
+        </div>
+      </section>
+
+      <!-- ② Process States -->
+      <section id="states" class="section-card">
+        <h2 class="topic-title">🔄 Process States</h2>
+        <p class="body-text">
+          Every process is always in one of the following states, visible in the
+          <code class="inline-code">STAT</code> / <code class="inline-code">S</code> column of <code class="inline-code">ps</code>:
+        </p>
+        <div class="state-grid">
+          <div class="state-badge" style="border-color:var(--accent-green);color:var(--accent-green);">
+            <div style="font-size:1.1rem;">R</div>
+            <div style="font-size:.7rem;color:var(--text-secondary);margin-top:2px;">Running / Runnable</div>
+          </div>
+          <div class="state-badge" style="border-color:var(--accent-blue);color:var(--accent-blue);">
+            <div style="font-size:1.1rem;">S</div>
+            <div style="font-size:.7rem;color:var(--text-secondary);margin-top:2px;">Sleeping (interruptible)</div>
+          </div>
+          <div class="state-badge" style="border-color:var(--accent-purple);color:var(--accent-purple);">
+            <div style="font-size:1.1rem;">D</div>
+            <div style="font-size:.7rem;color:var(--text-secondary);margin-top:2px;">Uninterruptible Sleep</div>
+          </div>
+          <div class="state-badge" style="border-color:var(--accent-orange);color:var(--accent-orange);">
+            <div style="font-size:1.1rem;">T</div>
+            <div style="font-size:.7rem;color:var(--text-secondary);margin-top:2px;">Stopped (SIGSTOP)</div>
+          </div>
+          <div class="state-badge" style="border-color:var(--accent-red);color:var(--accent-red);">
+            <div style="font-size:1.1rem;">Z</div>
+            <div style="font-size:.7rem;color:var(--text-secondary);margin-top:2px;">Zombie</div>
+          </div>
+          <div class="state-badge" style="border-color:var(--text-secondary);color:var(--text-secondary);">
+            <div style="font-size:1.1rem;">I</div>
+            <div style="font-size:.7rem;margin-top:2px;">Idle kernel thread</div>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Extra STAT Flags</h3>
+        <table class="cmd-table">
+          <thead><tr><th>Flag</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>&lt;</td><td>High priority (negative nice value)</td></tr>
+            <tr><td>N</td><td>Low priority (positive nice value)</td></tr>
+            <tr><td>L</td><td>Pages locked in memory</td></tr>
+            <tr><td>s</td><td>Session leader</td></tr>
+            <tr><td>l</td><td>Multi-threaded</td></tr>
+            <tr><td>+</td><td>In the foreground process group</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ③ Viewing Processes – ps -->
+      <section id="viewing" class="section-card">
+        <h2 class="topic-title">🔍 Viewing Processes – <code style="font-size:1rem;">ps</code></h2>
+        <p class="body-text">
+          <code class="inline-code">ps</code> (process snapshot) is the go-to command for listing processes at a
+          point in time. It supports two flag styles: <em>Unix</em> (<code class="inline-code">-</code>) and
+          <em>BSD</em> (no dash).
+        </p>
+
+        <h3 class="sub-title">Common ps Invocations</h3>
+        <pre class="code-block"><span class="cmt"># BSD-style: all processes, user-friendly columns</span>
+<span class="cmd">ps</span> <span class="flag">aux</span>
+
+<span class="cmt"># Unix-style: every process, full format</span>
+<span class="cmd">ps</span> <span class="flag">-ef</span>
+
+<span class="cmt"># Show a full process tree (forest)</span>
+<span class="cmd">ps</span> <span class="flag">-ef --forest</span>
+
+<span class="cmt"># Show specific columns only</span>
+<span class="cmd">ps</span> <span class="flag">-eo</span> <span class="arg">pid,ppid,user,stat,nice,pcpu,pmem,cmd</span>
+
+<span class="cmt"># Filter by process name</span>
+<span class="cmd">ps</span> <span class="flag">-C</span> <span class="arg">nginx</span>
+
+<span class="cmt"># Show threads</span>
+<span class="cmd">ps</span> <span class="flag">-eLf</span>
+
+<span class="cmt"># Sort by CPU usage (descending)</span>
+<span class="cmd">ps</span> <span class="flag">aux</span> --sort=<span class="flag">-</span><span class="arg">%cpu</span> | <span class="cmd">head</span> <span class="flag">-10</span></pre>
+
+        <h3 class="sub-title">ps aux Column Reference</h3>
+        <table class="cmd-table">
+          <thead><tr><th>Column</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>USER</td><td>Owner of the process</td></tr>
+            <tr><td>PID</td><td>Process ID</td></tr>
+            <tr><td>%CPU</td><td>CPU usage since process start</td></tr>
+            <tr><td>%MEM</td><td>% of physical RAM used</td></tr>
+            <tr><td>VSZ</td><td>Virtual memory size (KB)</td></tr>
+            <tr><td>RSS</td><td>Resident set size – physical RAM used (KB)</td></tr>
+            <tr><td>TTY</td><td>Controlling terminal</td></tr>
+            <tr><td>STAT</td><td>Process state (see above)</td></tr>
+            <tr><td>START</td><td>Time/date process started</td></tr>
+            <tr><td>TIME</td><td>Cumulative CPU time consumed</td></tr>
+            <tr><td>COMMAND</td><td>Full command with arguments</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="sub-title">Finding Processes – pgrep / pidof</h3>
+        <pre class="code-block"><span class="cmt"># Print PIDs matching a name pattern</span>
+<span class="cmd">pgrep</span> <span class="arg">nginx</span>
+
+<span class="cmt"># Print PID + name (verbose)</span>
+<span class="cmd">pgrep</span> <span class="flag">-l</span> <span class="arg">ssh</span>
+
+<span class="cmt"># Match exact name</span>
+<span class="cmd">pgrep</span> <span class="flag">-x</span> <span class="arg">bash</span>
+
+<span class="cmt"># Match by user</span>
+<span class="cmd">pgrep</span> <span class="flag">-u</span> <span class="arg">sairaj</span>
+
+<span class="cmt"># pidof – exact binary name</span>
+<span class="cmd">pidof</span> <span class="arg">sshd</span></pre>
+      </section>
+
+      <!-- ④ top & htop -->
+      <section id="top" class="section-card">
+        <h2 class="topic-title">📊 top &amp; htop – Real-Time Monitoring</h2>
+
+        <h3 class="sub-title">top</h3>
+        <p class="body-text">
+          <code class="inline-code">top</code> gives a live, auto-refreshing view of system resource usage.
+          It updates every 3 s by default.
+        </p>
+        <pre class="code-block"><span class="cmd">top</span>                    <span class="cmt"># launch top</span>
+<span class="cmd">top</span> <span class="flag">-u</span> <span class="arg">sairaj</span>         <span class="cmt"># show only processes of a specific user</span>
+<span class="cmd">top</span> <span class="flag">-p</span> <span class="arg">1234,5678</span>     <span class="cmt"># watch specific PIDs</span>
+<span class="cmd">top</span> <span class="flag">-b -n 1</span>           <span class="cmt"># batch mode – single snapshot (good for scripts)</span></pre>
+
+        <h3 class="sub-title-orange">top Interactive Keys</h3>
+        <table class="cmd-table">
+          <thead><tr><th>Key</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>q</td><td>Quit</td></tr>
+            <tr><td>k</td><td>Kill a process (prompts for PID + signal)</td></tr>
+            <tr><td>r</td><td>Renice a process</td></tr>
+            <tr><td>P</td><td>Sort by CPU %</td></tr>
+            <tr><td>M</td><td>Sort by Memory %</td></tr>
+            <tr><td>T</td><td>Sort by cumulative Time</td></tr>
+            <tr><td>1</td><td>Toggle per-CPU stats</td></tr>
+            <tr><td>u</td><td>Filter by user</td></tr>
+            <tr><td>H</td><td>Toggle threads view</td></tr>
+            <tr><td>f</td><td>Open field/column selector</td></tr>
+            <tr><td>d / s</td><td>Change refresh delay</td></tr>
+            <tr><td>z</td><td>Toggle color</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="sub-title">top Header Explained</h3>
+        <pre class="code-block"><span class="cmt">top - 14:23:01 up 3 days,  2:15,  2 users,  load average: 0.12, 0.08, 0.05
+Tasks: 198 total,   1 running, 197 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  1.3 us,  0.5 sy,  0.0 ni, 97.9 id,  0.3 wa,  0.0 hi,  0.0 si
+MiB Mem :  15883.6 total,   9241.3 free,   4187.4 used,   2454.9 buff/cache
+MiB Swap:   2048.0 total,   2048.0 free,      0.0 used.  11267.1 avail Mem</span>
+
+<span class="cmt">┌─ %Cpu breakdown:
+│  us = user space      sy = kernel     ni = niced processes
+│  id = idle            wa = I/O wait   hi = hardware IRQ
+│  si = software IRQ    st = stolen (VM)
+└──────────────────────────────────────────────────────────</span></pre>
+
+        <h3 class="sub-title">htop</h3>
+        <p class="body-text">
+          <code class="inline-code">htop</code> is an enhanced, colour-coded, mouse-friendly alternative to
+          <code class="inline-code">top</code>. Install with
+          <code class="inline-code">sudo dnf install htop</code> or <code class="inline-code">sudo apt install htop</code>.
+        </p>
+        <table class="cmd-table">
+          <thead><tr><th>htop Key</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>F2 / S</td><td>Setup (columns, colors, meters)</td></tr>
+            <tr><td>F3 / /</td><td>Search processes</td></tr>
+            <tr><td>F4 / \</td><td>Filter by string</td></tr>
+            <tr><td>F5</td><td>Tree view</td></tr>
+            <tr><td>F6</td><td>Sort by column</td></tr>
+            <tr><td>F9 / k</td><td>Send signal (kill menu)</td></tr>
+            <tr><td>F10 / q</td><td>Quit</td></tr>
+            <tr><td>Space</td><td>Tag/select a process</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ⑤ Jobs & Background -->
+      <section id="jobs" class="section-card">
+        <h2 class="topic-title">🧵 Jobs &amp; Background Execution</h2>
+        <p class="body-text">
+          The shell tracks <em>jobs</em> – processes it has started. You can suspend, background,
+          foreground, or disown them.
+        </p>
+
+        <h3 class="sub-title">Running Jobs</h3>
+        <pre class="code-block"><span class="cmt"># Start a command in the background</span>
+<span class="cmd">sleep</span> <span class="arg">300</span> <span class="flag">&amp;</span>
+
+<span class="cmt"># List current shell's jobs</span>
+<span class="cmd">jobs</span>
+<span class="cmd">jobs</span> <span class="flag">-l</span>    <span class="cmt"># include PID</span>
+
+<span class="cmt"># Bring job 1 to the foreground</span>
+<span class="cmd">fg</span> <span class="arg">%1</span>
+
+<span class="cmt"># Send job 1 to the background (if currently stopped)</span>
+<span class="cmd">bg</span> <span class="arg">%1</span>
+
+<span class="cmt"># Suspend the current foreground job</span>
+<span class="flag">Ctrl+Z</span>
+
+<span class="cmt"># Detach job so it survives terminal close</span>
+<span class="cmd">disown</span> <span class="arg">%1</span></pre>
+
+        <h3 class="sub-title">nohup – Immunity to HUP Signal</h3>
+        <pre class="code-block"><span class="cmt"># Run command that keeps going after you log out</span>
+<span class="cmd">nohup</span> <span class="arg">./long_script.sh</span> <span class="flag">&amp;</span>
+
+<span class="cmt"># Output goes to nohup.out by default; redirect it:</span>
+<span class="cmd">nohup</span> <span class="arg">./long_script.sh</span> > <span class="arg">/tmp/script.log</span> 2>&1 <span class="flag">&amp;</span></pre>
+
+        <h3 class="sub-title">screen / tmux (session managers)</h3>
+        <pre class="code-block"><span class="cmt">### screen ###</span>
+<span class="cmd">screen</span>                        <span class="cmt"># start new session</span>
+<span class="flag">Ctrl+a d</span>                     <span class="cmt"># detach</span>
+<span class="cmd">screen</span> <span class="flag">-r</span>                    <span class="cmt"># reattach</span>
+<span class="cmd">screen</span> <span class="flag">-ls</span>                   <span class="cmt"># list sessions</span>
+
+<span class="cmt">### tmux ###</span>
+<span class="cmd">tmux</span>                         <span class="cmt"># start new session</span>
+<span class="flag">Ctrl+b d</span>                     <span class="cmt"># detach</span>
+<span class="cmd">tmux</span> <span class="flag">attach</span>                  <span class="cmt"># reattach</span>
+<span class="cmd">tmux</span> <span class="flag">ls</span>                      <span class="cmt"># list sessions</span></pre>
+
+        <div class="tip-box">
+          ✅ Prefer <strong>tmux</strong> for persistent sessions on remote servers.
+          Use <code class="inline-code">nohup</code> for one-off long-running commands.
+        </div>
+      </section>
+
+      <!-- ⑥ Signals -->
+      <section id="signals" class="section-card">
+        <h2 class="topic-title">📡 Process Signals</h2>
+        <p class="body-text">
+          Signals are software interrupts sent to processes. The kernel, other processes
+          (with the right permissions), or the user can send them.
+        </p>
+        <pre class="code-block"><span class="cmt"># List all signals</span>
+<span class="cmd">kill</span> <span class="flag">-l</span></pre>
+
+        <h3 class="sub-title">Most Important Signals</h3>
+        <table class="cmd-table">
+          <thead><tr><th>Number</th><th>Name</th><th>Default Action</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>SIGHUP</td><td>Terminate</td><td>Hangup – often used to reload config</td></tr>
+            <tr><td>2</td><td>SIGINT</td><td>Terminate</td><td>Keyboard interrupt (Ctrl+C)</td></tr>
+            <tr><td>3</td><td>SIGQUIT</td><td>Core dump</td><td>Ctrl+\</td></tr>
+            <tr><td>9</td><td>SIGKILL</td><td>Terminate (force)</td><td>Cannot be caught or ignored</td></tr>
+            <tr><td>15</td><td>SIGTERM</td><td>Terminate</td><td>Default kill signal; allows graceful shutdown</td></tr>
+            <tr><td>17</td><td>SIGCHLD</td><td>Ignore</td><td>Child stopped or exited</td></tr>
+            <tr><td>18</td><td>SIGCONT</td><td>Continue</td><td>Resume a stopped process</td></tr>
+            <tr><td>19</td><td>SIGSTOP</td><td>Stop</td><td>Cannot be caught or ignored</td></tr>
+            <tr><td>20</td><td>SIGTSTP</td><td>Stop</td><td>Keyboard stop (Ctrl+Z)</td></tr>
+            <tr><td>10</td><td>SIGUSR1</td><td>Terminate</td><td>User-defined signal 1</td></tr>
+            <tr><td>12</td><td>SIGUSR2</td><td>Terminate</td><td>User-defined signal 2</td></tr>
+          </tbody>
+        </table>
+        <div class="warn-box">
+          ⚠️ <strong>SIGKILL (9)</strong> immediately destroys the process without giving it a chance to clean up.
+          Always try <strong>SIGTERM (15)</strong> first, then SIGKILL as a last resort.
+        </div>
+      </section>
+
+      <!-- ⑦ kill / killall / pkill -->
+      <section id="kill" class="section-card">
+        <h2 class="topic-title">🔫 kill / killall / pkill</h2>
+
+        <h3 class="sub-title">kill – Send Signal by PID</h3>
+        <pre class="code-block"><span class="cmt"># Send SIGTERM (15) to PID 1234</span>
+<span class="cmd">kill</span> <span class="arg">1234</span>
+
+<span class="cmt"># Send SIGKILL to PID 1234</span>
+<span class="cmd">kill</span> <span class="flag">-9</span> <span class="arg">1234</span>
+<span class="cmd">kill</span> <span class="flag">-SIGKILL</span> <span class="arg">1234</span>     <span class="cmt"># same thing</span>
+
+<span class="cmt"># Reload config of a daemon (nginx, sshd, etc.)</span>
+<span class="cmd">kill</span> <span class="flag">-HUP</span> <span class="arg">$(cat /var/run/nginx.pid)</span>
+
+<span class="cmt"># Kill all processes in a group (negative PID)</span>
+<span class="cmd">kill</span> <span class="flag">-TERM</span> <span class="flag">-</span><span class="arg">5678</span></pre>
+
+        <h3 class="sub-title">killall – Kill by Process Name</h3>
+        <pre class="code-block"><span class="cmt"># Kill all processes named "firefox"</span>
+<span class="cmd">killall</span> <span class="arg">firefox</span>
+
+<span class="cmt"># Force kill</span>
+<span class="cmd">killall</span> <span class="flag">-9</span> <span class="arg">firefox</span>
+
+<span class="cmt"># Kill only processes owned by a specific user</span>
+<span class="cmd">killall</span> <span class="flag">-u</span> <span class="arg">sairaj</span> <span class="arg">python3</span>
+
+<span class="cmt"># Verbose – report what was killed</span>
+<span class="cmd">killall</span> <span class="flag">-v</span> <span class="arg">nginx</span>
+
+<span class="cmt"># Interactive – confirm before killing</span>
+<span class="cmd">killall</span> <span class="flag">-i</span> <span class="arg">nginx</span></pre>
+
+        <h3 class="sub-title">pkill – Pattern-Based Kill</h3>
+        <pre class="code-block"><span class="cmt"># Kill by name pattern (regex supported)</span>
+<span class="cmd">pkill</span> <span class="arg">nginx</span>
+
+<span class="cmt"># Force kill matching pattern</span>
+<span class="cmd">pkill</span> <span class="flag">-9</span> <span class="arg">nginx</span>
+
+<span class="cmt"># Kill by user</span>
+<span class="cmd">pkill</span> <span class="flag">-u</span> <span class="arg">sairaj</span>
+
+<span class="cmt"># Kill exact name match only</span>
+<span class="cmd">pkill</span> <span class="flag">-x</span> <span class="arg">bash</span>
+
+<span class="cmt"># Send SIGHUP to reload</span>
+<span class="cmd">pkill</span> <span class="flag">-HUP</span> <span class="arg">sshd</span></pre>
+
+        <h3 class="sub-title-purple">Comparison: kill vs killall vs pkill</h3>
+        <table class="cmd-table">
+          <thead><tr><th>Command</th><th>Target</th><th>Best For</th></tr></thead>
+          <tbody>
+            <tr><td>kill</td><td>PID</td><td>Precise; use when you know the exact PID</td></tr>
+            <tr><td>killall</td><td>Exact process name</td><td>Killing all instances of a named binary</td></tr>
+            <tr><td>pkill</td><td>Name pattern / attributes</td><td>Flexible matching (user, terminal, regex)</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ⑧ Process Priority -->
+      <section id="priority" class="section-card">
+        <h2 class="topic-title">⚖️ Process Priority – nice &amp; renice</h2>
+        <p class="body-text">
+          Linux uses two related values to control scheduling priority:
+        </p>
+        <table class="cmd-table">
+          <thead><tr><th>Value</th><th>Range</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Nice value</td><td>-20 to +19</td><td>Lower = higher priority. Set at launch or changed with renice.</td></tr>
+            <tr><td>Priority (PRI)</td><td>0–139</td><td>Kernel's real scheduling priority. PRI = 20 + nice for normal processes.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="info-box">
+          💡 Only <strong>root</strong> can set a negative nice value (increase priority).
+          Regular users can only <em>lower</em> priority (raise the nice value).
+        </div>
+
+        <h3 class="sub-title">nice – Launch with a Priority</h3>
+        <pre class="code-block"><span class="cmt"># Launch with niceness +10 (lower priority than default 0)</span>
+<span class="cmd">nice</span> <span class="flag">-n 10</span> <span class="arg">./backup.sh</span>
+
+<span class="cmt"># Launch with highest possible priority (root only)</span>
+<span class="cmd">sudo nice</span> <span class="flag">-n -20</span> <span class="arg">./critical.sh</span>
+
+<span class="cmt"># Default nice value when no flag given is +10</span>
+<span class="cmd">nice</span> <span class="arg">./script.sh</span></pre>
+
+        <h3 class="sub-title">renice – Change Priority of a Running Process</h3>
+        <pre class="code-block"><span class="cmt"># Set nice value to +5 for PID 1234</span>
+<span class="cmd">renice</span> <span class="flag">+5</span> <span class="flag">-p</span> <span class="arg">1234</span>
+
+<span class="cmt"># Set nice value to -5 (root required)</span>
+<span class="cmd">sudo renice</span> <span class="flag">-5</span> <span class="flag">-p</span> <span class="arg">1234</span>
+
+<span class="cmt"># Renice all processes owned by a user</span>
+<span class="cmd">renice</span> <span class="flag">+10</span> <span class="flag">-u</span> <span class="arg">sairaj</span>
+
+<span class="cmt"># Renice an entire process group</span>
+<span class="cmd">renice</span> <span class="flag">+5</span> <span class="flag">-g</span> <span class="arg">1234</span>
+
+<span class="cmt"># Verify the change</span>
+<span class="cmd">ps</span> <span class="flag">-o</span> <span class="arg">pid,ni,pri,cmd</span> <span class="flag">-p</span> <span class="arg">1234</span></pre>
+
+        <h3 class="sub-title">CPU Affinity – taskset</h3>
+        <pre class="code-block"><span class="cmt"># Launch a command pinned to CPU 0 and 1</span>
+<span class="cmd">taskset</span> <span class="flag">-c</span> <span class="arg">0,1</span> <span class="arg">./program</span>
+
+<span class="cmt"># Pin an existing process to CPU 2</span>
+<span class="cmd">taskset</span> <span class="flag">-cp</span> <span class="arg">2</span> <span class="arg">1234</span>
+
+<span class="cmt"># Check current affinity</span>
+<span class="cmd">taskset</span> <span class="flag">-cp</span> <span class="arg">1234</span></pre>
+      </section>
+
+      <!-- ⑨ /proc Filesystem -->
+      <section id="proc" class="section-card">
+        <h2 class="topic-title">📂 /proc Filesystem</h2>
+        <p class="body-text">
+          <code class="inline-code">/proc</code> is a virtual filesystem maintained by the kernel.
+          Every running process has a directory <code class="inline-code">/proc/&lt;PID&gt;/</code>
+          containing live information.
+        </p>
+
+        <h3 class="sub-title">Useful /proc/&lt;PID&gt; Entries</h3>
+        <table class="cmd-table">
+          <thead><tr><th>File / Dir</th><th>Contains</th></tr></thead>
+          <tbody>
+            <tr><td>/proc/&lt;PID&gt;/status</td><td>Human-readable process info (name, PID, PPID, state, UID, memory)</td></tr>
+            <tr><td>/proc/&lt;PID&gt;/cmdline</td><td>Full command that started the process (NUL-separated)</td></tr>
+            <tr><td>/proc/&lt;PID&gt;/environ</td><td>Environment variables at process start</td></tr>
+            <tr><td>/proc/&lt;PID&gt;/maps</td><td>Memory maps (virtual address → file/lib)</td></tr>
+            <tr><td>/proc/&lt;PID&gt;/fd/</td><td>Symlinks to open file descriptors</td></tr>
+            <tr><td>/proc/&lt;PID&gt;/net/</td><td>Network info for the process's namespace</td></tr>
+            <tr><td>/proc/&lt;PID&gt;/io</td><td>I/O statistics (reads/writes)</td></tr>
+            <tr><td>/proc/&lt;PID&gt;/limits</td><td>Resource limits (ulimits)</td></tr>
+            <tr><td>/proc/&lt;PID&gt;/threads/</td><td>Per-thread directories</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="sub-title">System-wide /proc Files</h3>
+        <pre class="code-block"><span class="cmt"># Current logged-in users + uptime</span>
+<span class="cmd">cat</span> <span class="arg">/proc/uptime</span>
+
+<span class="cmt"># CPU info</span>
+<span class="cmd">cat</span> <span class="arg">/proc/cpuinfo</span>
+
+<span class="cmt"># Memory info</span>
+<span class="cmd">cat</span> <span class="arg">/proc/meminfo</span>
+
+<span class="cmt"># Kernel command line at boot</span>
+<span class="cmd">cat</span> <span class="arg">/proc/cmdline</span>
+
+<span class="cmt"># Loaded kernel modules</span>
+<span class="cmd">cat</span> <span class="arg">/proc/modules</span>
+
+<span class="cmt"># Read a specific process's command</span>
+<span class="cmd">cat</span> <span class="arg">/proc/1/cmdline</span> | <span class="cmd">tr</span> <span class="arg">'\0' ' '</span></pre>
+      </section>
+
+      <!-- ⑩ Monitoring Tools -->
+      <section id="monitoring" class="section-card">
+        <h2 class="topic-title">🛠️ Process Monitoring Tools</h2>
+
+        <h3 class="sub-title">vmstat – Virtual Memory Statistics</h3>
+        <pre class="code-block"><span class="cmt"># Refresh every 2 seconds, 5 times</span>
+<span class="cmd">vmstat</span> <span class="arg">2 5</span>
+
+<span class="cmt"># Display timestamps</span>
+<span class="cmd">vmstat</span> <span class="flag">-t</span> <span class="arg">1</span></pre>
+
+        <h3 class="sub-title">iostat – CPU and I/O Stats</h3>
+        <pre class="code-block"><span class="cmd">iostat</span>                  <span class="cmt"># one snapshot</span>
+<span class="cmd">iostat</span> <span class="flag">-x</span> <span class="arg">2</span>            <span class="cmt"># extended stats, refresh every 2 s</span>
+<span class="cmd">iostat</span> <span class="flag">-d</span> <span class="arg">sda 2</span>        <span class="cmt"># only disk sda</span></pre>
+
+        <h3 class="sub-title">lsof – List Open Files / Sockets</h3>
+        <pre class="code-block"><span class="cmt"># All open files</span>
+<span class="cmd">lsof</span>
+
+<span class="cmt"># Open files by a specific process</span>
+<span class="cmd">lsof</span> <span class="flag">-p</span> <span class="arg">1234</span>
+
+<span class="cmt"># Who has a specific file open?</span>
+<span class="cmd">lsof</span> <span class="arg">/var/log/syslog</span>
+
+<span class="cmt"># Network connections</span>
+<span class="cmd">lsof</span> <span class="flag">-i</span>
+<span class="cmd">lsof</span> <span class="flag">-i :80</span>             <span class="cmt"># who's listening on port 80</span>
+<span class="cmd">lsof</span> <span class="flag">-iTCP -sTCP:LISTEN</span></pre>
+
+        <h3 class="sub-title">strace – System Call Tracer</h3>
+        <pre class="code-block"><span class="cmt"># Trace syscalls of a new command</span>
+<span class="cmd">strace</span> <span class="arg">ls</span>
+
+<span class="cmt"># Attach to a running process</span>
+<span class="cmd">strace</span> <span class="flag">-p</span> <span class="arg">1234</span>
+
+<span class="cmt"># Summary of syscall counts</span>
+<span class="cmd">strace</span> <span class="flag">-c</span> <span class="arg">./program</span>
+
+<span class="cmt"># Only trace specific syscalls</span>
+<span class="cmd">strace</span> <span class="flag">-e trace=open,read,write</span> <span class="arg">./program</span></pre>
+
+        <h3 class="sub-title">Additional Useful Commands</h3>
+        <table class="cmd-table">
+          <thead><tr><th>Command</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>uptime</td><td>Load averages + how long system has been up</td></tr>
+            <tr><td>w</td><td>Who's logged in and what they're running</td></tr>
+            <tr><td>free -h</td><td>Memory usage summary (human-readable)</td></tr>
+            <tr><td>watch -n 1 'ps aux'</td><td>Run ps every second (poor-man's top)</td></tr>
+            <tr><td>sar -u 1 5</td><td>CPU stats via sysstat (5 samples, 1 s apart)</td></tr>
+            <tr><td>pidstat 2</td><td>Per-process CPU/IO stats (sysstat)</td></tr>
+            <tr><td>tload</td><td>ASCII load average graph in terminal</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ⑪ Cheat Sheet -->
+      <section id="cheatsheet" class="section-card">
+        <h2 class="topic-title">📋 Quick Cheat Sheet</h2>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">
+
+          <div>
+            <h3 class="sub-title">Viewing</h3>
+            <pre class="code-block" style="margin:0;font-size:.75rem;"><span class="cmd">ps aux</span>                 <span class="cmt">all processes</span>
+<span class="cmd">ps -ef --forest</span>        <span class="cmt">tree view</span>
+<span class="cmd">top</span>                    <span class="cmt">live monitor</span>
+<span class="cmd">htop</span>                   <span class="cmt">coloured live</span>
+<span class="cmd">pgrep -l nginx</span>         <span class="cmt">find PID</span>
+<span class="cmd">pidof sshd</span>            <span class="cmt">exact PID</span></pre>
+          </div>
+
+          <div>
+            <h3 class="sub-title">Signals / Kill</h3>
+            <pre class="code-block" style="margin:0;font-size:.75rem;"><span class="cmd">kill</span> <span class="arg">PID</span>               <span class="cmt">SIGTERM</span>
+<span class="cmd">kill -9</span> <span class="arg">PID</span>            <span class="cmt">SIGKILL</span>
+<span class="cmd">kill -HUP</span> <span class="arg">PID</span>          <span class="cmt">reload</span>
+<span class="cmd">killall</span> <span class="arg">nginx</span>           <span class="cmt">by name</span>
+<span class="cmd">pkill -u</span> <span class="arg">sairaj</span>         <span class="cmt">by user</span>
+<span class="cmd">kill -l</span>                 <span class="cmt">list signals</span></pre>
+          </div>
+
+          <div>
+            <h3 class="sub-title">Jobs</h3>
+            <pre class="code-block" style="margin:0;font-size:.75rem;"><span class="arg">cmd</span> <span class="flag">&amp;</span>                   <span class="cmt">background</span>
+<span class="flag">Ctrl+Z</span>                 <span class="cmt">suspend</span>
+<span class="cmd">bg</span> <span class="arg">%1</span>                  <span class="cmt">resume bg</span>
+<span class="cmd">fg</span> <span class="arg">%1</span>                  <span class="cmt">foreground</span>
+<span class="cmd">jobs -l</span>                <span class="cmt">list jobs</span>
+<span class="cmd">disown</span> <span class="arg">%1</span>              <span class="cmt">detach</span>
+<span class="cmd">nohup</span> <span class="arg">cmd</span> <span class="flag">&amp;</span>           <span class="cmt">survive logout</span></pre>
+          </div>
+
+          <div>
+            <h3 class="sub-title">Priority</h3>
+            <pre class="code-block" style="margin:0;font-size:.75rem;"><span class="cmd">nice -n 10</span> <span class="arg">cmd</span>        <span class="cmt">low priority</span>
+<span class="cmd">sudo nice -n -20</span> <span class="arg">cmd</span>  <span class="cmt">high priority</span>
+<span class="cmd">renice +5 -p</span> <span class="arg">PID</span>      <span class="cmt">change live</span>
+<span class="cmd">renice -5 -u</span> <span class="arg">user</span>     <span class="cmt">by user</span>
+<span class="cmd">ps -o pid,ni,cmd</span> <span class="arg">PID</span>  <span class="cmt">check nice</span></pre>
+          </div>
+
+          <div>
+            <h3 class="sub-title">Monitoring</h3>
+            <pre class="code-block" style="margin:0;font-size:.75rem;"><span class="cmd">lsof -p</span> <span class="arg">PID</span>            <span class="cmt">open files</span>
+<span class="cmd">strace -p</span> <span class="arg">PID</span>          <span class="cmt">syscalls</span>
+<span class="cmd">vmstat 2 5</span>             <span class="cmt">mem stats</span>
+<span class="cmd">iostat -x 2</span>            <span class="cmt">I/O stats</span>
+<span class="cmd">uptime</span>                 <span class="cmt">load avg</span>
+<span class="cmd">free -h</span>                <span class="cmt">memory</span></pre>
+          </div>
+
+          <div>
+            <h3 class="sub-title">/proc Quick Reads</h3>
+            <pre class="code-block" style="margin:0;font-size:.75rem;"><span class="cmd">cat /proc/</span><span class="arg">PID</span><span class="cmd">/status</span>    <span class="cmt">status</span>
+<span class="cmd">cat /proc/</span><span class="arg">PID</span><span class="cmd">/cmdline</span>   <span class="cmt">command</span>
+<span class="cmd">ls /proc/</span><span class="arg">PID</span><span class="cmd">/fd</span>         <span class="cmt">open fds</span>
+<span class="cmd">cat /proc/cpuinfo</span>       <span class="cmt">CPU info</span>
+<span class="cmd">cat /proc/meminfo</span>       <span class="cmt">mem info</span>
+<span class="cmd">cat /proc/uptime</span>        <span class="cmt">uptime secs</span></pre>
+          </div>
+
+        </div><!-- end cheat grid -->
+      </section>
+
+    </main><!-- /main-content -->
+  </div><!-- /content-shell -->
+
+  <footer>
+    <span>Linux Learning Dashboard &nbsp;·&nbsp; Section 4 – Process Management</span>
+    <span>
+      <a href="../index.html" style="color:var(--accent-blue);text-decoration:none;">← Back to Dashboard</a>
+      &nbsp;·&nbsp;
+      <a href="../Assignment/process_management/index.html" style="color:var(--accent-green);text-decoration:none;">Assignment: ps/kill</a>
+      &nbsp;·&nbsp;
+      <a href="../Assignment/nice_renice_command/index.html" style="color:var(--accent-orange);text-decoration:none;">Assignment: nice/renice</a>
+    </span>
+  </footer>
+
+</div><!-- /app-shell -->
+
+<script>
+  /* ── active nav-link on scroll ── */
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
