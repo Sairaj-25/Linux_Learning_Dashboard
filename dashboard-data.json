@@ -24,25 +24,30 @@
           "href": "Section3-User and Group Management/index.html",
           "tags": ["users", "groups", "linux"]
         },
-        {
-          "title": "Linux Section 8 - Package Management",
-          "href": "Section8-Package Management/index.html",
-          "tags": ["packages", "yum", "dnf"]
+                {
+          "title": "Linux Section 4 - Process Management",
+          "href": "Section4-Process Management/index.html",
+          "tags": ["process", "linux"]
         },
         {
           "title": "Linux Section 5 - Disk Management",
           "href": "Section5-Disk Management/index.html",
           "tags": ["disk", "storage", "partitions"]
         },
+                {
+          "title": "Linux Section 6 - Network Management",
+          "href": "Section6-Network Management/index.html",
+          "tags": ["network", "linux"]
+        },
         {
           "title": "Linux Section 7 - System Services & Daemon Management",
           "href": "Section7-System Services and Daemon Management/index.html",
           "tags": ["services", "daemon", "systemd"]
         },
-        {
-          "title": "Linux Section 6 - Network Management",
-          "href": "Section6-Network Management/index.html",
-          "tags": ["network", "linux"]
+                {
+          "title": "Linux Section 8 - Package Management",
+          "href": "Section8-Package Management/index.html",
+          "tags": ["packages", "yum", "dnf"]
         }
       ]
     },
