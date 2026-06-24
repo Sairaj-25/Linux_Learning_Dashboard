@@ -9,6 +9,10 @@ Linux Learning Dashboard is designed to help students, beginners, and aspiring s
 
 ---
 
+<p align="center">
+  <img src="images/dashboard_1.png" width="800">
+</p>
+
 ## 🎯 Learning Objectives
 
 By using this repository, you will learn:
@@ -16,6 +20,7 @@ By using this repository, you will learn:
 * Linux file and directory management
 * Filesystem permissions and security
 * User and group administration
+* Process management
 * Disk and storage management
 * Network configuration and troubleshooting
 * System services and daemon management
@@ -49,28 +54,34 @@ By using this repository, you will learn:
 * Group administration
 * Access control
 
-### 4. Disk Management
+### 4. Process Management
+
+* ps, top, htop
+* Process Priority – nice & renice
+* Process Signals
+
+### 5. Disk Management
 
 * Partitions
 * Mounting filesystems
 * Disk monitoring
 * Storage administration
 
-### 5. Network Management
+### 6. Network Management
 
 * IP configuration
 * DNS management
 * Network troubleshooting
 * SSH administration
 
-### 6. System Services and Daemon Management
+### 7. System Services and Daemon Management
 
 * systemd
 * service management
 * logs and monitoring
 * startup configuration
 
-### 7. Package Management
+### 8. Package Management
 
 * apt
 * yum/dnf
@@ -115,11 +126,12 @@ in your web browser.
 1. File and Directory Management
 2. Filesystem Permissions and Security
 3. User and Group Management
-4. Disk Management
-5. Network Management
-6. System Services and Daemon Management
-7. Package Management
-8. Interview Practice
+4. Process Management
+5. Disk Management
+6. Network Management
+7. System Services and Daemon Management
+8. Package Management
+9. Interview Practice
 
 ---
 
